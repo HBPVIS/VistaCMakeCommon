@@ -4,8 +4,6 @@ include( FindPackageHandleStandardArgs )
 
 if( NOT VGLUT_FOUND )
 
-	set( VGLUT_FOUND "NO" )
-
 	find_path( GLUT_DIR include/GL/freeglut.h 
 			PATHS 	$ENV{FREEGLUT_ROOT}/${VISTA_HWARCH} $ENV{FREEGLUT_ROOT}
 					$ENV{GLUT_ROOT} $ENV{GLUT_ROOT}/${VISTA_HWARCH} 
@@ -61,8 +59,8 @@ if( NOT VGLUT_FOUND )
 		add_definitions( ${GLUT_DEFINITIONS} )
 		list( APPEND LIBRARIES ${GLUT_LIBRARIES} )
 	endmacro( vista_use_GLUT )
-	
-	find_package_handle_standard_args( VGLUT "glut/Freeglut could not be found" GLUT_INC_DIR GLUT_LIBRARIES )  
 
 endif( NOT VGLUT_FOUND )
+
+find_package_handle_standard_args( VGLUT "glut/Freeglut could not be found" GLUT_INC_DIR GLUT_LIBRARIES )  
 

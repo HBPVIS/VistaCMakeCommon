@@ -145,22 +145,9 @@ def GenCMakeForLib( startDir, projectName ):
 	fileHandle.write( "\n" )
 	fileHandle.write( "add_library( " + projectName + " ${ProjectSources} )\n" )
 	fileHandle.write( "target_link_libraries( " + projectName + "\n" )
-	fileHandle.write( "\t${LIBRARIES}\n" )
 	fileHandle.write( ")\n" )
 	fileHandle.write( "\n" )
-	fileHandle.write( "install( TARGETS " + projectName + "\n" )
-	fileHandle.write( "\tLIBRARY DESTINATION lib\n" )
-	fileHandle.write( "\tARCHIVE DESTINATION lib\n" )	
-	fileHandle.write( "\tRUNTIME DESTINATION lib )\n" )
-	fileHandle.write( "install( DIRECTORY" )	
-	for dir in sourceSubDirs:
-		fileHandle.write( "\t" + dir )	
-	fileHandle.write( "\n" )	
-	fileHandle.write( "\tDESTINATION include/" + projectName + "\n" )	
-	fileHandle.write( "\tFILES_MATCHING PATTERN \"*.h\"\n" )	
-	fileHandle.write( "\tPATTERN \"build\" EXCLUDE\n" )	
-	fileHandle.write( "\tPATTERN \".svn\" EXCLUDE\n" )	
-	fileHandle.write( "\tPATTERN \"CMakeFiles\" EXCLUDE )\n" )
+	fileHandle.write( "vista_install()\n" )
 	fileHandle.write( "\n" )
 	
 
@@ -186,7 +173,6 @@ def GenCMakeForApp( startDir, projectName ):
 	fileHandle.write( "#EXEC_NAME Is set inside VistaAppCommon to include the D for debug builds\n" )
 	fileHandle.write( "add_executable( ${EXEC_NAME} ${ProjectSources} )\n" )
 	fileHandle.write( "target_link_libraries( ${EXEC_NAME}\n" )
-	fileHandle.write( "\t${LIBRARIES}\n" )
 	fileHandle.write( ")\n" )
 	fileHandle.write( "\n" )
 	
@@ -229,6 +215,6 @@ else:
 	print( "  -app | -application      : the project will be configured as an application [default]" )
 	print( "  -lib | -library          : the project will be configured as a library " )
 	print( "  -src | -source           : if set, only the " + localSourceFileName + "-files will be updated" )
-	print( "  - name                   : specify name of the project. if omitted, the directory name will be used instead" )
+	print( "  -name                    : specify name of the project. if omitted, the directory name will be used instead" )
 
 print("note: underlines in foldernames will cause errors!")

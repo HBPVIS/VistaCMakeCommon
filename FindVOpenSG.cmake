@@ -2,7 +2,10 @@ include( FindPackageHandleStandardArgs )
 
 if( NOT VOPENSG_FOUND )
 
-	find_path( OPENSG_DIR include/OpenSG/OSGAction.h PATHS $ENV{OPENSG_ROOT}/${VISTA_HWARCH} $ENV{OPENSG_ROOT} CACHE PATH "OpenSG package directory" )
+	find_path( OPENSG_DIR include/OpenSG/OSGAction.h 
+				PATHS $ENV{OPENSG_ROOT}/${VISTA_HWARCH} $ENV{OPENSG_ROOT} 
+						$ENV{VRDEV}/OpenSG/${VISTA_HWARCH} $ENV{VRDEV}/OpenSG
+				CACHE PATH "OpenSG package directory" )
 
 	if( OPENSG_DIR )
 		set( OpenSG_FOUND "YES" )
@@ -30,11 +33,11 @@ if( NOT VOPENSG_FOUND )
 		link_directories( ${OPENSG_LIB_DIR} )
 		list( APPEND LIBRARIES ${OPENSG_LIBRARIES} )
 		add_definitions( ${OPENSG_DEFINTIONS} )			
-	endmacro( vista_use_OpenSG )
-	
-	find_package_handle_standard_args( VOpenSG "OpenSG could not be found" OPENSG_INC_DIR OPENSG_LIBRARIES )
+	endmacro( vista_use_OpenSG )	
 
 endif( NOT VOPENSG_FOUND )
+
+find_package_handle_standard_args( VOpenSG "OpenSG could not be found" OPENSG_INC_DIR OPENSG_LIBRARIES )
 
 
 
