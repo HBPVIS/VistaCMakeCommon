@@ -131,6 +131,79 @@ elseif( WIN32 )
     endif( MSVC )
 endif( UNIX )
 
+
+macro( find_package_versioned PACKAGE_NAME VERSION_NAME )
+	# we first do a regular search with a definitely unused version
+	# this will fail, but gives us ${PACKAGE_NAME}_CONSIDERED_CONFIGS
+	# with a list of found config files
+	find_package( ${PACKAGE_NAME} 666.666.666.666 QUIET )
+	
+	set( _FIND_SUCCESS FALSE )
+	
+	foreach( FOUND_CONFIG ${${PACKAGE_NAME}_CONSIDERED_CONFIGS} )
+		#string( REGEX MATCH "" ${FOUND_VERSION} _REXEX_MATCH )
+		message( "find_package_versioned: examining ${FOUND_CONFIG}" )
+		
+		string( REGEX MATCH "(.+)Config\\.cmake" _MATCH_SUCCESS ${FOUND_CONFIG} )
+		if( _MATCH_SUCCESS )
+			# lets look for a corresponding ConfigVersion.cmake file
+			set( _VERSION_FILE "" CACHE FILE INTERNAL )
+			message( "looking for version file:  ${CMAKE_MATCH_1}ConfigVersion.cmake" )
+			set( _VERSION_FILE "${CMAKE_MATCH_1}ConfigVersion.cmake" )
+			message( "versionfile: ${_VERSION_FILE}" )
+			if( _VERSION_FILE )
+				# let's include the file
+				include( ${_VERSION_FILE} )
+				if( PACKAGE_VERSION_EXT )
+					# it's a specially configured file for custom versioning, so it provides a macro check_custom_versioned
+					message( "Found version file ${_VERSION_FILE} with version ${PACKAGE_VERSION_EXT}" )
+					check_custom_versioned( ${VERSION_NAME} _FIND_SUCCESS )
+					if( _FIND_SUCCESS )
+						message( "version matches!" )
+					endif( _FIND_SUCCESS )
+				endif( PACKAGE_VERSION_EXT )
+			endif( _VERSION_FILE )
+			
+		endif( _MATCH_SUCCESS )
+		
+	endforeach( FOUND_CONFIG ${${PACKAGE_NAME}_CONSIDERED_CONFIGS} )
+	
+endmacro( find_package_versioned PACKAGE_NAME VERSION_NAME )
+
+macro( configure_and_install_package_version _IN_PACKAGE_NAME )
+	find_file( _VERSION_PROTO_FILE "PackageConfigVersion.cmake_proto" )
+	
+	string( TOUPPER ${_IN_PACKAGE_NAME} _IN_PACKAGE_NAME_UPPER )
+	
+	if( _VERSION_PROTO_FILE )
+		set( _VERSION_TYPE		${${_IN_PACKAGE_NAME_UPPER}_VERSION_TYPE} )
+		set( _VERSION_NAME		${${_IN_PACKAGE_NAME_UPPER}_VERSION_NAME} )
+		set( _VERSION_MAJOR 	${${_IN_PACKAGE_NAME_UPPER}_VERSION_MAJOR} )
+		set( _VERSION_MINOR 	${${_IN_PACKAGE_NAME_UPPER}_VERSION_MINOR} )
+		set( _VERSION_REVISION	${${_IN_PACKAGE_NAME_UPPER}_VERSION_REVISION} )
+		configure_file(
+			${_VERSION_PROTO_FILE}
+			${CMAKE_CURRENT_BINARY_DIR}/cmake/${_IN_PACKAGE_NAME}ConfigVersion.cmake
+			@ONLY
+		)
+		if( UNIX )
+			install( FILES
+				${CMAKE_CURRENT_BINARY_DIR}/cmake/${_IN_PACKAGE_NAME}ConfigVersion.cmake
+				DESTINATION "${CMAKE_INSTALL_PREFIX}/share/cmake/${PACKAGE_NAME}"
+			)
+		elseif( WIN32 )
+			install( FILES
+				${CMAKE_CURRENT_BINARY_DIR}/cmake/${_IN_PACKAGE_NAME}ConfigVersion.cmake
+				DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake"
+			)
+		endif(UNIX)
+	else( _VERSION_PROTO_FILE )
+		message( "Warning( configure_and_install_package_version ) could not find file PackageConfigVersion.cmake_proto" )
+	endif( _VERSION_PROTO_FILE )
+	
+endmacro( configure_and_install_package_version )
+
+
 set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG" )
 
 # Should we use rpath?

@@ -34,7 +34,6 @@ def GenSourceListForSubdir( dirName, parentDir, relDir = "", relSourceGroup = ""
 		return False
 	sourceSubDirs = []
 	fullDirName = os.path.join( parentDir, dirName )	
-	print( "GenSourceListForSubdir( " + fullDirName + ")" )
 	
 	if( relDir == "" ):
 		relDir = dirName
@@ -59,7 +58,6 @@ def GenSourceListForSubdir( dirName, parentDir, relDir = "", relSourceGroup = ""
 			sourceSubDirs.append( dir )
 			
 	if( len( sourceSubDirs ) == 0 and len( sourceFiles ) == 0 ):
-		print( "found no sources" )
 		return False # no source directory
 	
 	fileName = os.path.join( fullDirName, "_SourceFiles.cmake" )
@@ -124,7 +122,6 @@ def GenCMakeForLib( startDir, projectName ):
 	sourceSubDirs = GenSourceLists( startDir )
 					
 	listsFile = os.path.join( startDir, "CMakeLists.txt" )
-	print( listsFile )
 	Backup( listsFile )
 	
 	fileHandle = open( listsFile, "w" )
@@ -147,7 +144,7 @@ def GenCMakeForLib( startDir, projectName ):
 	fileHandle.write( "target_link_libraries( " + projectName + "\n" )
 	fileHandle.write( ")\n" )
 	fileHandle.write( "\n" )
-	fileHandle.write( "vista_install()\n" )
+	fileHandle.write( "vista_install( " + projectName + " )\n" )
 	fileHandle.write( "\n" )
 	
 
@@ -155,7 +152,6 @@ def GenCMakeForApp( startDir, projectName ):
 	sourceSubDirs = GenSourceLists( startDir )
 					
 	listsFile = os.path.join( startDir, "CMakeLists.txt" )
-	print( listsFile )
 	Backup( listsFile )
 	
 	fileHandle = open( listsFile, "w" )
@@ -182,7 +178,7 @@ def GenCMakeForApp( startDir, projectName ):
 
 if len( sys.argv ) >= 2 and sys.argv[1] != "-h" and sys.argv[1] != "--help" :
 	startDir = sys.argv[1]
-	argcount = 1
+	argcount = 2
 	buildAsApp = True
 	onlyBuildSourceLists = False
 	projectName = os.path.basename( startDir )
