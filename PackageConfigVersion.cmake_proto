@@ -1,15 +1,16 @@
 # Values in the form @VAR@ are prototype variables
 # They will be replaced by CMake
 
-set( _PACKAGE_VERSION_TYPE		@_VERSION_TYPE@ )
-set( _PACKAGE_VERSION_NAME		@_VERSION_NAME@ )
+set( _PACKAGE_VERSION_TYPE		"@_VERSION_TYPE@" )
+set( _PACKAGE_VERSION_NAME		"@_VERSION_NAME@" )
 set( _PACKAGE_VERSION_MAJOR		@_VERSION_MAJOR@ )
 set( _PACKAGE_VERSION_MINOR		@_VERSION_MINOR@ )
 set( _PACKAGE_VERSION_REVISION	@_VERSION_REVISION@ )
+set( _PACKAGE_HWARCH			"@VISTA_HWARCH@" )
 
 set( PACKAGE_VERSION "@_VERSION_MAJOR@.@_VERSION_MINOR@.@_VERSION_REVISION@" )
 
-set( PACKAGE_VERSION_EXT "@_VERSION_TYPE@ @_VERSION_NAME@ - @_VERSION_MAJOR@.@_VERSION_MINOR@.@_VERSION_REVISION@" )
+set( PACKAGE_VERSION_EXT "Type @_VERSION_TYPE@ - Name @_VERSION_NAME@ - @_VERSION_MAJOR@.@_VERSION_MINOR@.@_VERSION_REVISION@ - HWARCH: ${VISTA_HWARCH}" )
 
 # the cmake native versioning system: just allows an exact match with MAJOR.MINOR.REVISION - just works for releases!
 
@@ -92,102 +93,108 @@ macro( check_custom_versioned VERSION_NAME VERSION_MATCH_FLAG )
 
 	set( _VERSION_MATCH FALSE )
 	
-	set( _IN_NAME		"" )
-	set( _IN_MAJOR		"" )
-	set( _IN_MINOR		"" )
-	set( _IN_REVISION	"" )
-	
-	# first, we decompose the input		
-	set( _REMAINING_VERSION ${VERSION_NAME} )
-	
-	if( _REMAINING_VERSION )
-		string( REGEX MATCH "([a-zA-Z]+[a-zA-Z0-9_\\-]*)([\\.0-9\\+\\-]*)$" MATCH_SUCCESS ${_REMAINING_VERSION} )
-		if( MATCH_SUCCESS )
-			# we found a textual start -> Name
-			set( _IN_NAME ${CMAKE_MATCH_1} )
-			set( _REMAINING_VERSION ${CMAKE_MATCH_2} )
-		endif( MATCH_SUCCESS )
-	endif( _REMAINING_VERSION )
-	
-	if( _REMAINING_VERSION )
-		string( REGEX MATCH "([0-9\\+\\-]+)([\\.0-9\\+\\-]*)$" MATCH_SUCCESS ${_REMAINING_VERSION} )
-		if( MATCH_SUCCESS )
-			# we found a textual start -> Name
-			set( _IN_MAJOR ${CMAKE_MATCH_1} )
-			set( _REMAINING_VERSION ${CMAKE_MATCH_2} )
-		endif( MATCH_SUCCESS )
-	endif( _REMAINING_VERSION )
-	
-	if( _REMAINING_VERSION )	
-		string( REGEX MATCH "([0-9\\+\\-]+)([\\.0-9\\+\\-]*)$" MATCH_SUCCESS ${_REMAINING_VERSION} )
-		if( MATCH_SUCCESS )
-			# we found a textual start -> Name
-			set( _IN_MINOR ${CMAKE_MATCH_1} )
-			set( _REMAINING_VERSION ${CMAKE_MATCH_2} )
-		endif( MATCH_SUCCESS )
-	endif( _REMAINING_VERSION )
-	
-	if( _REMAINING_VERSION )	
-		string( REGEX MATCH "([0-9\\+\\-]+)([\\.0-9\\+\\-]*)$" MATCH_SUCCESS ${_REMAINING_VERSION} )
-		if( MATCH_SUCCESS )
-			# we found a textual start -> Name
-			set( _IN_REVISION ${CMAKE_MATCH_1} )
-			set( _REMAINING_VERSION ${CMAKE_MATCH_2} )
-		endif( MATCH_SUCCESS )	
-	endif( _REMAINING_VERSION )
-	
-	# option1: for RELEASE versions, valid parameters are
-	#   - RELEASENAME
-	#   - RELEASENAME.REVISION[+ | -RANGE]
-	#   - MAJOR[+ | -RANGE]
-	#   - MAJOR.MINOR[+ | -RANGE]
-	#   - MAJOR.MINOR.REVISION[+ | -RANGE]
-	if( _PACKAGE_VERSION_TYPE STREQUAL "RELEASE" )
-		if( _PACKAGE_VERSION_NAME STREQUAL _IN_NAME )
-			# we start with the release name, just check for revision
-			set( _VERSION_MATCH TRUE )
-			check_valid_subversion( _IN_MAJOR _PACKAGE_VERSION_MINOR _VERSION_MATCH )
+	if( VISTA_HWARCH STREQUAL _PACKAGE_HWARCH )
+		
+		set( _IN_NAME		"" )
+		set( _IN_MAJOR		"" )
+		set( _IN_MINOR		"" )
+		set( _IN_REVISION	"" )
+		
+		# first, we decompose the input		
+		set( _REMAINING_VERSION ${VERSION_NAME} )
+		
+		if( _REMAINING_VERSION )
+			string( REGEX MATCH "([a-zA-Z]+[a-zA-Z0-9_\\-]*)([\\.0-9\\+\\-]*)$" MATCH_SUCCESS ${_REMAINING_VERSION} )
+			if( MATCH_SUCCESS )
+				# we found a textual start -> Name
+				set( _IN_NAME ${CMAKE_MATCH_1} )
+				set( _REMAINING_VERSION ${CMAKE_MATCH_2} )
+			endif( MATCH_SUCCESS )
+		endif( _REMAINING_VERSION )
+		
+		if( _REMAINING_VERSION )
+			string( REGEX MATCH "([0-9\\+\\-]+)([\\.0-9\\+\\-]*)$" MATCH_SUCCESS ${_REMAINING_VERSION} )
+			if( MATCH_SUCCESS )
+				# we found a textual start -> Name
+				set( _IN_MAJOR ${CMAKE_MATCH_1} )
+				set( _REMAINING_VERSION ${CMAKE_MATCH_2} )
+			endif( MATCH_SUCCESS )
+		endif( _REMAINING_VERSION )
+		
+		if( _REMAINING_VERSION )	
+			string( REGEX MATCH "([0-9\\+\\-]+)([\\.0-9\\+\\-]*)$" MATCH_SUCCESS ${_REMAINING_VERSION} )
+			if( MATCH_SUCCESS )
+				# we found a textual start -> Name
+				set( _IN_MINOR ${CMAKE_MATCH_1} )
+				set( _REMAINING_VERSION ${CMAKE_MATCH_2} )
+			endif( MATCH_SUCCESS )
+		endif( _REMAINING_VERSION )
+		
+		if( _REMAINING_VERSION )	
+			string( REGEX MATCH "([0-9\\+\\-]+)([\\.0-9\\+\\-]*)$" MATCH_SUCCESS ${_REMAINING_VERSION} )
+			if( MATCH_SUCCESS )
+				# we found a textual start -> Name
+				set( _IN_REVISION ${CMAKE_MATCH_1} )
+				set( _REMAINING_VERSION ${CMAKE_MATCH_2} )
+			endif( MATCH_SUCCESS )	
+		endif( _REMAINING_VERSION )
+		
+		# option1: for RELEASE versions, valid parameters are
+		#   - RELEASENAME
+		#   - RELEASENAME.REVISION[+ | -RANGE]
+		#   - MAJOR[+ | -RANGE]
+		#   - MAJOR.MINOR[+ | -RANGE]
+		#   - MAJOR.MINOR.REVISION[+ | -RANGE]
+		if( _PACKAGE_VERSION_TYPE STREQUAL "RELEASE" )
+			if( _PACKAGE_VERSION_NAME STREQUAL _IN_NAME )
+				# we start with the release name, just check for revision
+				set( _VERSION_MATCH TRUE )
+				check_valid_subversion( _IN_MAJOR _PACKAGE_VERSION_MINOR _VERSION_MATCH )
+				
+			else( _PACKAGE_VERSION_NAME STREQUAL _IN_NAME )
+				# check for the full monty
+				set( _VERSION_MATCH TRUE )
+				check_valid_subversion( _IN_MAJOR _PACKAGE_VERSION_MAJOR _VERSION_MATCH )
+				check_valid_subversion( _IN_MINOR _PACKAGE_VERSION_MINOR _VERSION_MATCH )
+				check_valid_subversion( _IN_REVISION _PACKAGE_VERSION_REVISION _VERSION_MATCH )
+			endif( _PACKAGE_VERSION_NAME STREQUAL _IN_NAME )
+
+		# option2: for HEAD versions, valid parameters are
+		#   - HEAD
+		#   - HEAD.MAJOR[+ | -RANGE]
+		#   - HEAD.MAJOR.MINOR[+ | -RANGE]
+		#   - HEAD.MAJOR.MINOR.REVISION[+ | -RANGE]	
+		elseif( _PACKAGE_VERSION_TYPE STREQUAL "HEAD" )
+			if( _IN_NAME STREQUAL "HEAD" )
+				# we still need to check for major.minor.revision
+				set( _VERSION_MATCH TRUE )
+				check_valid_subversion( _IN_MAJOR _PACKAGE_VERSION_MAJOR _VERSION_MATCH )
+				check_valid_subversion( _IN_MINOR _PACKAGE_VERSION_MINOR _VERSION_MATCH )
+				check_valid_subversion( _IN_REVISION _PACKAGE_VERSION_REVISION _VERSION_MATCH )
+			endif( _IN_NAME STREQUAL "HEAD" )
+
+		# option3: for BRANCH versions, valid parameters are
+		#	- BRANCHNAME
+		elseif( _PACKAGE_VERSION_TYPE STREQUAL "BRANCH" )	
+			if( _PACKAGE_VERSION_NAME STREQUAL _IN_NAME )
+				set( _VERSION_MATCH TRUE )
+			endif( _PACKAGE_VERSION_NAME STREQUAL _IN_NAME )
 			
-		else( _PACKAGE_VERSION_NAME STREQUAL _IN_NAME )
-			# check for the full monty
-			set( _VERSION_MATCH TRUE )
-			check_valid_subversion( _IN_MAJOR _PACKAGE_VERSION_MAJOR _VERSION_MATCH )
-			check_valid_subversion( _IN_MINOR _PACKAGE_VERSION_MINOR _VERSION_MATCH )
-			check_valid_subversion( _IN_REVISION _PACKAGE_VERSION_REVISION _VERSION_MATCH )
-		endif( _PACKAGE_VERSION_NAME STREQUAL _IN_NAME )
-
-	# option2: for HEAD versions, valid parameters are
-	#   - HEAD
-	#   - HEAD.MAJOR[+ | -RANGE]
-	#   - HEAD.MAJOR.MINOR[+ | -RANGE]
-	#   - HEAD.MAJOR.MINOR.REVISION[+ | -RANGE]	
-	elseif( _PACKAGE_VERSION_TYPE STREQUAL "HEAD" )
-		if( _IN_NAME STREQUAL "HEAD" )
-			# we still need to check for major.minor.revision
-			set( _VERSION_MATCH TRUE )
-			check_valid_subversion( _IN_MAJOR _PACKAGE_VERSION_MAJOR _VERSION_MATCH )
-			check_valid_subversion( _IN_MINOR _PACKAGE_VERSION_MINOR _VERSION_MATCH )
-			check_valid_subversion( _IN_REVISION _PACKAGE_VERSION_REVISION _VERSION_MATCH )
-		endif( _IN_NAME STREQUAL "HEAD" )
-
-	# option3: for BRANCH versions, valid parameters are
-	#	- BRANCHNAME
-	elseif( _PACKAGE_VERSION_TYPE STREQUAL "BRANCH" )	
-		if( _PACKAGE_VERSION_NAME STREQUAL _IN_NAME )
-			set( _VERSION_MATCH TRUE )
-		endif( _PACKAGE_VERSION_NAME STREQUAL _IN_NAME )
+		# option4: for TAG versions, valid parameters are
+		#	- TAGNAME
+		elseif( _PACKAGE_VERSION_TYPE STREQUAL "TAG" )
+			if( _PACKAGE_VERSION_NAME STREQUAL _IN_NAME )
+				set( _VERSION_MATCH TRUE )
+			endif( _PACKAGE_VERSION_NAME STREQUAL _IN_NAME )
+			
+		endif(_PACKAGE_VERSION_TYPE STREQUAL "RELEASE" )
 		
-	# option4: for TAG versions, valid parameters are
-	#	- TAGNAME
-	elseif( _PACKAGE_VERSION_TYPE STREQUAL "TAG" )
-		if( _PACKAGE_VERSION_NAME STREQUAL _IN_NAME )
-			set( _VERSION_MATCH TRUE )
-		endif( _PACKAGE_VERSION_NAME STREQUAL _IN_NAME )
+		set( ${VERSION_MATCH_FLAG} ${_VERSION_MATCH} )
 		
-	endif(_PACKAGE_VERSION_TYPE STREQUAL "RELEASE" )
+	else( else VISTA_HWARCH STREQUAL _PACKAGE_HWARCH )
+		set( ${VERSION_MATCH_FLAG} FALSE )
+	endif( VISTA_HWARCH STREQUAL _PACKAGE_HWARCH )
 	
-	set( ${VERSION_MATCH_FLAG} ${_VERSION_MATCH} )
-
 endmacro( check_custom_versioned )
 
 

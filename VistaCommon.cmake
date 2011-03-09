@@ -1,3 +1,5 @@
+include( FindPackageHandleStandardArgs )
+
 if( NOT ALREADY_CONFIGURED_ONCE OR FIRST_CONFIGURE_RUN )
 	set( ALREADY_CONFIGURED_ONCE TRUE CACHE INTERNAL "defines if this is the first config run or not" )
 	set( FIRST_CONFIGURE_RUN TRUE )
@@ -122,12 +124,14 @@ elseif( WIN32 )
             remove_definitions(/MP)
         endif(VISTA_USE_PARALLEL_BUILD)
 		# Check for sse optimization
-		set( VISTA_USE_SSE_OPTIMIZATION ON CACHE BOOL "Use automatic SSE2 optimizations")
-		if( VISTA_USE_SSE_OPTIMIZATION )
-            add_definitions( /arch:SSE2 )
-        else()
-            remove_definitions( /arch:SSE2 )
-        endif( VISTA_USE_SSE_OPTIMIZATION )
+		if( NOT VISTA_64BIT )
+			set( VISTA_USE_SSE_OPTIMIZATION ON CACHE BOOL "Use automatic SSE2 optimizations")
+			if( VISTA_USE_SSE_OPTIMIZATION )
+				add_definitions( /arch:SSE2 )
+			else()
+				remove_definitions( /arch:SSE2 )
+			endif( VISTA_USE_SSE_OPTIMIZATION )
+		endif( NOT VISTA_64BIT )
     endif( MSVC )
 endif( UNIX )
 
@@ -136,12 +140,17 @@ macro( find_package_versioned PACKAGE_NAME VERSION_NAME )
 	# we first do a regular search with a definitely unused version
 	# this will fail, but gives us ${PACKAGE_NAME}_CONSIDERED_CONFIGS
 	# with a list of found config files
-	find_package( ${PACKAGE_NAME} 666.666.666.666 QUIET )
+	
+	set( ARGS_LIST ${ARGV} )
+	list( FIND ARGS_LIST "REQUIRED" _REQUIRED_FOUND_IN_ARGS )
+	list( REMOVE_ITEM ARGS_LIST ${PACKAGE_NAME} ${VERSION_NAME} REQUIRED )
+	
+	find_package( ${PACKAGE_NAME} 666.666.666.666 QUIET ${ARGS_LIST} )
 	
 	set( _FIND_SUCCESS FALSE )
 	
 	foreach( FOUND_CONFIG ${${PACKAGE_NAME}_CONSIDERED_CONFIGS} )
-		#string( REGEX MATCH "" ${FOUND_VERSION} _REXEX_MATCH )		
+		#string( REGEX MATCH "" ${FOUND_VERSION} _REXEX_MATCH )	
 		if( NOT _FIND_SUCCESS )
 			string( REGEX MATCH "(.+)Config\\.cmake" _MATCH_SUCCESS ${FOUND_CONFIG} )
 			if( _MATCH_SUCCESS )
@@ -157,33 +166,72 @@ macro( find_package_versioned PACKAGE_NAME VERSION_NAME )
 						if( _FIND_SUCCESS )
 							#include actual config file
 							include( ${FOUND_CONFIG} )
+						else( _FIND_SUCCESS )
+							list( APPEND _CANDIDATE_LIST "${FOUND_CONFIG} (Version: ${PACKAGE_VERSION_EXT})" )
 						endif( _FIND_SUCCESS )
+					else( PACKAGE_VERSION_EXT )
+						list( APPEND _CANDIDATE_LIST "${FOUND_CONFIG} (incompatible version file)" )
 					endif( PACKAGE_VERSION_EXT )
 				endif( _VERSION_FILE )
+					list( APPEND _CANDIDATE_LIST "${FOUND_CONFIG} (unversioned)" )
+				else( _VERSION_FILE )
 			endif( _MATCH_SUCCESS )
 				
 		endif( NOT _FIND_SUCCESS )
 		
 		
 	endforeach( FOUND_CONFIG ${${PACKAGE_NAME}_CONSIDERED_CONFIGS} )
-
-	#todo: parse other arguments	
+	
+	
+	if( _FIND_SUCCESS )
+		if( NOT QUIET )
+			message( STATUS "Found Package ${PACKAGE_NAME} at: ${} (Version: ${PACKAGE_VERSION_EXT})" )
+		endif( NOT QUIET )
+	else( _FIND_SUCCESS )
+		if( NOT QUIET OR NOT _REQUIRED_FOUND_IN_ARGS EQUAL -1 )
+			message( "${PACKAGE_NAME} could not be found. Candidates were:" )
+			foreach( CANDIDATE ${_CANDIDATE_LIST} )
+				message( "\t${CANDIDATE}" )
+			endforeach( CANDIDATE ${_CANDIDATE_LIST} )
+			if( NOT _REQUIRED_FOUND_IN_ARGS EQUAL -1 )
+				message( SEND_ERROR " " )			
+			endif( NOT _REQUIRED_FOUND_IN_ARGS EQUAL -1 )
+		endif( NOT QUIET OR NOT _REQUIRED_FOUND_IN_ARGS EQUAL -1 )
+	endif( _FIND_SUCCESS )
 	
 endmacro( find_package_versioned PACKAGE_NAME VERSION_NAME )
 
 macro( configure_and_install_package_version _IN_PACKAGE_NAME )
-	find_file( _VERSION_PROTO_FILE "PackageConfigVersion.cmake_proto" )
+	find_file( VISTA_VERSION_PROTO_FILE "PackageConfigVersion.cmake_proto" )
+	mark_as_advanced( VISTA_VERSION_PROTO_FILE )
 	
 	string( TOUPPER ${_IN_PACKAGE_NAME} _IN_PACKAGE_NAME_UPPER )
 	
-	if( _VERSION_PROTO_FILE )
+	if( NOT ${${_IN_PACKAGE_NAME_UPPER}_VERSION_TYPE}
+		OR NOT ${${_IN_PACKAGE_NAME_UPPER}_VERSION_NAME}
+		OR NOT ${${_IN_PACKAGE_NAME_UPPER}_VERSION_MAJOR}
+		OR NOT ${${_IN_PACKAGE_NAME_UPPER}_VERSION_MINOR}
+		OR NOT ${${_IN_PACKAGE_NAME_UPPER}_VERSION_REVISION} )
+		message( "To correctly configure a versionfile, the following version variables need to be specified:" )
+		message( "\t${_IN_PACKAGE_NAME_UPPER}_VERSION_TYPE" )
+		message( "\t${_IN_PACKAGE_NAME_UPPER}_VERSION_NAME" )
+		message( "\t${_IN_PACKAGE_NAME_UPPER}_VERSION_MAJOR" )
+		message( "\t${_IN_PACKAGE_NAME_UPPER}_VERSION_MINOR" )
+		message( "\t${_IN_PACKAGE_NAME_UPPER}_VERSION_REVISION" )
+	endif( NOT ${${_IN_PACKAGE_NAME_UPPER}_VERSION_TYPE}
+		OR NOT ${${_IN_PACKAGE_NAME_UPPER}_VERSION_NAME}
+		OR NOT ${${_IN_PACKAGE_NAME_UPPER}_VERSION_MAJOR}
+		OR NOT ${${_IN_PACKAGE_NAME_UPPER}_VERSION_MINOR}
+		OR NOT ${${_IN_PACKAGE_NAME_UPPER}_VERSION_REVISION} )
+	
+	if( VISTA_VERSION_PROTO_FILE )
 		set( _VERSION_TYPE		${${_IN_PACKAGE_NAME_UPPER}_VERSION_TYPE} )
 		set( _VERSION_NAME		${${_IN_PACKAGE_NAME_UPPER}_VERSION_NAME} )
 		set( _VERSION_MAJOR 	${${_IN_PACKAGE_NAME_UPPER}_VERSION_MAJOR} )
 		set( _VERSION_MINOR 	${${_IN_PACKAGE_NAME_UPPER}_VERSION_MINOR} )
 		set( _VERSION_REVISION	${${_IN_PACKAGE_NAME_UPPER}_VERSION_REVISION} )
 		configure_file(
-			${_VERSION_PROTO_FILE}
+			${VISTA_VERSION_PROTO_FILE}
 			${CMAKE_CURRENT_BINARY_DIR}/cmake/${_IN_PACKAGE_NAME}ConfigVersion.cmake
 			@ONLY
 		)
@@ -198,9 +246,9 @@ macro( configure_and_install_package_version _IN_PACKAGE_NAME )
 				DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake"
 			)
 		endif(UNIX)
-	else( _VERSION_PROTO_FILE )
+	else( VISTA_VERSION_PROTO_FILE )
 		message( "Warning( configure_and_install_package_version ) could not find file PackageConfigVersion.cmake_proto" )
-	endif( _VERSION_PROTO_FILE )
+	endif( VISTA_VERSION_PROTO_FILE )
 	
 endmacro( configure_and_install_package_version )
 
