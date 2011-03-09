@@ -141,32 +141,33 @@ macro( find_package_versioned PACKAGE_NAME VERSION_NAME )
 	set( _FIND_SUCCESS FALSE )
 	
 	foreach( FOUND_CONFIG ${${PACKAGE_NAME}_CONSIDERED_CONFIGS} )
-		#string( REGEX MATCH "" ${FOUND_VERSION} _REXEX_MATCH )
-		message( "find_package_versioned: examining ${FOUND_CONFIG}" )
+		#string( REGEX MATCH "" ${FOUND_VERSION} _REXEX_MATCH )		
+		if( NOT _FIND_SUCCESS )
+			string( REGEX MATCH "(.+)Config\\.cmake" _MATCH_SUCCESS ${FOUND_CONFIG} )
+			if( _MATCH_SUCCESS )
+				# lets look for a corresponding ConfigVersion.cmake file
+				set( _VERSION_FILE "" CACHE FILE INTERNAL )
+				set( _VERSION_FILE "${CMAKE_MATCH_1}ConfigVersion.cmake" )
+				if( _VERSION_FILE )
+					# let's include the file
+					include( ${_VERSION_FILE} )
+					if( PACKAGE_VERSION_EXT )
+						# it's a specially configured file for custom versioning, so it provides a macro check_custom_versioned
+						check_custom_versioned( ${VERSION_NAME} _FIND_SUCCESS )
+						if( _FIND_SUCCESS )
+							#include actual config file
+							include( ${FOUND_CONFIG} )
+						endif( _FIND_SUCCESS )
+					endif( PACKAGE_VERSION_EXT )
+				endif( _VERSION_FILE )
+			endif( _MATCH_SUCCESS )
+				
+		endif( NOT _FIND_SUCCESS )
 		
-		string( REGEX MATCH "(.+)Config\\.cmake" _MATCH_SUCCESS ${FOUND_CONFIG} )
-		if( _MATCH_SUCCESS )
-			# lets look for a corresponding ConfigVersion.cmake file
-			set( _VERSION_FILE "" CACHE FILE INTERNAL )
-			message( "looking for version file:  ${CMAKE_MATCH_1}ConfigVersion.cmake" )
-			set( _VERSION_FILE "${CMAKE_MATCH_1}ConfigVersion.cmake" )
-			message( "versionfile: ${_VERSION_FILE}" )
-			if( _VERSION_FILE )
-				# let's include the file
-				include( ${_VERSION_FILE} )
-				if( PACKAGE_VERSION_EXT )
-					# it's a specially configured file for custom versioning, so it provides a macro check_custom_versioned
-					message( "Found version file ${_VERSION_FILE} with version ${PACKAGE_VERSION_EXT}" )
-					check_custom_versioned( ${VERSION_NAME} _FIND_SUCCESS )
-					if( _FIND_SUCCESS )
-						message( "version matches!" )
-					endif( _FIND_SUCCESS )
-				endif( PACKAGE_VERSION_EXT )
-			endif( _VERSION_FILE )
-			
-		endif( _MATCH_SUCCESS )
 		
 	endforeach( FOUND_CONFIG ${${PACKAGE_NAME}_CONSIDERED_CONFIGS} )
+
+	#todo: parse other arguments	
 	
 endmacro( find_package_versioned PACKAGE_NAME VERSION_NAME )
 
