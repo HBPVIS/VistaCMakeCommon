@@ -31,7 +31,6 @@ if( NOT VOPENSG_FOUND )
 	macro( vista_use_OpenSG )
 		include_directories( ${OPENSG_INC_DIR} )
 		link_directories( ${OPENSG_LIB_DIR} )
-		list( APPEND LIBRARIES ${OPENSG_LIBRARIES} )
 		add_definitions( ${OPENSG_DEFINTIONS} )			
 	endmacro( vista_use_OpenSG )	
 

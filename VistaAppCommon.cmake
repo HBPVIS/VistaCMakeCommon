@@ -43,7 +43,7 @@ macro( vista_configure_app APP_NAME )
 				@ONLY
 			)
 		else( _VCPROJUSER_PROTO_FILE )
-			message( "Warning( vista_configure_app ) could not find file VisualStudio.vcproj.user_proto" )
+			message( "Warning: could not find file VisualStudio.vcproj.user_proto" )
 		endif( _VCPROJUSER_PROTO_FILE )
 	endif( MSVC AND NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/${APP_NAME}.vcproj.user )
 endmacro( vista_configure_app APP_NAME )

@@ -10,7 +10,7 @@ set( _PACKAGE_HWARCH			"@VISTA_HWARCH@" )
 
 set( PACKAGE_VERSION "@_VERSION_MAJOR@.@_VERSION_MINOR@.@_VERSION_REVISION@" )
 
-set( PACKAGE_VERSION_EXT "Type @_VERSION_TYPE@ - Name @_VERSION_NAME@ - @_VERSION_MAJOR@.@_VERSION_MINOR@.@_VERSION_REVISION@ - HWARCH: ${VISTA_HWARCH}" )
+set( PACKAGE_VERSION_EXT "Type @_VERSION_TYPE@ - Name: @_VERSION_NAME@ - @_VERSION_MAJOR@.@_VERSION_MINOR@.@_VERSION_REVISION@ - HWARCH: @VISTA_HWARCH@" )
 
 # the cmake native versioning system: just allows an exact match with MAJOR.MINOR.REVISION - just works for releases!
 
@@ -151,7 +151,7 @@ macro( check_custom_versioned VERSION_NAME VERSION_MATCH_FLAG )
 				set( _VERSION_MATCH TRUE )
 				check_valid_subversion( _IN_MAJOR _PACKAGE_VERSION_MINOR _VERSION_MATCH )
 				
-			else( _PACKAGE_VERSION_NAME STREQUAL _IN_NAME )
+			elseif( NOT _IN_NAME )
 				# check for the full monty
 				set( _VERSION_MATCH TRUE )
 				check_valid_subversion( _IN_MAJOR _PACKAGE_VERSION_MAJOR _VERSION_MATCH )

@@ -1,5 +1,3 @@
-include( FindPackageHandleStandardArgs )
-
 if( NOT ALREADY_CONFIGURED_ONCE OR FIRST_CONFIGURE_RUN )
 	set( ALREADY_CONFIGURED_ONCE TRUE CACHE INTERNAL "defines if this is the first config run or not" )
 	set( FIRST_CONFIGURE_RUN TRUE )
@@ -137,67 +135,78 @@ endif( UNIX )
 
 
 macro( find_package_versioned PACKAGE_NAME VERSION_NAME )
-	# we first do a regular search with a definitely unused version
-	# this will fail, but gives us ${PACKAGE_NAME}_CONSIDERED_CONFIGS
-	# with a list of found config files
-	
+
 	set( ARGS_LIST ${ARGV} )
 	list( FIND ARGS_LIST "REQUIRED" _REQUIRED_FOUND_IN_ARGS )
-	list( REMOVE_ITEM ARGS_LIST ${PACKAGE_NAME} ${VERSION_NAME} REQUIRED )
-	
-	find_package( ${PACKAGE_NAME} 666.666.666.666 QUIET ${ARGS_LIST} )
-	
-	set( _FIND_SUCCESS FALSE )
-	
-	foreach( FOUND_CONFIG ${${PACKAGE_NAME}_CONSIDERED_CONFIGS} )
-		#string( REGEX MATCH "" ${FOUND_VERSION} _REXEX_MATCH )	
+		
+	if( NOT ${PACKAGE_NAME}_FOUND )
+		# we first do a regular search with a definitely unused version
+		# this will fail, but gives us ${PACKAGE_NAME}_CONSIDERED_CONFIGS
+		# with a list of found config files		
+		
+		list( REMOVE_ITEM ARGS_LIST ${PACKAGE_NAME} ${VERSION_NAME} REQUIRED )
+		
+		find_package( ${PACKAGE_NAME} 666.666.666.666 QUIET ${ARGS_LIST} )
+		
+		set( _FIND_SUCCESS FALSE )
+		
+		foreach( FOUND_CONFIG ${${PACKAGE_NAME}_CONSIDERED_CONFIGS} )
+			#string( REGEX MATCH "" ${FOUND_VERSION} _REXEX_MATCH )	
+			if( NOT _FIND_SUCCESS )
+				string( REGEX MATCH "(.+)Config\\.cmake" _MATCH_SUCCESS ${FOUND_CONFIG} )
+				if( _MATCH_SUCCESS )
+					# lets look for a corresponding ConfigVersion.cmake file
+					set( _VERSION_FILE "" CACHE INTERNAL "internal store to version file" )
+					set( _VERSION_FILE "${CMAKE_MATCH_1}ConfigVersion.cmake" )
+					if( _VERSION_FILE )
+						# let's include the file
+						include( ${_VERSION_FILE} )
+						if( PACKAGE_VERSION_EXT )
+							# it's a specially configured file for custom versioning, so it provides a macro check_custom_versioned
+							check_custom_versioned( ${VERSION_NAME} _FIND_SUCCESS )
+							if( _FIND_SUCCESS )
+								#include actual config file
+								include( ${FOUND_CONFIG} )
+								if( NOT QUIET )
+									message( STATUS "Found Package ${PACKAGE_NAME}" )
+									message( STATUS "\tDirectory: ${FOUND_CONFIG}" )
+									message( STATUS "\tVersion  : ${PACKAGE_VERSION_EXT}" )
+								endif( NOT QUIET )
+							else( _FIND_SUCCESS )
+								list( APPEND _CANDIDATE_LIST "${FOUND_CONFIG} (Version: ${PACKAGE_VERSION_EXT})" )
+							endif( _FIND_SUCCESS )
+						else( PACKAGE_VERSION_EXT )
+							list( APPEND _CANDIDATE_LIST "${FOUND_CONFIG} (incompatible version file)" )
+						endif( PACKAGE_VERSION_EXT )
+					else( _VERSION_FILE )
+						list( APPEND _CANDIDATE_LIST "${FOUND_CONFIG} (unversioned)" )
+					endif( _VERSION_FILE )
+				endif( _MATCH_SUCCESS )
+					
+			endif( NOT _FIND_SUCCESS )
+			
+			
+		endforeach( FOUND_CONFIG ${${PACKAGE_NAME}_CONSIDERED_CONFIGS} )
+		
+		
 		if( NOT _FIND_SUCCESS )
-			string( REGEX MATCH "(.+)Config\\.cmake" _MATCH_SUCCESS ${FOUND_CONFIG} )
-			if( _MATCH_SUCCESS )
-				# lets look for a corresponding ConfigVersion.cmake file
-				set( _VERSION_FILE "" CACHE FILE INTERNAL )
-				set( _VERSION_FILE "${CMAKE_MATCH_1}ConfigVersion.cmake" )
-				if( _VERSION_FILE )
-					# let's include the file
-					include( ${_VERSION_FILE} )
-					if( PACKAGE_VERSION_EXT )
-						# it's a specially configured file for custom versioning, so it provides a macro check_custom_versioned
-						check_custom_versioned( ${VERSION_NAME} _FIND_SUCCESS )
-						if( _FIND_SUCCESS )
-							#include actual config file
-							include( ${FOUND_CONFIG} )
-						else( _FIND_SUCCESS )
-							list( APPEND _CANDIDATE_LIST "${FOUND_CONFIG} (Version: ${PACKAGE_VERSION_EXT})" )
-						endif( _FIND_SUCCESS )
-					else( PACKAGE_VERSION_EXT )
-						list( APPEND _CANDIDATE_LIST "${FOUND_CONFIG} (incompatible version file)" )
-					endif( PACKAGE_VERSION_EXT )
-				endif( _VERSION_FILE )
-					list( APPEND _CANDIDATE_LIST "${FOUND_CONFIG} (unversioned)" )
-				else( _VERSION_FILE )
-			endif( _MATCH_SUCCESS )
-				
+			if( NOT QUIET OR NOT _REQUIRED_FOUND_IN_ARGS EQUAL -1 )
+				message( "${PACKAGE_NAME} could not be found. Candidates were:" )
+				foreach( CANDIDATE ${_CANDIDATE_LIST} )
+					message( "\t${CANDIDATE}" )
+				endforeach( CANDIDATE ${_CANDIDATE_LIST} )				
+			endif( NOT QUIET OR NOT _REQUIRED_FOUND_IN_ARGS EQUAL -1 )
 		endif( NOT _FIND_SUCCESS )
 		
+		set( ${PACKAGE_NAME}_FOUND _FIND_SUCCESS )
 		
-	endforeach( FOUND_CONFIG ${${PACKAGE_NAME}_CONSIDERED_CONFIGS} )
+	endif( NOT ${PACKAGE_NAME}_FOUND )
 	
-	
-	if( _FIND_SUCCESS )
-		if( NOT QUIET )
-			message( STATUS "Found Package ${PACKAGE_NAME} at: ${} (Version: ${PACKAGE_VERSION_EXT})" )
-		endif( NOT QUIET )
-	else( _FIND_SUCCESS )
-		if( NOT QUIET OR NOT _REQUIRED_FOUND_IN_ARGS EQUAL -1 )
-			message( "${PACKAGE_NAME} could not be found. Candidates were:" )
-			foreach( CANDIDATE ${_CANDIDATE_LIST} )
-				message( "\t${CANDIDATE}" )
-			endforeach( CANDIDATE ${_CANDIDATE_LIST} )
-			if( NOT _REQUIRED_FOUND_IN_ARGS EQUAL -1 )
-				message( SEND_ERROR " " )			
-			endif( NOT _REQUIRED_FOUND_IN_ARGS EQUAL -1 )
-		endif( NOT QUIET OR NOT _REQUIRED_FOUND_IN_ARGS EQUAL -1 )
-	endif( _FIND_SUCCESS )
+	if( NOT ${PACKAGE_NAME}_FOUND )
+		if( NOT _REQUIRED_FOUND_IN_ARGS EQUAL -1 )
+			message( SEND_ERROR "${PACKAGE_NAME} not found!" )
+		endif( NOT _REQUIRED_FOUND_IN_ARGS EQUAL -1 )
+	endif( NOT ${PACKAGE_NAME}_FOUND )
 	
 endmacro( find_package_versioned PACKAGE_NAME VERSION_NAME )
 
@@ -207,22 +216,22 @@ macro( configure_and_install_package_version _IN_PACKAGE_NAME )
 	
 	string( TOUPPER ${_IN_PACKAGE_NAME} _IN_PACKAGE_NAME_UPPER )
 	
-	if( NOT ${${_IN_PACKAGE_NAME_UPPER}_VERSION_TYPE}
-		OR NOT ${${_IN_PACKAGE_NAME_UPPER}_VERSION_NAME}
-		OR NOT ${${_IN_PACKAGE_NAME_UPPER}_VERSION_MAJOR}
-		OR NOT ${${_IN_PACKAGE_NAME_UPPER}_VERSION_MINOR}
-		OR NOT ${${_IN_PACKAGE_NAME_UPPER}_VERSION_REVISION} )
+	if( NOT ${_IN_PACKAGE_NAME_UPPER}_VERSION_TYPE
+		OR NOT ${_IN_PACKAGE_NAME_UPPER}_VERSION_NAME
+		OR NOT ${_IN_PACKAGE_NAME_UPPER}_VERSION_MAJOR
+		OR NOT ${_IN_PACKAGE_NAME_UPPER}_VERSION_MINOR
+		OR NOT ${_IN_PACKAGE_NAME_UPPER}_VERSION_REVISION )
 		message( "To correctly configure a versionfile, the following version variables need to be specified:" )
 		message( "\t${_IN_PACKAGE_NAME_UPPER}_VERSION_TYPE" )
 		message( "\t${_IN_PACKAGE_NAME_UPPER}_VERSION_NAME" )
 		message( "\t${_IN_PACKAGE_NAME_UPPER}_VERSION_MAJOR" )
 		message( "\t${_IN_PACKAGE_NAME_UPPER}_VERSION_MINOR" )
 		message( "\t${_IN_PACKAGE_NAME_UPPER}_VERSION_REVISION" )
-	endif( NOT ${${_IN_PACKAGE_NAME_UPPER}_VERSION_TYPE}
-		OR NOT ${${_IN_PACKAGE_NAME_UPPER}_VERSION_NAME}
-		OR NOT ${${_IN_PACKAGE_NAME_UPPER}_VERSION_MAJOR}
-		OR NOT ${${_IN_PACKAGE_NAME_UPPER}_VERSION_MINOR}
-		OR NOT ${${_IN_PACKAGE_NAME_UPPER}_VERSION_REVISION} )
+	endif( NOT ${_IN_PACKAGE_NAME_UPPER}_VERSION_TYPE
+		OR NOT ${_IN_PACKAGE_NAME_UPPER}_VERSION_NAME
+		OR NOT ${_IN_PACKAGE_NAME_UPPER}_VERSION_MAJOR
+		OR NOT ${_IN_PACKAGE_NAME_UPPER}_VERSION_MINOR
+		OR NOT ${_IN_PACKAGE_NAME_UPPER}_VERSION_REVISION )
 	
 	if( VISTA_VERSION_PROTO_FILE )
 		set( _VERSION_TYPE		${${_IN_PACKAGE_NAME_UPPER}_VERSION_TYPE} )
@@ -251,7 +260,6 @@ macro( configure_and_install_package_version _IN_PACKAGE_NAME )
 	endif( VISTA_VERSION_PROTO_FILE )
 	
 endmacro( configure_and_install_package_version )
-
 
 set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG" )
 

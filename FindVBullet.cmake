@@ -27,9 +27,7 @@ if( NOT VBULLET_FOUND )
 			debug BulletSoftBodyD
 			debug GIMPACTUtilsD
 			debug ConvexDecompositionD
-		)	
-		
-		
+		)			
 		
 	else( BULLET_DIR )		
 		find_package( BULLET )
@@ -43,7 +41,7 @@ if( NOT VBULLET_FOUND )
 	
 	macro( vista_use_bullet )
 			include_directories( ${BULLET_INC_DIR} )
-			link_directories( ${BULLET_LIB_DIR} )
+			link_directories(  ${BULLET_LIB_DIR} )
 	endmacro( vista_use_bullet )
 
 

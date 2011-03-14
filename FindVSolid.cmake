@@ -40,11 +40,10 @@ if( NOT VSOLID_FOUND )
 		
 	endif( SOLID_DIR )	
 	
-	macro( vista_use_bullet )
-			include_directories( ${SOLID_INC_DIR} )
-			link_directories( ${SOLID_LIB_DIR} )
-			list( APPEND LIBRARIES ${SOLID_LIBRARIES} )
-	endmacro( vista_use_bullet )
+	macro( vista_use_Solid )
+		include_directories( ${SOLID_INC_DIR} )
+		link_directories( ${SOLID_LIB_DIR} )
+	endmacro( vista_use_Solid )
 
 
 endif( NOT VSOLID_FOUND )
