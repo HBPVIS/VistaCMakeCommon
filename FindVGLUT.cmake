@@ -2,8 +2,6 @@
 
 include( FindPackageHandleStandardArgs )
 
-message( "CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}" )
-
 if( NOT VGLUT_FOUND )
 
 	find_path( GLUT_DIR include/GL/freeglut.h 
@@ -14,13 +12,11 @@ if( NOT VGLUT_FOUND )
 			CACHE "Glut/Freeglut package directory" )			
 	find_library( GLUT_LIBRARIES NAMES freeglut freeglut-msvc90x86 glut glut32 PATHS ${GLUT_DIR}/lib ${GLUT_DIR}/lib/opt )
 
-message( "GLUT_DIR ${GLUT_DIR}" )
-message( "GLUT_LIBRARIES ${GLUT_LIBRARIES}" )
-
 	if( GLUT_DIR AND GLUT_LIBRARIES )
 		message( STATUS "Found Freeglut in ${GLUT_DIR}" )
 		
-		set( GLUT_INC_DIR ${GLUT_DIR}/include )		
+		set( GLUT_INC_DIR ${GLUT_DIR}/include )
+		set( GLUT_DEFINITIONS "" )
 		
 	else( GLUT_DIR AND GLUT_LIBRARIES )
 		message( STATUS "FREEGLUT not found - searching for native GLUT" )
@@ -34,7 +30,8 @@ message( "GLUT_LIBRARIES ${GLUT_LIBRARIES}" )
 		if( GLUT_DIR AND GLUT_LIBRARIES )
 			message( STATUS "Found GLUT in ${GLUT_DIR}" )
 			
-			set( GLUT_INC_DIR ${GLUT_DIR}/include )			
+			set( GLUT_INC_DIR ${GLUT_DIR}/include )
+			set( GLUT_DEFINITIONS "" )
 		
 		else( GLUT_DIR AND GLUT_LIBRARIES )
 			find_package( GLUT )
@@ -42,7 +39,7 @@ message( "GLUT_LIBRARIES ${GLUT_LIBRARIES}" )
 			if( GLUT_FOUND )
 				set( GLUT_INC_DIR ${GLUT_INCLUDE_DIR} )
 				set( GLUT_LIBRARIES ${GLUT_glut_LIBRARY} )
-				set( GLUT_DEFINITIONS "USE_NATIVE_GLUT" )
+				set( GLUT_DEFINITIONS "-DUSE_NATIVE_GLUT" )
 				
 				message( STATUS "Found GLUT in ${GLUT_DIR}" )				
 					
