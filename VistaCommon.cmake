@@ -211,7 +211,7 @@ macro( find_package_versioned PACKAGE_NAME VERSION_NAME )
 endmacro( find_package_versioned PACKAGE_NAME VERSION_NAME )
 
 macro( configure_and_install_package_version _IN_PACKAGE_NAME )
-	find_file( VISTA_VERSION_PROTO_FILE "PackageConfigVersion.cmake_proto" )
+	find_file( VISTA_VERSION_PROTO_FILE "PackageConfigVersion.cmake_proto" ${CMAKE_MODULE_PATH} )
 	mark_as_advanced( VISTA_VERSION_PROTO_FILE )
 	
 	string( TOUPPER ${_IN_PACKAGE_NAME} _IN_PACKAGE_NAME_UPPER )

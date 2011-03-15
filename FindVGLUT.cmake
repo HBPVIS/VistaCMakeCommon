@@ -2,6 +2,8 @@
 
 include( FindPackageHandleStandardArgs )
 
+message( "CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}" )
+
 if( NOT VGLUT_FOUND )
 
 	find_path( GLUT_DIR include/GL/freeglut.h 
@@ -11,6 +13,9 @@ if( NOT VGLUT_FOUND )
 					${VRDEV}/glut/${VISTA_HWARCH}  ${VRDEV}/glut 
 			CACHE "Glut/Freeglut package directory" )			
 	find_library( GLUT_LIBRARIES NAMES freeglut freeglut-msvc90x86 glut glut32 PATHS ${GLUT_DIR}/lib ${GLUT_DIR}/lib/opt )
+
+message( "GLUT_DIR ${GLUT_DIR}" )
+message( "GLUT_LIBRARIES ${GLUT_LIBRARIES}" )
 
 	if( GLUT_DIR AND GLUT_LIBRARIES )
 		message( STATUS "Found Freeglut in ${GLUT_DIR}" )

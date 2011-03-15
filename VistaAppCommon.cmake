@@ -34,7 +34,7 @@ macro( vista_configure_app APP_NAME )
 		
 		set( _WORK_DIR ${CMAKE_CURRENT_SOURCE_DIR} )
 
-		find_file( _VCPROJUSER_PROTO_FILE "VisualStudio.vcproj.user_proto" )
+		find_file( _VCPROJUSER_PROTO_FILE "VisualStudio.vcproj.user_proto" ${CMAKE_MODULE_PATH} )
 	
 		if( _VCPROJUSER_PROTO_FILE )
 			configure_file(
