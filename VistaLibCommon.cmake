@@ -1,7 +1,7 @@
 include( VistaCommon )
 
 if( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
-	changevardefault( CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}/dist/${VISTA_HWARCH}" CACHE STRING "distribution directory" FORCE )
+	changevardefault( CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}/dist/${VISTA_HWARCH}" CACHE PATH "distribution directory" FORCE )
 endif( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
 
 changevardefault( BUILD_SHARED_LIBS ON CACHE BOOL "Build shared libraries if ON, static libraries if OFF" FORCE )
