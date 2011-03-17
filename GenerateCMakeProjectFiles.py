@@ -1,11 +1,12 @@
 # $Id$
-import os, sys, re
+import os, sys, re, string
 
 localSourceFileName = "_SourceFiles.cmake"
 backupExtension = ".BAK"
 excludeDirs = [ "cvs", ".svn", "build", "built", "cmake" ]
 sourceExtensions = [ ".c", ".cpp", ".h" ]
 
+findCommented = re.compile( r'\s*#\s*.*' )
 findSetListRegEx = re.compile( r'set\(\s*(\S+)\s*\Z' )
 findSetVarRegEx = re.compile( r'set\(\s*(\S+)\s+(\S+)\s*\)' )
 findForEachRegEx = re.compile( r'foreach\(\s+File\s+\$\{(\w+)\}' )
@@ -15,6 +16,11 @@ MODE_APP = 1
 MODE_LIB = 2
 MODE_SRC = 3
 
+def CheckIsAdditionalInfoArgument( argcount ):
+	if( len( sys.argv ) <= argcount ):
+		return False
+	argument = sys.argv[argcount]
+	return ( argument[0] != "-" )
 
 def CheckIsSourceFile( entry ):
 	name, ext = os.path.splitext( entry )
@@ -22,6 +28,9 @@ def CheckIsSourceFile( entry ):
 		return True
 	else:
 		return False
+		
+def CheckIsCommented( entry ):
+	return( re.match( findCommented, entry ) )	
 
 def Backup( fileName ):
 	if os.path.exists( fileName ):
@@ -87,6 +96,7 @@ def GenSourceListForSubdir( dirName, parentDir, renew, relDir = "", relSourceGro
 		
 		SourceFileGroups = {}
 		existingSourceFiles = []
+		excludedSourceFiles = {}
 		SourceFileGroupsNames = {}
 		dictVariables = {}
 				
@@ -206,7 +216,7 @@ def GenSourceListForSubdir( dirName, parentDir, renew, relDir = "", relSourceGro
 			fileHandle.write( "foreach( SubDirFile ${SubDirFiles} )\n" )
 			fileHandle.write( "\tinclude( ${SubDirFile} )\n" )
 			fileHandle.write( "endforeach()\n" )
-			fileHandle.write( "\n" )		
+			fileHandle.write( "\n" )	
 		
 		
 	else:
@@ -271,7 +281,7 @@ def GenSourceLists( startDir, renew ):
 	return sourceSubDirs
 	
 
-def GenCMakeForLib( startDir, projectName, renew, linkVistaCoreLibs, multiProjectParent = "" ):
+def GenCMakeForLib( startDir, projectName, renew, version, linkVistaCoreLibs, multiProjectParent = "" ):
 	sourceSubDirs = GenSourceLists( startDir, renew )
 	
 	if( len( sourceSubDirs ) == 0 ):
@@ -311,13 +321,14 @@ def GenCMakeForLib( startDir, projectName, renew, linkVistaCoreLibs, multiProjec
 	fileHandle.write( "\tendif( BUILD_SHARED_LIBS )\n" )
 	fileHandle.write( "endif( WIN32 )\n" )
 	fileHandle.write( "\n" )
+	fileHandle.write( "# Including the source files of all subfolders recursively\n" )
 	for dir in sourceSubDirs:
 		fileHandle.write( "include( \"" + dir + "/" + localSourceFileName + "\" )\n" )
 	fileHandle.write( "\n" )
 	fileHandle.write( "add_library( " + projectName + " ${ProjectSources} )\n" )
 	if( multiProjectParent != "" ):
-		fileHandle.write( "#The following line prevent CMake from adding all depencies to other projects that link this one\n" )
-		fileHandle.write( "#from within the same build\n" )
+		fileHandle.write( "#The following line prevent CMake from adding all depencies to other projects that link\n" )
+		fileHandle.write( "# this one from within the same cmake build\n" )
 		fileHandle.write( "set_property( TARGET " + projectName + " PROPERTY LINK_INTERFACE_LIBRARIES \"\" )\n" )
 	fileHandle.write( "target_link_libraries( " + projectName + "\n" )
 	if linkVistaCoreLibs:		
@@ -326,18 +337,31 @@ def GenCMakeForLib( startDir, projectName, renew, linkVistaCoreLibs, multiProjec
 	fileHandle.write( "\n" )
 	if( multiProjectParent == "" ):
 		fileHandle.write( "vista_install( " + projectName + " )\n" )
+		fileHandle.write( "vista_install_package_config( " + projectName + " )\n" )		
+		if( version ):
+			fileHandle.write( "vista_install_package_version( " + projectName 
+								+ " \"" + version[0] + "\" \"" + version[1] + "\" "
+								+ version[2] + " " + version[3] + " " + version[4] + " )\n" )
 	else:
 		fileHandle.write( "if( " + str.upper(multiProjectParent) + "_COMMON_BUILD )\n" )
 		fileHandle.write( "\tvista_install( " + projectName + " " + projectName + " )\n" )
+		fileHandle.write( "\tvista_install_package_config( " + projectName + " " + projectName + " )\n" )
+		if( version ):
+			fileHandle.write( "\tvista_install_package_version( " + projectName + " " + multiProjectParent + " )\n" )
 		fileHandle.write( "else( " + str.upper(multiProjectParent) + "_COMMON_BUILD )\n" )
 		fileHandle.write( "\tvista_install( " + projectName + " )\n" )
+		fileHandle.write( "\tvista_install_package_config( " + projectName + " )\n" )		
+		if( version ):
+			fileHandle.write( "\tvista_install_package_version( " + projectName 
+								+ " \"" + str(version[0]) + "\" \"" + str(version[1]) + "\" "
+								+ str(version[2]) + " " + str(version[3]) + " " + str(version[4]) + " )\n" )
 		fileHandle.write( "endif( " + str.upper(multiProjectParent) + "_COMMON_BUILD )\n" )
 		fileHandle.write( "\n" )
 		
 	return True
 	
 
-def GenCMakeForApp( startDir, projectName, renew, linkVistaCoreLibs, multiProjectParent = "" ):
+def GenCMakeForApp( startDir, projectName, renew, version, linkVistaCoreLibs, multiProjectParent = "" ):
 	sourceSubDirs = GenSourceLists( startDir, renew )
 	
 	if( len( surceSubDirs ) == 0 ):
@@ -385,7 +409,7 @@ def GenCMakeForApp( startDir, projectName, renew, linkVistaCoreLibs, multiProjec
 	
 	return True
 
-def GenMultiProject( mode, startDir, projectName, renew, linkVistaCoreLibs ):
+def GenMultiProject( mode, startDir, projectName, renew, version, linkVistaCoreLibs ):
 	
 	projectSubDirs = []
 	
@@ -397,15 +421,17 @@ def GenMultiProject( mode, startDir, projectName, renew, linkVistaCoreLibs ):
 			GenSourceLists( fullDir, renew )
 			return
 		elif mode == MODE_APP:
-			if( GenCMakeForApp( fullDir, dir, renew, linkVistaCoreLibs, projectName ) ):
+			if( GenCMakeForApp( fullDir, dir, renew, version, linkVistaCoreLibs, projectName ) ):
 				projectSubDirs.append( dir )
 		else:
-			if( GenCMakeForLib( fullDir, dir, renew, linkVistaCoreLibs, projectName ) ):
+			if( GenCMakeForLib( fullDir, dir, renew, version, linkVistaCoreLibs, projectName ) ):
 				projectSubDirs.append( dir )
 	
 	if( len( projectSubDirs ) == 0 ):
 		print( "No sub-projects found in folder " + startDir )
 		return
+		
+	projectNameUpper = str.upper( projectName )
 		
 		
 	listsFile = os.path.join( startDir, "CMakeLists.txt" )
@@ -422,16 +448,24 @@ def GenMultiProject( mode, startDir, projectName, renew, linkVistaCoreLibs ):
 	else:
 		fileHandle.write( "include( VistaLibCommon )\n" )
 	fileHandle.write( "\n" )
+	if( version ):
+		fileHandle.write( "set( " + projectNameUpper + "_VERSION_TYPE \"" + str(version[0]) + "\" )\n" )
+		fileHandle.write( "set( " + projectNameUpper + "_VERSION_NAME \"" + str(version[1]) + "\" )\n" )
+		fileHandle.write( "set( " + projectNameUpper + "_VERSION_MAJOR " + str(version[2]) + " )\n" )
+		fileHandle.write( "set( " + projectNameUpper + "_VERSION_MINOR " + str(version[3]) + " )\n" )
+		fileHandle.write( "set( " + projectNameUpper + "_VERSION_REVISION " + str(version[4]) + " )\n" )
+		fileHandle.write( "\n" )
+	fileHandle.write( "\n" )
 	fileHandle.write( "include_directories( ${" + projectName + "_SOURCE_DIR} )\n" )		
 	fileHandle.write( "\n" )
 	fileHandle.write( "# this variable indicates to sub-projects that they are build all together\n" )
-	fileHandle.write( "set( " + str.upper( projectName ) + "_COMMON_BUILD TRUE )\n" )
+	fileHandle.write( "set( " + projectNameUpper + "_COMMON_BUILD TRUE )\n" )
 	fileHandle.write( "\n" )
 	if linkVistaCoreLibs:
 		fileHandle.write( "find_package_versioned( VistaCoreLibs \"" + linkVistaCoreLibs + "\" )\n" )
 		fileHandle.write( "\n" )
 	for subproject in projectSubDirs:
-		fileHandle.write( "vista_conditional_add_subdirectory( " + str.upper( projectName ) + "_BUILD_" + str.upper( subproject ) + " " + subproject + " ON )\n" )
+		fileHandle.write( "vista_conditional_add_subdirectory( " + projectNameUpper + "_BUILD_" + projectNameUpper + " " + subproject + " ON )\n" )
 	fileHandle.write( "\n" )
 
 if len( sys.argv ) >= 2 and sys.argv[1] != "-h" and sys.argv[1] != "--help" :
@@ -443,6 +477,7 @@ if len( sys.argv ) >= 2 and sys.argv[1] != "-h" and sys.argv[1] != "--help" :
 	renew = False
 	linkVistaCoreLibs = False	
 	multiProject = False
+	version = False
 	while( argcount < len( sys.argv ) ):
 		arg = sys.argv[argcount]
 		if( arg == "-app" or arg == "-application" ):
@@ -457,26 +492,45 @@ if len( sys.argv ) >= 2 and sys.argv[1] != "-h" and sys.argv[1] != "--help" :
 			multiProject = True
 		elif( arg == "-linkcorelibs" ):
 			linkVistaCoreLibs = True
-			if( len( sys.argv ) > argcount + 1 ):
+			if( CheckIsAdditionalInfoArgument( argcount + 1 ) ):
 				argcount = argcount + 1
 				linkVistaCoreLibs = sys.argv[argcount]
 			else:
 				linkVistaCoreLibs = "SETI"
 		elif( arg == "-name" ):
 			argcount = argcount + 1
-			projectName = sys.argv[argcount]		
+			projectName = sys.argv[argcount]
+		elif( arg == "-version" ):
+			argcount = argcount + 1
+			version_type = sys.argv[argcount]
+			argcount = argcount + 1
+			version_name = sys.argv[argcount]
+			version_major = 0
+			version_minor = 0
+			version_revision = 0
+			if( CheckIsAdditionalInfoArgument( argcount + 1 ) ):
+				argcount = argcount + 1
+				version_major = sys.argv[argcount]
+			if( CheckIsAdditionalInfoArgument( argcount + 1 ) ):
+				argcount = argcount + 1
+				version_minor = sys.argv[argcount]
+			if( CheckIsAdditionalInfoArgument( argcount + 1 ) ):
+				argcount = argcount + 1
+				version_revision = sys.argv[argcount]
+			version = ( version_type, version_name, version_major, version_minor, version_revision )
 		else:
 			print( "unknown parameter: " + arg )
 		argcount = argcount + 1
+
 	
 	if multiProject :
-		GenMultiProject( mode, startDir, projectName, renew, linkVistaCoreLibs )
+		GenMultiProject( mode, startDir, projectName, renew, version, linkVistaCoreLibs )
 	elif mode == MODE_SRC:
 		GenSourceLists( startDir, renew )
 	elif mode == MODE_APP:
-		GenCMakeForApp( startDir, projectName, renew, linkVistaCoreLibs )
+		GenCMakeForApp( startDir, projectName, renew, version, linkVistaCoreLibs )
 	else:
-		GenCMakeForLib( startDir, projectName, renew, linkVistaCoreLibs )	
+		GenCMakeForLib( startDir, projectName, renew, version, linkVistaCoreLibs )	
 else:
 	print( "Usage:" )
 	print( "GenCakeList MainDir [Options]" )
