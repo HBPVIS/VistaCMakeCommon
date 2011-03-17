@@ -4,16 +4,16 @@ include( FindPackageHandleStandardArgs )
 
 if( NOT VSOLID_FOUND )
 
-	find_path( SOLID_DIR include/SOLID.h 
+	find_path( SOLID_ROOT_DIR include/SOLID.h 
 				PATHS $ENV{SOLID_ROOT}/${VISTA_HWARCH} $ENV{SOLID_ROOT}
 						$ENV{VRDEV}/SOLID/${VISTA_HWARCH} $ENV{VRDEV}/SOLID
 				CACHE "Solid package directory" )
 
-	if( SOLID_DIR )
-		message( STATUS "Found Solid in ${SOLID_DIR}" )
+	if( SOLID_ROOT_DIR )
+		message( STATUS "Found Solid in ${SOLID_ROOT_DIR}" )
 		
-		set( SOLID_INC_DIR ${SOLID_DIR}/include )
-		set( SOLID_LIB_DIR ${SOLID_DIR}/lib )
+		set( SOLID_INCLUDE_DIRS ${SOLID_ROOT_DIR}/include )
+		set( SOLID_LIBRARY_DIRS ${SOLID_ROOT_DIR}/lib )
 		set( SOLID_LIBRARIES
 			optimized solid
 			optimized qhull
@@ -29,23 +29,23 @@ if( NOT VSOLID_FOUND )
 		
 		
 		
-	else( SOLID_DIR )		
+	else( SOLID_ROOT_DIR )		
 		# todo
 		#find_package( SOLID )
 		
 		#if( SOLID_FOUND )
-		#	set( SOLID_INC_DIR ${SOLID_INCLUDE_DIR} )
+		#	set( SOLID_INCLUDE_DIRS ${SOLID_INCLUDE_DIRS} )
 			#SOLID_LIBRARIES already set by find_package
 		#endif( SOLID_FOUND )
 		
-	endif( SOLID_DIR )	
+	endif( SOLID_ROOT_DIR )	
 	
 	macro( vista_use_Solid )
-		include_directories( ${SOLID_INC_DIR} )
-		link_directories( ${SOLID_LIB_DIR} )
+		include_directories( ${SOLID_INCLUDE_DIRS} )
+		link_directories( ${SOLID_LIBRARY_DIRS} )
 	endmacro( vista_use_Solid )
 
 
 endif( NOT VSOLID_FOUND )
 
-find_package_handle_standard_args( VSolid "Solid could not be found" SOLID_INC_DIR SOLID_LIBRARIES )  
+find_package_handle_standard_args( VSolid "Solid could not be found" SOLID_INCLUDE_DIRS SOLID_LIBRARIES )  

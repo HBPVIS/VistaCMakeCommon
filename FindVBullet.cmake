@@ -4,16 +4,16 @@ include( FindPackageHandleStandardArgs )
 
 if( NOT VBULLET_FOUND )
 
-	find_path( BULLET_DIR include/btBulletCollisionCommon.h
+	find_path( BULLET_ROOT_DIR include/btBulletCollisionCommon.h
 				PATHS	$ENV{BULLET_ROOT}/${VISTA_HWARCH} $ENV{BULLET_ROOT} 
 						$ENV{VRDEV}/SOLID/${VISTA_HWARCH} $ENV{VRDEV}/SOLID/
 				CACHE "Bullet package directory" )
 
-	if( BULLET_DIR )
-		message( STATUS "Found Bullet in ${BULLET_DIR}" )
+	if( BULLET_ROOT_DIR )
+		message( STATUS "Found Bullet in ${BULLET_ROOT_DIR}" )
 		
-		set( BULLET_INC_DIR ${BULLET_DIR}/include )
-		set( BULLET_LIB_DIR ${BULLET_DIR}/lib )
+		set( BULLET_INCLUDE_DIRS ${BULLET_ROOT_DIR}/include )
+		set( BULLET_LIBRARY_DIRS ${BULLET_ROOT_DIR}/lib )
 		set( BULLET_LIBRARIES
 			optimized BulletCollision
 			optimized BulletDynamics
@@ -29,22 +29,22 @@ if( NOT VBULLET_FOUND )
 			debug ConvexDecompositionD
 		)			
 		
-	else( BULLET_DIR )		
+	else( BULLET_ROOT_DIR )		
 		find_package( BULLET )
 		
 		if( BULLET_FOUND )
-			set( BULLET_INC_DIR ${BULLET_INCLUDE_DIR} )
-			#BULLET_LIBRARIES already set by find_package
+			#BULLET_LIBRARIES and BULLET_LIBRARIES already set by find_package
+			set( BULLET_LIBRARY_DIRS "" )
 		endif( BULLET_FOUND )
 		
-	endif( BULLET_DIR )	
+	endif( BULLET_ROOT_DIR )	
 	
 	macro( vista_use_bullet )
-			include_directories( ${BULLET_INC_DIR} )
-			link_directories(  ${BULLET_LIB_DIR} )
+			include_directories( ${BULLET_INCLUDE_DIRS} )
+			link_directories(  ${BULLET_LIBRARY_DIRS} )
 	endmacro( vista_use_bullet )
 
 
 endif( NOT VBULLET_FOUND )
 
-find_package_handle_standard_args( VBullet "Bullet could not be found" BULLET_INC_DIR BULLET_LIBRARIES )  
+find_package_handle_standard_args( VBullet "Bullet could not be found" BULLET_INCLUDE_DIRS BULLET_LIBRARIES )  

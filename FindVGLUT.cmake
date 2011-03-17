@@ -4,61 +4,55 @@ include( FindPackageHandleStandardArgs )
 
 if( NOT VGLUT_FOUND )
 
-	find_path( GLUT_DIR include/GL/freeglut.h 
+	find_path( GLUT_ROOT_DIR include/GL/freeglut.h 
 			PATHS 	$ENV{FREEGLUT_ROOT}/${VISTA_HWARCH} $ENV{FREEGLUT_ROOT}
 					$ENV{GLUT_ROOT} $ENV{GLUT_ROOT}/${VISTA_HWARCH} 
-					${VRDEV}/freeglut/${VISTA_HWARCH}  ${VRDEV}/freeglut 
-					${VRDEV}/glut/${VISTA_HWARCH}  ${VRDEV}/glut 
+					$ENV{VRDEV}/freeglut/${VISTA_HWARCH}  $ENV{VRDEV}/freeglut 
+					$ENV{VRDEV}/glut/${VISTA_HWARCH}  $ENV{VRDEV}/glut 
 			CACHE "Glut/Freeglut package directory" )			
-	find_library( GLUT_LIBRARIES NAMES freeglut freeglut-msvc90x86 glut glut32 PATHS ${GLUT_DIR}/lib ${GLUT_DIR}/lib/opt )
+	find_library( GLUT_LIBRARIES NAMES freeglut freeglut-msvc90x86 glut glut32 
+					PATHS ${GLUT_ROOT_DIR}/lib ${GLUT_ROOT_DIR}/lib/opt
+					CACHE "Glut/freeglut library")
 
-	if( GLUT_DIR AND GLUT_LIBRARIES )
-		message( STATUS "Found Freeglut in ${GLUT_DIR}" )
+	if( GLUT_ROOT_DIR AND GLUT_LIBRARIES )
 		
-		set( GLUT_INC_DIR ${GLUT_DIR}/include )
+		set( GLUT_INCLUDE_DIRS ${GLUT_ROOT_DIR}/include )
 		set( GLUT_DEFINITIONS "" )
 		
-	else( GLUT_DIR AND GLUT_LIBRARIES )
-		message( STATUS "FREEGLUT not found - searching for native GLUT" )
-		
-		find_path( GLUT_DIR include/GL/glut.h 
-				PATHS	$ENV{FREEGLUT_ROOT}/${VISTA_HWARCH} $ENV{FREEGLUT_ROOT}
-						${VRDEV}/glut/${VISTA_HWARCH}  ${VRDEV}/glut
-				CACHE "Glut/Freeglut package directory" )
-		find_library( GLUT_LIBRARIES NAMES glut glut32 PATHS ${GLUT_DIR}/lib ${GLUT_DIR}/lib/opt )
-		
-		if( GLUT_DIR AND GLUT_LIBRARIES )
-			message( STATUS "Found GLUT in ${GLUT_DIR}" )
+	else( GLUT_ROOT_DIR AND GLUT_LIBRARIES )
 			
-			set( GLUT_INC_DIR ${GLUT_DIR}/include )
+		find_path( GLUT_ROOT_DIR include/GL/glut.h 
+				PATHS	$ENV{GLUT_ROOT}/${VISTA_HWARCH} $ENV{GLUT_ROOT}
+						$ENV{VRDEV}/glut/${VISTA_HWARCH} $ENV{VRDEV}/glut
+				CACHE "Glut/Freeglut package directory" )
+		find_library( GLUT_LIBRARIES NAMES glut glut32 PATHS ${GLUT_ROOT_DIR}/lib ${GLUT_ROOT_DIR}/lib/opt )
+		
+		if( GLUT_ROOT_DIR AND GLUT_LIBRARIES )
+			
+			set( GLUT_INCLUDE_DIRS ${GLUT_ROOT_DIR}/include )
 			set( GLUT_DEFINITIONS "" )
 		
-		else( GLUT_DIR AND GLUT_LIBRARIES )
+		else( GLUT_ROOT_DIR AND GLUT_LIBRARIES )
 			find_package( GLUT )
 			
 			if( GLUT_FOUND )
-				set( GLUT_INC_DIR ${GLUT_INCLUDE_DIR} )
+			
+				set( GLUT_INCLUDE_DIRS ${GLUT_INCLUDE_DIR} )
 				set( GLUT_LIBRARIES ${GLUT_glut_LIBRARY} )
 				set( GLUT_DEFINITIONS "-DUSE_NATIVE_GLUT" )
 				
-				message( STATUS "Found GLUT in ${GLUT_DIR}" )				
-					
-				macro( vista_use_GLUT )
-					include_directories( ${GLUT_INC_DIR} )
-					add_definitions( ${GLUT_DEFINITIONS} )
-				endmacro( vista_use_GLUT )
 			endif( GLUT_FOUND )
 			
-		endif( GLUT_DIR AND GLUT_LIBRARIES )
+		endif( GLUT_ROOT_DIR AND GLUT_LIBRARIES )
 
-	endif( GLUT_DIR AND GLUT_LIBRARIES )	
+	endif( GLUT_ROOT_DIR AND GLUT_LIBRARIES )	
 	
 	macro( vista_use_GLUT )
-		include_directories( ${GLUT_INC_DIR} )
+		include_directories( ${GLUT_INCLUDE_DIRS} )
 		add_definitions( ${GLUT_DEFINITIONS} )
 	endmacro( vista_use_GLUT )
 
 endif( NOT VGLUT_FOUND )
 
-find_package_handle_standard_args( VGLUT "glut/Freeglut could not be found" GLUT_INC_DIR GLUT_LIBRARIES )  
+find_package_handle_standard_args( VGLUT "glut/Freeglut could not be found" GLUT_INCLUDE_DIRS GLUT_LIBRARIES )  
 

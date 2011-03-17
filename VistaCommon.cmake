@@ -210,56 +210,210 @@ macro( find_package_versioned PACKAGE_NAME VERSION_NAME )
 	
 endmacro( find_package_versioned PACKAGE_NAME VERSION_NAME )
 
-macro( configure_and_install_package_version _IN_PACKAGE_NAME )
-	find_file( VISTA_VERSION_PROTO_FILE "PackageConfigVersion.cmake_proto" ${CMAKE_MODULE_PATH} )
+macro( vista_install _PACKAGE_NAME )
+	if( ${ARGC} EQUAL 0 OR ${ARGC} GREATER 3 )
+		message( SEND_ERROR "Invalid number of arguments for vista_install! usage: vista_install( TargetName [ IncludeSubDirectory ] [ LibrarySubDirectory ] ) - with optional subdirectories appended to the include / lib subdirs" )
+	endif( ${ARGC} EQUAL 0 OR ${ARGC} GREATER 3 )
+	
+	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
+	
+	if( ${ARGC} GREATER 1 )
+		set( ${_PACKAGE_NAME_UPPER}_INCLUDE_SUBDIR "include/${ARGV1}" )
+	else( ${ARGC} GREATER 1 )
+		set( ${_PACKAGE_NAME_UPPER}_INCLUDE_SUBDIR "include" )
+	endif( ${ARGC} GREATER 1 )
+	
+	if( ${ARGC} GREATER 2 )
+		set( ${_PACKAGE_NAME_UPPER}_LIB_SUBDIR "lib/${ARGV2}" )
+	else( ${ARGC} GREATER 2 )
+		set(${_PACKAGE_NAME_UPPER}_LIB_SUBDIR "lib" )
+	endif( ${ARGC} GREATER 2 )	
+	
+	install( TARGETS ${_PACKAGE_NAME}
+		LIBRARY DESTINATION ${${_PACKAGE_NAME_UPPER}_LIB_SUBDIR}
+		ARCHIVE DESTINATION ${${_PACKAGE_NAME_UPPER}_LIB_SUBDIR}
+		RUNTIME DESTINATION ${${_PACKAGE_NAME_UPPER}_LIB_SUBDIR}
+	)
+	install( DIRECTORY	.
+		DESTINATION ${${_PACKAGE_NAME_UPPER}_INCLUDE_SUBDIR}
+		FILES_MATCHING PATTERN "*.h"
+		PATTERN "build" EXCLUDE
+		PATTERN ".svn" EXCLUDE
+		PATTERN "CMakeFiles" EXCLUDE
+	)
+	install( FILES ${CMAKE_CURRENT_BINARY_DIR}/Debug/${ARGV0}D.pdb
+		DESTINATION ${${_PACKAGE_NAME_UPPER}_LIB_SUBDIR}
+		CONFIGURATIONS Debug
+	)
+	install( FILES ${CMAKE_CURRENT_BINARY_DIR}/RelWithDebugInfo/${ARGV0}.pdb
+		DESTINATION ${${_PACKAGE_NAME_UPPER}_LIB_SUBDIR}
+		CONFIGURATIONS RelWithDebugInfo
+	)
+endmacro()
+
+macro( vista_install_package_config )
+	set( _PACKAGE_NAME ${ARGV0} )
+	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
+	set( _PRECONDITION_FAIL FALSE )
+	
+	if( ${ARGC} GREATER 1 )
+		if( EXISTS ${ARGV1} )
+			set( _CONFIG_PROTO_FILE ${ARGV1} )
+		else( EXISTS ${ARGV1} )
+			find_file( _CONFIG_PROTO_FILE ${ARGV1} PATHS ${CMAKE_MODULE_PATH} )
+		endif( EXISTS ${ARGV1} )
+	else( ${ARGC} GREATER 1 )
+		find_file( _CONFIG_PROTO_FILE "PackageConfig.cmake_proto" PATHS ${CMAKE_MODULE_PATH} )
+
+		if( NOT ( ${_PACKAGE_NAME_UPPER}_INCLUDE_SUBDIR AND ${_PACKAGE_NAME_UPPER}_LIB_SUBDIR ) )
+			message( "Warning( vista_install_package_config ) required variables not defined" )
+			message( "\tPackage Config will " )
+			message( "\tNote: vista_install has to be run before vista_install_package_config" )
+			set( _PRECONDITION_FAIL TRUE )
+		endif( NOT ( ${_PACKAGE_NAME_UPPER}_INCLUDE_SUBDIR AND ${_PACKAGE_NAME_UPPER}_LIB_SUBDIR ) )
+		
+		set( _IN_INC_POSTFIX ${${_PACKAGE_NAME_UPPER}_INCLUDE_SUBDIR} )
+		set( _IN_LIB_POSTFIX ${${_PACKAGE_NAME_UPPER}_LIB_SUBDIR} )
+	endif( ${ARGC} GREATER 1 )
+	
+	set( _CONFIG_PROTO_FILE ${_CONFIG_PROTO_FILE} CACHE INTERNAL "Prototype file for <Package>Config.cmake" )
+
+	if( NOT _PRECONDITION_FAIL )
+		if( EXISTS ${_CONFIG_PROTO_FILE} )		
+			configure_file(
+				${_CONFIG_PROTO_FILE}
+				${CMAKE_CURRENT_BINARY_DIR}/cmake/${_PACKAGE_NAME}Config.cmake
+				@ONLY
+			)
+			if( UNIX )
+				install( FILES
+					${CMAKE_CURRENT_BINARY_DIR}/cmake/${_PACKAGE_NAME}Config.cmake
+					DESTINATION "${CMAKE_INSTALL_PREFIX}/share/cmake/${PACKAGE_NAME}"
+				)
+			elseif( WIN32 )
+				install( FILES
+					${CMAKE_CURRENT_BINARY_DIR}/cmake/${_PACKAGE_NAME}Config.cmake
+					DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake"
+				)
+			endif(UNIX)
+		else( EXISTS ${_CONFIG_PROTO_FILE} )
+			if( ${ARGC} GREATER 1 )
+				message( "Warning( vista_install_package_config ) could not find custom Configure file ${ARGV1}" )
+			else( ${ARGC} GREATER 1 )
+				message( "Warning( vista_install_package_config ) could not find file PackageConfig.cmake_proto" )
+			endif( ${ARGC} GREATER 1 )
+		endif( EXISTS ${_CONFIG_PROTO_FILE} )
+	endif( NOT _PRECONDITION_FAIL )
+	
+endmacro( vista_install_package_config )
+
+macro( vista_install_package_version _PACKAGE_NAME )
+	find_file( VISTA_VERSION_PROTO_FILE "PackageConfigVersion.cmake_proto" PATHS ${CMAKE_MODULE_PATH} )
 	mark_as_advanced( VISTA_VERSION_PROTO_FILE )
 	
-	string( TOUPPER ${_IN_PACKAGE_NAME} _IN_PACKAGE_NAME_UPPER )
+	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
+
+	if( ${ARGC} EQUAL 1 )
+		# we expect explicitely set variables		
+		if( NOT ${_PACKAGE_NAME_UPPER}_VERSION_TYPE
+			OR NOT ${_PACKAGE_NAME_UPPER}_VERSION_NAME
+			OR NOT ${_PACKAGE_NAME_UPPER}_VERSION_MAJOR
+			OR NOT ${_PACKAGE_NAME_UPPER}_VERSION_MINOR
+			OR NOT ${_PACKAGE_NAME_UPPER}_VERSION_REVISION )
+			message( "To correctly configure a versionfile, the following version variables need to be specified:" )
+			message( "\t${_PACKAGE_NAME_UPPER}_VERSION_TYPE" )
+			message( "\t${_PACKAGE_NAME_UPPER}_VERSION_NAME" )
+			message( "\t${_PACKAGE_NAME_UPPER}_VERSION_MAJOR" )
+			message( "\t${_PACKAGE_NAME_UPPER}_VERSION_MINOR" )
+			message( "\t${_PACKAGE_NAME_UPPER}_VERSION_REVISION" )
+		endif( NOT ${_PACKAGE_NAME_UPPER}_VERSION_TYPE
+			OR NOT ${_PACKAGE_NAME_UPPER}_VERSION_NAME
+			OR NOT ${_PACKAGE_NAME_UPPER}_VERSION_MAJOR
+			OR NOT ${_PACKAGE_NAME_UPPER}_VERSION_MINOR
+			OR NOT ${_PACKAGE_NAME_UPPER}_VERSION_REVISION )
+			
+			set( _VERSION_TYPE		${${_PACKAGE_NAME_UPPER}_VERSION_TYPE} )
+			set( _VERSION_NAME		${${_PACKAGE_NAME_UPPER}_VERSION_NAME} )
+			set( _VERSION_MAJOR 	${${_PACKAGE_NAME_UPPER}_VERSION_MAJOR} )
+			set( _VERSION_MINOR 	${${_PACKAGE_NAME_UPPER}_VERSION_MINOR} )
+			set( _VERSION_REVISION	${${_PACKAGE_NAME_UPPER}_VERSION_REVISION} )
+	elseif( ${ARGC} EQUAL 2 )
+		# we expect explicitely set variables, but for a "parent" version of a project specified
+		# as second parameter
+		string( TOUPPER ${ARGV1} _IN_VERSION_NAME_UPPER )
+		
+		if( NOT ${_IN_VERSION_NAME_UPPER}_VERSION_TYPE
+			OR NOT ${_IN_VERSION_NAME_UPPER}_VERSION_NAME
+			OR NOT ${_IN_VERSION_NAME_UPPER}_VERSION_MAJOR
+			OR NOT ${_IN_VERSION_NAME_UPPER}_VERSION_MINOR
+			OR NOT ${_IN_VERSION_NAME_UPPER}_VERSION_REVISION )
+			message( "To correctly configure a versionfile, the following version variables need to be specified:" )
+			message( "\t${_IN_VERSION_NAME_UPPER}_VERSION_TYPE" )
+			message( "\t${_IN_VERSION_NAME_UPPER}_VERSION_NAME" )
+			message( "\t${_IN_VERSION_NAME_UPPER}_VERSION_MAJOR" )
+			message( "\t${_IN_VERSION_NAME_UPPER}_VERSION_MINOR" )
+			message( "\t${_IN_VERSION_NAME_UPPER}_VERSION_REVISION" )
+		endif( NOT ${_IN_VERSION_NAME_UPPER}_VERSION_TYPE
+			OR NOT ${_IN_VERSION_NAME_UPPER}_VERSION_NAME
+			OR NOT ${_IN_VERSION_NAME_UPPER}_VERSION_MAJOR
+			OR NOT ${_IN_VERSION_NAME_UPPER}_VERSION_MINOR
+			OR NOT ${_IN_VERSION_NAME_UPPER}_VERSION_REVISION )
+			
+			set( _VERSION_TYPE		${${_IN_VERSION_NAME_UPPER}_VERSION_TYPE} )
+			set( _VERSION_NAME		${${_IN_VERSION_NAME_UPPER}_VERSION_NAME} )
+			set( _VERSION_MAJOR 	${${_IN_VERSION_NAME_UPPER}_VERSION_MAJOR} )
+			set( _VERSION_MINOR 	${${_IN_VERSION_NAME_UPPER}_VERSION_MINOR} )
+			set( _VERSION_REVISION	${${_IN_VERSION_NAME_UPPER}_VERSION_REVISION} )
+	else( ${ARGC} EQUAL 1 )
+		# we expect parameters of the form ProjectName VersionType VersionName [Major] [Minor] [Revision]
+		set( _VERSION_TYPE ${ARGV1} )
+		set( _VERSION_NAME ${ARGV2} )
+		if( ${ARGC} GREATER 3 )
+			set( _VERSION_MAJOR ${ARGV3} )
+		else( ${ARGC} GREATER 3 )
+			set( _VERSION_MAJOR 0 )
+		endif( ${ARGC} GREATER 3 )
+		if( ${ARGC} GREATER 4 )
+			set( _VERSION_MINOR ${ARGV4} )
+		else( ${ARGC} GREATER 4 )
+			set( _VERSION_MINOR 0 )
+		endif( ${ARGC} GREATER 4 )
+		if( ${ARGC} GREATER 5 )
+			set( _VERSION_REVISION ${ARGV5} )
+		else( ${ARGC} GREATER 5 )
+			set( _VERSION_REVISION 0 )
+		endif( ${ARGC} GREATER 5 )
+	endif( ${ARGC} EQUAL 1 )
 	
-	if( NOT ${_IN_PACKAGE_NAME_UPPER}_VERSION_TYPE
-		OR NOT ${_IN_PACKAGE_NAME_UPPER}_VERSION_NAME
-		OR NOT ${_IN_PACKAGE_NAME_UPPER}_VERSION_MAJOR
-		OR NOT ${_IN_PACKAGE_NAME_UPPER}_VERSION_MINOR
-		OR NOT ${_IN_PACKAGE_NAME_UPPER}_VERSION_REVISION )
-		message( "To correctly configure a versionfile, the following version variables need to be specified:" )
-		message( "\t${_IN_PACKAGE_NAME_UPPER}_VERSION_TYPE" )
-		message( "\t${_IN_PACKAGE_NAME_UPPER}_VERSION_NAME" )
-		message( "\t${_IN_PACKAGE_NAME_UPPER}_VERSION_MAJOR" )
-		message( "\t${_IN_PACKAGE_NAME_UPPER}_VERSION_MINOR" )
-		message( "\t${_IN_PACKAGE_NAME_UPPER}_VERSION_REVISION" )
-	endif( NOT ${_IN_PACKAGE_NAME_UPPER}_VERSION_TYPE
-		OR NOT ${_IN_PACKAGE_NAME_UPPER}_VERSION_NAME
-		OR NOT ${_IN_PACKAGE_NAME_UPPER}_VERSION_MAJOR
-		OR NOT ${_IN_PACKAGE_NAME_UPPER}_VERSION_MINOR
-		OR NOT ${_IN_PACKAGE_NAME_UPPER}_VERSION_REVISION )
+	set( ${_PACKAGE_NAME_UPPER}_VERSION_TYPE		${_VERSION_TYPE} )
+	set( ${_PACKAGE_NAME_UPPER}_VERSION_NAME		${_VERSION_NAME} )
+	set( ${_PACKAGE_NAME_UPPER}_VERSION_MAJOR		${_VERSION_MAJOR} )
+	set( ${_PACKAGE_NAME_UPPER}_VERSION_MINOR		${_VERSION_MINOR} )
+	set( ${_PACKAGE_NAME_UPPER}_VERSION_REVISION	${_VERSION_REVISION} )
 	
 	if( VISTA_VERSION_PROTO_FILE )
-		set( _VERSION_TYPE		${${_IN_PACKAGE_NAME_UPPER}_VERSION_TYPE} )
-		set( _VERSION_NAME		${${_IN_PACKAGE_NAME_UPPER}_VERSION_NAME} )
-		set( _VERSION_MAJOR 	${${_IN_PACKAGE_NAME_UPPER}_VERSION_MAJOR} )
-		set( _VERSION_MINOR 	${${_IN_PACKAGE_NAME_UPPER}_VERSION_MINOR} )
-		set( _VERSION_REVISION	${${_IN_PACKAGE_NAME_UPPER}_VERSION_REVISION} )
+		
 		configure_file(
 			${VISTA_VERSION_PROTO_FILE}
-			${CMAKE_CURRENT_BINARY_DIR}/cmake/${_IN_PACKAGE_NAME}ConfigVersion.cmake
+			${CMAKE_CURRENT_BINARY_DIR}/cmake/${_PACKAGE_NAME}ConfigVersion.cmake
 			@ONLY
 		)
 		if( UNIX )
 			install( FILES
-				${CMAKE_CURRENT_BINARY_DIR}/cmake/${_IN_PACKAGE_NAME}ConfigVersion.cmake
+				${CMAKE_CURRENT_BINARY_DIR}/cmake/${_PACKAGE_NAME}ConfigVersion.cmake
 				DESTINATION "${CMAKE_INSTALL_PREFIX}/share/cmake/${PACKAGE_NAME}"
 			)
 		elseif( WIN32 )
 			install( FILES
-				${CMAKE_CURRENT_BINARY_DIR}/cmake/${_IN_PACKAGE_NAME}ConfigVersion.cmake
+				${CMAKE_CURRENT_BINARY_DIR}/cmake/${_PACKAGE_NAME}ConfigVersion.cmake
 				DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake"
 			)
 		endif(UNIX)
 	else( VISTA_VERSION_PROTO_FILE )
-		message( "Warning( configure_and_install_package_version ) could not find file PackageConfigVersion.cmake_proto" )
+		message( "Warning( vista_install_package_version ) could not find file PackageConfigVersion.cmake_proto" )
 	endif( VISTA_VERSION_PROTO_FILE )
 	
-endmacro( configure_and_install_package_version )
+endmacro( vista_install_package_version )
 
 set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG" )
 
