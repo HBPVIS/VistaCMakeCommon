@@ -3,7 +3,7 @@ include( VistaCommon )
 #since CMAKE_DEBUG_POSTFIX doesnt work on executables, we have to trick
 
 if( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
-	changevardefault( CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}" CACHE PATH "distribution directory" FORCE )
+	vista_set_defaultvalue( CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}" CACHE PATH "distribution directory" FORCE )
 endif( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
 
 macro( vista_set_app_outdir APP_NAME TARGET_DIR )

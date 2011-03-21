@@ -57,6 +57,7 @@ def GetSourceFilesAndDirs( path ):
 def GenSourceListForSubdir( dirName, parentDir, renew, relDir = "", relSourceGroup = "" ):
 	if( dirName in excludeDirs ):
 		return False
+	
 	sourceSubDirs = []
 	fullDirName = os.path.join( parentDir, dirName )	
 	
@@ -84,7 +85,8 @@ def GenSourceListForSubdir( dirName, parentDir, renew, relDir = "", relSourceGro
 			
 	if( len( sourceSubDirs ) == 0 and len( sourceFiles ) == 0 ):
 		return False # no source directory
-	
+		
+
 	fileName = os.path.join( fullDirName, "_SourceFiles.cmake" )
 	
 	if( os.path.exists( fileName ) and not renew ):
@@ -311,7 +313,7 @@ def GenCMakeForLib( startDir, projectName, renew, version, linkVistaCoreLibs, mu
 	fileHandle.write( "\n" )
 	if linkVistaCoreLibs:
 		fileHandle.write( "find_package_versioned( VistaCoreLibs \"" + linkVistaCoreLibs + "\" REQUIRED )\n" )
-		fileHandle.write( "vista_use_CoreLibs()\n" )
+		fileHandle.write( "vista_use_VistaCoreLibs()\n" )
 		fileHandle.write( "\n" )
 	fileHandle.write( "if( WIN32 )\n" )
 	fileHandle.write( "\tif( BUILD_SHARED_LIBS )\n" )
@@ -364,7 +366,7 @@ def GenCMakeForLib( startDir, projectName, renew, version, linkVistaCoreLibs, mu
 def GenCMakeForApp( startDir, projectName, renew, version, linkVistaCoreLibs, multiProjectParent = "" ):
 	sourceSubDirs = GenSourceLists( startDir, renew )
 	
-	if( len( surceSubDirs ) == 0 ):
+	if( len( sourceSubDirs ) == 0 ):
 		if( multiProjectParent != "" ):
 			print( "Project Directory " + startDir + " contains no sources" )
 		return False
@@ -382,16 +384,20 @@ def GenCMakeForApp( startDir, projectName, renew, version, linkVistaCoreLibs, mu
 		fileHandle.write( "\n" )
 		fileHandle.write( "include( VistaAppCommon )\n" )
 	else:		
-		fileHandle.write( "if( NOT " + string.toupper(multiProjectParent) + "_COMMON_BUILD )\n" )
+		fileHandle.write( "if( NOT " + str.upper(multiProjectParent) + "_COMMON_BUILD )\n" )
 		fileHandle.write( "\tproject( " + projectName + " )\n" )
 		fileHandle.write( "\n" )
 		fileHandle.write( "\tlist( APPEND CMAKE_MODULE_PATH \"$ENV{VISTA_CMAKE_COMMON}\" )\n" )		
 		fileHandle.write( "\tinclude( VistaLibCommon )\n" )
-		fileHandle.write( "ENDif( NOT " + string.toupper(multiProjectParent) + "_COMMON_BUILD )\n" )
+		fileHandle.write( "ENDif( NOT " + str.upper(multiProjectParent) + "_COMMON_BUILD )\n" )
 	fileHandle.write( "\n" )
 	if linkVistaCoreLibs:
 		fileHandle.write( "find_package_versioned( VistaCoreLibs \"" + linkVistaCoreLibs + "\" REQUIRED )\n" )
-		fileHandle.write( "vista_use_CoreLibs()\n" )
+		fileHandle.write( "vista_use_VistaCoreLibs()\n" )
+		fileHandle.write( "\n" )
+		fileHandle.write( "if( WIN32 )\n" )
+		fileHandle.write( "\tlist( APPEND LIBRARIES opengl32 glu32 )\n" )
+		fileHandle.write( "endif( WIN32 )\n" )
 		fileHandle.write( "\n" )
 	for dir in sourceSubDirs:
 		fileHandle.write( "include( \"" + dir + "/" + localSourceFileName + "\" )\n" )
@@ -400,6 +406,7 @@ def GenCMakeForApp( startDir, projectName, renew, version, linkVistaCoreLibs, mu
 	fileHandle.write( "target_link_libraries( " + projectName + "\n" )
 	if linkVistaCoreLibs:		
 		fileHandle.write( "\t${VISTACORELIBS_LIBRARIES}\n" )	
+	fileHandle.write( "\t${LIBRARIES}\n" )
 	fileHandle.write( ")\n" )
 	fileHandle.write( "\n" )
 	fileHandle.write( "vista_configure_app( " + projectName + " )\n" )
@@ -465,7 +472,7 @@ def GenMultiProject( mode, startDir, projectName, renew, version, linkVistaCoreL
 		fileHandle.write( "find_package_versioned( VistaCoreLibs \"" + linkVistaCoreLibs + "\" )\n" )
 		fileHandle.write( "\n" )
 	for subproject in projectSubDirs:
-		fileHandle.write( "vista_conditional_add_subdirectory( " + projectNameUpper + "_BUILD_" + projectNameUpper + " " + subproject + " ON )\n" )
+		fileHandle.write( "vista_conditional_add_subdirectory( " + projectNameUpper + "_BUILD_" + str.upper(subproject) + " " + subproject + " ON )\n" )
 	fileHandle.write( "\n" )
 
 if len( sys.argv ) >= 2 and sys.argv[1] != "-h" and sys.argv[1] != "--help" :
