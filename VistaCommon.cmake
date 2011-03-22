@@ -30,30 +30,30 @@ endmacro( vista_set_defaultvalue )
 
 # use: vista_conditional_add_subdirectory( variable_name directory [ON|OFF] [ADVANCED [MSG string] )
 macro( vista_conditional_add_subdirectory )
-	set( VISTA_CONDITIONAL_SET_STATE ON )
-	set( VISTA_CONDITIONAL_SET_ADVANCED FALSE )
-	set( VISTA_CONDITIONAL_SET_MSG "Build the ${ARGV1} library" )
-	set( VISTA_CONDITIONAL_SET_MSG_NEXT FALSE )
+	set( _VISTA_CONDITIONAL_SET_STATE ON )
+	set( _VISTA_CONDITIONAL_SET_ADVANCED FALSE )
+	set( _VISTA_CONDITIONAL_SET_MSG "Build the ${ARGV1} library" )
+	set( _VISTA_CONDITIONAL_SET_MSG_NEXT FALSE )
 	
 	foreach( ARG ${ARGV} )
-		if( VISTA_CONDITIONAL_SET_MSG_NEXT )
-			set( VISTA_CONDITIONAL_SET_MSG ${ARG} )
-			set( VISTA_CONDITIONAL_SET_MSG_NEXT FALSE )
+		if( _VISTA_CONDITIONAL_SET_MSG_NEXT )
+			set( _VISTA_CONDITIONAL_SET_MSG ${ARG} )
+			set( _VISTA_CONDITIONAL_SET_MSG_NEXT FALSE )
 		elseif( ${ARG} STREQUAL  "ON" )
-			set( VISTA_CONDITIONAL_SET_STATE ON )
+			set( _VISTA_CONDITIONAL_SET_STATE ON )
 		elseif( ${ARG} STREQUAL  "OFF" )
-			set( VISTA_CONDITIONAL_SET_STATE OFF )
+			set( _VISTA_CONDITIONAL_SET_STATE OFF )
 		elseif( ${ARG} STREQUAL  "ADVANCED" )
-			set( VISTA_CONDITIONAL_SET_ADVANCED TRUE )
+			set( _VISTA_CONDITIONAL_SET_ADVANCED TRUE )
 		elseif( ${ARG} STREQUAL  "MSG" )
-			set( VISTA_CONDITIONAL_SET_MSG_NEXT TRUE )
-		endif( VISTA_CONDITIONAL_SET_MSG_NEXT )
+			set( _VISTA_CONDITIONAL_SET_MSG_NEXT TRUE )
+		endif( _VISTA_CONDITIONAL_SET_MSG_NEXT )
 	endforeach( ARG ${ARGV} )
 	
-	set( ${ARGV0} ${VISTA_CONDITIONAL_SET_STATE} CACHE BOOL "${VISTA_CONDITIONAL_SET_MSG}" )
-	if( VISTA_CONDITIONAL_SET_ADVANCED )
+	set( ${ARGV0} ${_VISTA_CONDITIONAL_SET_STATE} CACHE BOOL "${_VISTA_CONDITIONAL_SET_MSG}" )
+	if( _VISTA_CONDITIONAL_SET_ADVANCED )
 		mark_as_advanced( ${ARGV0} )
-	endif( VISTA_CONDITIONAL_SET_ADVANCED )
+	endif( _VISTA_CONDITIONAL_SET_ADVANCED )
 	
 	if( ${ARGV0} )
 		add_subdirectory( ${ARGV1} )
@@ -135,23 +135,107 @@ elseif( WIN32 )
 endif( UNIX )
 
 
-macro( find_package_versioned PACKAGE_NAME VERSION_NAME )
+macro( find_package_versioned _PACKAGE_NAME _VERSION_NAME )
 
-	set( ARGS_LIST ${ARGV} )
-	list( FIND ARGS_LIST "REQUIRED" _REQUIRED_FOUND_IN_ARGS )
+	set( _ARGS_LIST ${ARGV} )
+	list( FIND _ARGS_LIST "REQUIRED" _REQUIRED_FOUND_IN_ARGS )
+	
+	if( ${_PACKAGE_NAME}_FOUND )
+		# package already found before - check if version matches
+		if( EXISTS ${PACKAGE_NAME}_VERSION_FILE )
+			# we already found a versioned Vista
+			include( ${_VERSION_FILE} )
+			if( PACKAGE_VERSION_EXT )
+				# it's a specially configured file for custom versioning, so it provides a macro check_custom_versioned
+				check_custom_versioned( ${_VERSION_NAME} _VERSION_MATCHES )
+				if( NOT _VERSION_MATCHES )
+					message( FATAL_ERROR "find_package_versioned(${_PACKAGE_NAME}, ${_VERSION_NAME}) - Package found before, but with a different version (${PACKAGE_VERSION_EXT})!" )
+				endif( NOT _VERSION_MATCHES )
+			endif( PACKAGE_VERSION_EXT )
+		elseif( EXISTS ${PACKAGE_NAME}_VERSION_FILE )
+			# found Vista wasn't versioned - we search again, and utter a warning
+			message( "find_package_versioned(${_PACKAGE_NAME}, ${_VERSION_NAME}) - Package found before, but not versioned - performing new search!" )
+			set( ${_PACKAGE_NAME}_FOUND FALSE )
+		endif( EXISTS ${PACKAGE_NAME}_VERSION_FILE )
+	endif( ${_PACKAGE_NAME}_FOUND )
 		
-	if( NOT ${PACKAGE_NAME}_FOUND )
-		# we first do a regular search with a definitely unused version
-		# this will fail, but gives us ${PACKAGE_NAME}_CONSIDERED_CONFIGS
-		# with a list of found config files		
+	if( NOT ${_PACKAGE_NAME}_FOUND )
 		
-		list( REMOVE_ITEM ARGS_LIST ${PACKAGE_NAME} ${VERSION_NAME} REQUIRED )
+		if( CMAKE_VERSION VERSION_LESS 2.8.2 )
+			# for old cmakes: explicit search
+			# limited functionality! (e.g. no explicit PATHS HINTS etc)
+					
+			list( FIND _ARGS_LIST "NO_CMAKE_PATH" _NO_CMAKE_PATH_FOUND_IN_ARGS )
+			list( FIND _ARGS_LIST "NO_CMAKE_ENVIRONMENT_PATH" _NO_CMAKE_ENVIRONMENT_PATH_FOUND_IN_ARGS )
+			list( FIND _ARGS_LIST "NO_CMAKE_SYSTEM_PATH" _NO_CMAKE_SYSTEM_PATH_PATH_FOUND_IN_ARGS )
+			list( FIND _ARGS_LIST "NO_DEFAULT_PATH" _NO_DEFAULT_PATH_FOUND_IN_ARGS )
+			list( FIND _ARGS_LIST "NO_CMAKE_BUILDS_PATH" _NO_CMAKE_BUILDS_PATHFOUND_IN_ARGS )
+			set( _PREFIX_PATHES "." )
+			
+			if( ${_NO_DEFAULT_PATH_FOUND_IN_ARGS} EQUAL -1 )
+				if( ${_NO_CMAKE_PATH_FOUND_IN_ARGS} EQUAL -1 )
+					list( APPEND _PREFIX_PATHES ${CMAKE_PREFIX_PATH} ${CMAKE_MODULE_PATH} ${CMAKE_FRAMEWORK_PATH} ${CMAKE_APPBUNDLE_PATH} )
+				endif( ${_NO_CMAKE_PATH_FOUND_IN_ARGS} EQUAL -1 )			
+				if( ${_NO_CMAKE_ENVIRONMENT_PATH_FOUND_IN_ARGS} EQUAL -1 )
+					list( APPEND _PREFIX_PATHES $ENV{CMAKE_PREFIX_PATH} $ENV{CMAKE_MODULE_PATH} $ENV{CMAKE_FRAMEWORK_PATH} $ENV{CMAKE_APPBUNDLE_PATH} $ENV{${_PACKAGE_NAME}_DIR} )
+				endif( ${_NO_CMAKE_ENVIRONMENT_PATH_FOUND_IN_ARGS} EQUAL -1 )			
+				if( ${_NO_CMAKE_SYSTEM_PATH_PATH_FOUND_IN_ARGS} EQUAL -1 )
+					list( APPEND _PREFIX_PATHES ${CMAKE_SYSTEM_PREFIX_PATH} ${CMAKE_SYSTEM_FRAMEWORK_PATH} ${CMAKE_SYSTEM_APPBUNDLE_PATH} )
+				endif( ${_NO_CMAKE_SYSTEM_PATH_PATH_FOUND_IN_ARGS} EQUAL -1 )
+				if( WIN32 AND ${_NO_CMAKE_BUILDS_PATHFOUND_IN_ARGS} EQUAL -1 )
+					foreach( _I RANGE 0 9 )
+						get_filename_component( _CMAKE_REG_ENTRY_${_I} 
+								"[HKEY_CURRENT_USER\\Software\\Kitware\\CMakeSetup\\Settings\\StartPath;WhereBuild${_I}]"
+								ABSOLUTE CACHE INTERNAL )
+						list( APPEND _PREFIX_PATHES ${_CMAKE_REG_ENTRY_${_I}} )
+					endforeach( _I RANGE 1 10 )
+				endif( WIN32 AND ${_NO_CMAKE_BUILDS_PATHFOUND_IN_ARGS} EQUAL -1 )
+			endif( ${_NO_DEFAULT_PATH_FOUND_IN_ARGS} EQUAL -1 )
+			
+			foreach( _PATH ${_PREFIX_PATHES} )
+				if( WIN32 )					
+					file( GLOB _LOCAL_FILES 
+						"${_PATH}/${_PACKAGE_NAME}Config.cmake"
+						"${_PATH}/cmake/${_PACKAGE_NAME}Config.cmake"
+						"${_PATH}/CMake/${_PACKAGE_NAME}Config.cmake"
+						"${_PATH}/${PackageName}*/${_PACKAGE_NAME}Config.cmake"
+						"${_PATH}/${PackageName}*/cmake${_PACKAGE_NAME}Config.cmake"
+						"${_PATH}/${PackageName}*/CMake${_PACKAGE_NAME}Config.cmake"
+					)
+				elseif( UNIX )
+					file( GLOB _LOCAL_FILES 
+						"${_PATH}/${_PACKAGE_NAME}Config.cmake"
+						"${_PATH}/share/${_PACKAGE_NAME}Config.cmake"
+						"${_PATH}/share/cmake/${_PACKAGE_NAME}Config.cmake"
+						"${_PATH}/share/${_PACKAGE_NAME}*/${_PACKAGE_NAME}Config.cmake"
+						"${_PATH}/share/${_PACKAGE_NAME}*/cmake/${_PACKAGE_NAME}Config.cmake"
+						"${_PATH}/share/cmake/${_PACKAGE_NAME}*/${_PACKAGE_NAME}Config.cmake"
+						"${_PATH}/lib/${_PACKAGE_NAME}Config.cmake"
+						"${_PATH}/lib/cmake/${_PACKAGE_NAME}Config.cmake"
+						"${_PATH}/lib/${_PACKAGE_NAME}*/${_PACKAGE_NAME}Config.cmake"
+						"${_PATH}/lib/${_PACKAGE_NAME}*/cmake/${_PACKAGE_NAME}Config.cmake"
+						"${_PATH}/lib/cmake/${_PACKAGE_NAME}*/${_PACKAGE_NAME}Config.cmake"						
+					)
+				endif( WIN32 )
+				list( APPEND ${_PACKAGE_NAME}_CONSIDERED_CONFIGS ${_LOCAL_FILES} )
+			endforeach( _PATH ${_PREFIX_PATHES} )			
+
+		set( _FIND_SUCCESS FALSE )
 		
-		find_package( ${PACKAGE_NAME} 666.666.666.666 QUIET ${ARGS_LIST} )
+		else( CMAKE_VERSION VERSION_LESS 2.8.2 )
+			#for newer ones: use find_package trick
+			# we first do a regular search with a definitely unused version
+			# this will fail, but gives us ${_PACKAGE_NAME}_CONSIDERED_CONFIGS
+			# with a list of found config files		
+			
+			list( REMOVE_ITEM _ARGS_LIST ${_PACKAGE_NAME} ${_VERSION_NAME} REQUIRED )
+			
+			find_package( ${_PACKAGE_NAME} 666.666.666.666 QUIET ${_ARGS_LIST} )
+		endif( CMAKE_VERSION VERSION_LESS 2.8.2 )	
 		
 		set( _FIND_SUCCESS FALSE )
 		
-		foreach( FOUND_CONFIG ${${PACKAGE_NAME}_CONSIDERED_CONFIGS} )
+		foreach( FOUND_CONFIG ${${_PACKAGE_NAME}_CONSIDERED_CONFIGS} )
 			#string( REGEX MATCH "" ${FOUND_VERSION} _REXEX_MATCH )	
 			if( NOT _FIND_SUCCESS )
 				string( REGEX MATCH "(.+)Config\\.cmake" _MATCH_SUCCESS ${FOUND_CONFIG} )
@@ -159,17 +243,18 @@ macro( find_package_versioned PACKAGE_NAME VERSION_NAME )
 					# lets look for a corresponding ConfigVersion.cmake file
 					set( _VERSION_FILE "" CACHE INTERNAL "internal store to version file" )
 					set( _VERSION_FILE "${CMAKE_MATCH_1}ConfigVersion.cmake" )
-					if( _VERSION_FILE )
+					if( EXISTS ${_VERSION_FILE} )
 						# let's include the file
 						include( ${_VERSION_FILE} )
 						if( PACKAGE_VERSION_EXT )
 							# it's a specially configured file for custom versioning, so it provides a macro check_custom_versioned
-							check_custom_versioned( ${VERSION_NAME} _FIND_SUCCESS )
+							check_custom_versioned( ${_VERSION_NAME} _FIND_SUCCESS )
 							if( _FIND_SUCCESS )
 								#include actual config file
+								set( ${PACKAGE_NAME}_VERSION_FILE ${FOUND_CONFIG} CACHE INTERNAL "" )
 								include( ${FOUND_CONFIG} )
 								if( NOT QUIET )
-									message( STATUS "Found Package ${PACKAGE_NAME}" )
+									message( STATUS "Found Package ${_PACKAGE_NAME}" )
 									message( STATUS "\tDirectory: ${FOUND_CONFIG}" )
 									message( STATUS "\tVersion  : ${PACKAGE_VERSION_EXT}" )
 								endif( NOT QUIET )
@@ -179,37 +264,38 @@ macro( find_package_versioned PACKAGE_NAME VERSION_NAME )
 						else( PACKAGE_VERSION_EXT )
 							list( APPEND _CANDIDATE_LIST "${FOUND_CONFIG} (incompatible version file)" )
 						endif( PACKAGE_VERSION_EXT )
-					else( _VERSION_FILE )
+					else( EXISTS ${_VERSION_FILE} )
 						list( APPEND _CANDIDATE_LIST "${FOUND_CONFIG} (unversioned)" )
-					endif( _VERSION_FILE )
-				endif( _MATCH_SUCCESS )
-					
-			endif( NOT _FIND_SUCCESS )
-			
-			
-		endforeach( FOUND_CONFIG ${${PACKAGE_NAME}_CONSIDERED_CONFIGS} )
+					endif( EXISTS ${_VERSION_FILE} )
+				endif( _MATCH_SUCCESS )					
+			endif( NOT _FIND_SUCCESS )			
+		endforeach( FOUND_CONFIG ${${_PACKAGE_NAME}_CONSIDERED_CONFIGS} )
 		
 		
 		if( NOT _FIND_SUCCESS )
 			if( NOT QUIET OR NOT _REQUIRED_FOUND_IN_ARGS EQUAL -1 )
-				message( "${PACKAGE_NAME} could not be found. Candidates were:" )
+				message( "${_PACKAGE_NAME} could not be found. Candidates were:" )
 				foreach( CANDIDATE ${_CANDIDATE_LIST} )
 					message( "\t${CANDIDATE}" )
 				endforeach( CANDIDATE ${_CANDIDATE_LIST} )				
 			endif( NOT QUIET OR NOT _REQUIRED_FOUND_IN_ARGS EQUAL -1 )
 		endif( NOT _FIND_SUCCESS )
 		
-		set( ${PACKAGE_NAME}_FOUND _FIND_SUCCESS )
+		set( ${_PACKAGE_NAME}_FOUND _FIND_SUCCESS )
 		
-	endif( NOT ${PACKAGE_NAME}_FOUND )
+	endif( NOT ${_PACKAGE_NAME}_FOUND )
 	
-	if( NOT ${PACKAGE_NAME}_FOUND )
+	
+	if( NOT ${_PACKAGE_NAME}_FOUND )
 		if( NOT _REQUIRED_FOUND_IN_ARGS EQUAL -1 )
-			message( SEND_ERROR "${PACKAGE_NAME} not found!" )
+			message( FATAL_ERROR "${_PACKAGE_NAME} not found!" )
 		endif( NOT _REQUIRED_FOUND_IN_ARGS EQUAL -1 )
-	endif( NOT ${PACKAGE_NAME}_FOUND )
+	endif( NOT ${_PACKAGE_NAME}_FOUND )
 	
-endmacro( find_package_versioned PACKAGE_NAME VERSION_NAME )
+endmacro( find_package_versioned _PACKAGE_NAME _VERSION_NAME )
+
+
+
 
 macro( vista_install _PACKAGE_NAME )
 	if( ${ARGC} EQUAL 0 OR ${ARGC} GREATER 3 )
@@ -263,12 +349,12 @@ macro( vista_install_package_config )
 		if( EXISTS ${ARGV1} )
 			set( _CONFIG_PROTO_FILE ${ARGV1} )
 		else( EXISTS ${ARGV1} )
-			find_file( _${PACKAGE_NAME}_CONFIG_PROTO_FILE ${ARGV1} PATHS ${CMAKE_MODULE_PATH} PATHS ${CMAKE_CURRENT_SOURCE_DIR} )
-			if( NOT _${PACKAGE_NAME}_CONFIG_PROTO_FILE )
+			find_file( _${_PACKAGE_NAME}_CONFIG_PROTO_FILE ${ARGV1} PATHS ${CMAKE_MODULE_PATH} PATHS ${CMAKE_CURRENT_SOURCE_DIR} )
+			if( NOT _${_PACKAGE_NAME}_CONFIG_PROTO_FILE )
 				message( "Could not find config file ${ARGV1}" )
 				set( _PRECONDITION_FAIL TRUE )
-			endif( NOT _${PACKAGE_NAME}_CONFIG_PROTO_FILE )
-			set( _CONFIG_PROTO_FILE ${_${PACKAGE_NAME}_CONFIG_PROTO_FILE} )
+			endif( NOT _${_PACKAGE_NAME}_CONFIG_PROTO_FILE )
+			set( _CONFIG_PROTO_FILE ${_${_PACKAGE_NAME}_CONFIG_PROTO_FILE} )
 		endif( EXISTS ${ARGV1} )
 	else( ${ARGC} GREATER 1 )
 		find_file( _DEFAULT_CONFIG_PROTO_FILE "PackageConfig.cmake_proto" PATHS ${CMAKE_MODULE_PATH} )
@@ -300,7 +386,7 @@ macro( vista_install_package_config )
 			if( UNIX )
 				install( FILES
 					${CMAKE_CURRENT_BINARY_DIR}/cmake/${_PACKAGE_NAME}Config.cmake
-					DESTINATION "${CMAKE_INSTALL_PREFIX}/share/cmake/${PACKAGE_NAME}"
+					DESTINATION "${CMAKE_INSTALL_PREFIX}/share/cmake/${_PACKAGE_NAME}"
 				)
 			elseif( WIN32 )
 				install( FILES
@@ -415,7 +501,7 @@ macro( vista_install_package_version _PACKAGE_NAME )
 		if( UNIX )
 			install( FILES
 				${CMAKE_CURRENT_BINARY_DIR}/cmake/${_PACKAGE_NAME}ConfigVersion.cmake
-				DESTINATION "${CMAKE_INSTALL_PREFIX}/share/cmake/${PACKAGE_NAME}"
+				DESTINATION "${CMAKE_INSTALL_PREFIX}/share/cmake/${_PACKAGE_NAME}"
 			)
 		elseif( WIN32 )
 			install( FILES
