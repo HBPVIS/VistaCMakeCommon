@@ -171,6 +171,8 @@ macro( find_package_versioned _PACKAGE_NAME _VERSION_NAME )
 			list( FIND _ARGS_LIST "NO_DEFAULT_PATH" _NO_DEFAULT_PATH_FOUND_IN_ARGS )
 			list( FIND _ARGS_LIST "NO_CMAKE_BUILDS_PATH" _NO_CMAKE_BUILDS_PATHFOUND_IN_ARGS )
 			set( _PREFIX_PATHES "." )
+
+message( "ay" )
 			
 			if( ${_NO_DEFAULT_PATH_FOUND_IN_ARGS} EQUAL -1 )
 				if( ${_NO_CMAKE_PATH_FOUND_IN_ARGS} EQUAL -1 )
@@ -191,7 +193,7 @@ macro( find_package_versioned _PACKAGE_NAME _VERSION_NAME )
 					endforeach( _I RANGE 1 10 )
 				endif( WIN32 AND ${_NO_CMAKE_BUILDS_PATHFOUND_IN_ARGS} EQUAL -1 )
 			endif( ${_NO_DEFAULT_PATH_FOUND_IN_ARGS} EQUAL -1 )
-			
+message( "asd ${_PREFIX_PATHES}" )			
 			foreach( _PATH ${_PREFIX_PATHES} )
 				if( WIN32 )					
 					file( GLOB _LOCAL_FILES 
@@ -205,6 +207,7 @@ macro( find_package_versioned _PACKAGE_NAME _VERSION_NAME )
 				elseif( UNIX )
 					file( GLOB _LOCAL_FILES 
 						"${_PATH}/${_PACKAGE_NAME}Config.cmake"
+						"${_PATH}/${_PACKAGE_NAME}*/${_PACKAGE_NAME}Config.cmake"
 						"${_PATH}/share/${_PACKAGE_NAME}Config.cmake"
 						"${_PATH}/share/cmake/${_PACKAGE_NAME}Config.cmake"
 						"${_PATH}/share/${_PACKAGE_NAME}*/${_PACKAGE_NAME}Config.cmake"
@@ -234,6 +237,8 @@ macro( find_package_versioned _PACKAGE_NAME _VERSION_NAME )
 		endif( CMAKE_VERSION VERSION_LESS 2.8.2 )	
 		
 		set( _FIND_SUCCESS FALSE )
+
+message( "paths: ${${_PACKAGE_NAME}_CONSIDERED_CONFIGS}" )
 		
 		foreach( FOUND_CONFIG ${${_PACKAGE_NAME}_CONSIDERED_CONFIGS} )
 			#string( REGEX MATCH "" ${FOUND_VERSION} _REXEX_MATCH )	
