@@ -293,7 +293,7 @@ def GenCMakeForLib( startDir, projectName, renew, version, linkVistaCoreLibs, mu
 					
 	listsFile = os.path.join( startDir, "CMakeLists.txt" )
 	Backup( listsFile )
-	
+		
 	fileHandle = open( listsFile, "w" )
 	
 	fileHandle.write( "cmake_minimum_required( VERSION 2.6 )\n" )
@@ -312,13 +312,13 @@ def GenCMakeForLib( startDir, projectName, renew, version, linkVistaCoreLibs, mu
 		fileHandle.write( "endif( NOT " + str.upper(multiProjectParent) + "_COMMON_BUILD )\n" )
 	fileHandle.write( "\n" )
 	if version:
-		fileHandle.write( "vista_set_version( VistaCoreLibs RELEASE HEAD 1 10 1 "$Id: CMakeLists.txt 19647 2010-07-23 15:45:53Z tbeer $" )\n" )
+		fileHandle.write( "vista_set_version( " + projectName + " " + version + " )" )
 		fileHandle.write( "\n" )	
 	if linkVistaCoreLibs:
-		fileHandle.write( "vista_use_package( VistaCoreLibs \"" + linkVistaCoreLibs + "\" REQUIRED )\n" )
+		fileHandle.write( "vista_use_package( VistaCoreLibs \"" + linkVistaCoreLibs + "\" REQUIRED FIND_DEPENDENCIES )\n" )
 		fileHandle.write( "\n" )	
 	fileHandle.write( "\n" )
-	fileHandle.write( "# Including the source files of all subfolders recursively\n" )
+	fileHandle.write( "# Including the source files of all source subfolders recursively\n" )
 	for dir in sourceSubDirs:
 		fileHandle.write( "include( \"" + dir + "/" + localSourceFileName + "\" )\n" )
 	fileHandle.write( "\n" )
@@ -337,11 +337,9 @@ def GenCMakeForLib( startDir, projectName, renew, version, linkVistaCoreLibs, mu
 		fileHandle.write( "vista_create_cmake_configs( " + projectName + " )\n" )
 	else:
 		fileHandle.write( "if( " + str.upper(multiProjectParent) + "_COMMON_BUILD )\n" )
-		fileHandle.write( "\vista_configure_lib( " + projectName + " )\n" )
-		fileHandle.write( "\vista_install( " + projectName + " " + projectName + " )\n" )
-		fileHandle.write( "vista_create_cmake_configs( " + projectName + " )\n" )
-		if( version ):
-			fileHandle.write( "\tvista_install_package_version( " + projectName + " " + multiProjectParent + " )\n" )
+		fileHandle.write( "\tvista_configure_lib( " + projectName + " )\n" )
+		fileHandle.write( "\tvista_install( " + projectName + " " + projectName + " )\n" )
+		fileHandle.write( "\tvista_create_cmake_configs( " + projectName + " )\n" )
 		fileHandle.write( "else( " + str.upper(multiProjectParent) + "_COMMON_BUILD )\n" )
 		fileHandle.write( "\tvista_configure_lib( " + projectName + " )\n" )
 		fileHandle.write( "\tvista_install( " + projectName + " )\n" )
@@ -365,41 +363,38 @@ def GenCMakeForApp( startDir, projectName, renew, version, linkVistaCoreLibs, mu
 	fileHandle = open( listsFile, "w" )
 	
 	fileHandle.write( "cmake_minimum_required( VERSION 2.6 )\n" )
-	if( multiProjectParent == "" ):
+	if( multiProjectParent == "" ):		
 		fileHandle.write( "project( " + projectName + " )\n" )
 		fileHandle.write( "\n" )
 		fileHandle.write( "list( APPEND CMAKE_MODULE_PATH \"$ENV{VISTA_CMAKE_COMMON}\" )\n" )
 		fileHandle.write( "\n" )
-		fileHandle.write( "include( VistaAppCommon )\n" )
-	else:		
+		fileHandle.write( "include( VistaCommon )\n" )
+	else:
 		fileHandle.write( "if( NOT " + str.upper(multiProjectParent) + "_COMMON_BUILD )\n" )
 		fileHandle.write( "\tproject( " + projectName + " )\n" )
 		fileHandle.write( "\n" )
 		fileHandle.write( "\tlist( APPEND CMAKE_MODULE_PATH \"$ENV{VISTA_CMAKE_COMMON}\" )\n" )		
-		fileHandle.write( "\tinclude( VistaLibCommon )\n" )
-		fileHandle.write( "ENDif( NOT " + str.upper(multiProjectParent) + "_COMMON_BUILD )\n" )
+		fileHandle.write( "\tinclude( VistaCommon )\n" )
+		fileHandle.write( "endif( NOT " + str.upper(multiProjectParent) + "_COMMON_BUILD )\n" )
 	fileHandle.write( "\n" )
+	if version:
+		fileHandle.write( "vista_set_version( " + projectName + " " + version + " )" )
+		fileHandle.write( "\n" )	
 	if linkVistaCoreLibs:
-		fileHandle.write( "find_package_versioned( VistaCoreLibs \"" + linkVistaCoreLibs + "\" REQUIRED )\n" )
-		fileHandle.write( "vista_use_VistaCoreLibs()\n" )
-		fileHandle.write( "\n" )
-		fileHandle.write( "if( WIN32 )\n" )
-		fileHandle.write( "\tlist( APPEND LIBRARIES opengl32 glu32 )\n" )
-		fileHandle.write( "endif( WIN32 )\n" )
-		fileHandle.write( "\n" )
+		fileHandle.write( "vista_use_package( VistaCoreLibs \"" + linkVistaCoreLibs + "\" REQUIRED FIND_DEPENDENCIES )\n" )
+		fileHandle.write( "\n" )	
+	fileHandle.write( "\n" )
+	fileHandle.write( "# Including the source files of all source subfolders recursively\n" )
 	for dir in sourceSubDirs:
 		fileHandle.write( "include( \"" + dir + "/" + localSourceFileName + "\" )\n" )
-	fileHandle.write( "\n" )	
+	fileHandle.write( "\n" )
 	fileHandle.write( "add_executable( " + projectName + " ${ProjectSources} )\n" )
 	fileHandle.write( "target_link_libraries( " + projectName + "\n" )
 	if linkVistaCoreLibs:		
 		fileHandle.write( "\t${VISTACORELIBS_LIBRARIES}\n" )	
-	fileHandle.write( "\t${LIBRARIES}\n" )
 	fileHandle.write( ")\n" )
 	fileHandle.write( "\n" )
 	fileHandle.write( "vista_configure_app( " + projectName + " )\n" )
-	fileHandle.write( "vista_set_app_outdir( " + projectName + " ${CMAKE_CURRENT_SOURCE_DIR} )\n" )
-	fileHandle.write( "vista_install( " + projectName + " )\n" )
 	fileHandle.write( "\n" )
 	
 	return True
@@ -438,17 +433,10 @@ def GenMultiProject( mode, startDir, projectName, renew, version, linkVistaCoreL
 	fileHandle.write( "project( " + projectName + " )\n" )
 	fileHandle.write( "\n" )
 	fileHandle.write( "list( APPEND CMAKE_MODULE_PATH \"$ENV{VISTA_CMAKE_COMMON}\" )\n" )
-	if( mode == MODE_APP ):
-		fileHandle.write( "include( VistaAppCommon )\n" )
-	else:
-		fileHandle.write( "include( VistaLibCommon )\n" )
+	fileHandle.write( "include( VistaCommon )\n" )	
 	fileHandle.write( "\n" )
 	if( version ):
-		fileHandle.write( "set( " + projectNameUpper + "_VERSION_TYPE \"" + str(version[0]) + "\" )\n" )
-		fileHandle.write( "set( " + projectNameUpper + "_VERSION_NAME \"" + str(version[1]) + "\" )\n" )
-		fileHandle.write( "set( " + projectNameUpper + "_VERSION_MAJOR " + str(version[2]) + " )\n" )
-		fileHandle.write( "set( " + projectNameUpper + "_VERSION_MINOR " + str(version[3]) + " )\n" )
-		fileHandle.write( "set( " + projectNameUpper + "_VERSION_REVISION " + str(version[4]) + " )\n" )
+		fileHandle.write( "vista_set_version( " + projectName + " " + version + " )\n" )
 		fileHandle.write( "\n" )
 	fileHandle.write( "\n" )
 	fileHandle.write( "include_directories( ${" + projectName + "_SOURCE_DIR} )\n" )		
@@ -456,9 +444,6 @@ def GenMultiProject( mode, startDir, projectName, renew, version, linkVistaCoreL
 	fileHandle.write( "# this variable indicates to sub-projects that they are build all together\n" )
 	fileHandle.write( "set( " + projectNameUpper + "_COMMON_BUILD TRUE )\n" )
 	fileHandle.write( "\n" )
-	if linkVistaCoreLibs:
-		fileHandle.write( "find_package_versioned( VistaCoreLibs \"" + linkVistaCoreLibs + "\" )\n" )
-		fileHandle.write( "\n" )
 	for subproject in projectSubDirs:
 		fileHandle.write( "vista_conditional_add_subdirectory( " + projectNameUpper + "_BUILD_" + str.upper(subproject) + " " + subproject + " ON )\n" )
 	fileHandle.write( "\n" )
@@ -500,19 +485,19 @@ if len( sys.argv ) >= 2 and sys.argv[1] != "-h" and sys.argv[1] != "--help" :
 			version_type = sys.argv[argcount]
 			argcount = argcount + 1
 			version_name = sys.argv[argcount]
-			version_major = 0
-			version_minor = 0
-			version_revision = 0
+			version = version_type + " " + version_name;
 			if( CheckIsAdditionalInfoArgument( argcount + 1 ) ):
 				argcount = argcount + 1
-				version_major = sys.argv[argcount]
+				version = version + " " + str( sys.argv[argcount] )
 			if( CheckIsAdditionalInfoArgument( argcount + 1 ) ):
 				argcount = argcount + 1
-				version_minor = sys.argv[argcount]
+				version = version + " " + str( sys.argv[argcount] )
 			if( CheckIsAdditionalInfoArgument( argcount + 1 ) ):
 				argcount = argcount + 1
-				version_revision = sys.argv[argcount]
-			version = ( version_type, version_name, version_major, version_minor, version_revision )
+				version = version + " " + str( sys.argv[argcount] )
+			if( CheckIsAdditionalInfoArgument( argcount + 1 ) ):
+				argcount = argcount + 1
+				version = version + " " + str( sys.argv[argcount] )
 		else:
 			print( "unknown parameter: " + arg )
 		argcount = argcount + 1

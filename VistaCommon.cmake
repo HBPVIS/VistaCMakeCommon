@@ -104,13 +104,15 @@ macro( vista_get_svn_revision _TARGET_VAR )
 	if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.svn/entries" )
 		 file( STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/.svn/entries" _FILE_ENTRIES LIMIT_COUNT 10 )
 		 set( _NEXT_IS_SVN FALSE )
+		 set( _FOUND FALSE )
 		 foreach( _STRING ${_FILE_ENTRIES} )
-			if( NOT ${_TARGET_VAR} AND _STRING STREQUAL "dir" )
+			if( NOT _FOUND AND ${_STRING} STREQUAL "dir" )
 				set( _NEXT_IS_SVN TRUE )
 			elseif( _NEXT_IS_SVN )
 				set( ${_TARGET_VAR} ${_STRING} )
 				set( _NEXT_IS_SVN FALSE )
-			endif( NOT ${_TARGET_VAR} AND _STRING STREQUAL "dir" )
+				set( _FOUND TRUE )
+			endif( NOT _FOUND AND ${_STRING} STREQUAL "dir" )
 		 endforeach( _STRING ${_FILE_ENTRIES} )
 	endif( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.svn/entries" )
 endmacro( vista_get_svn_revision )
@@ -212,6 +214,8 @@ macro( vista_use_package _PACKAGE_NAME )
 			find_package( V${_PACKAGE_NAME} ${_FIND_PACKAGE_ARGS} )
 		endif( _PACKAGE_VERSION )
 		
+		message( "vista_use_package( ${_PACKAGE_NAME} FIND_DEPENDENCIES=${_FIND_DEPENDENCIES} )" )
+		
 		set( ${_PACKAGE_NAME_UPPER}_FOUND ${${_PACKAGE_NAME_UPPER}_FOUND} )
 		
 		#if found - set required variables
@@ -226,19 +230,18 @@ macro( vista_use_package _PACKAGE_NAME )
 			endif( ${_PACKAGE_NAME_UPPER}_HWARCH AND NOT ${${_PACKAGE_NAME_UPPER}_HWARCH} STREQUAL ${VISTA_HWARCH} )
 			
 			#handle dependencies
-			
 			foreach( _DEPENDENCY ${${_PACKAGE_NAME_UPPER}_DEPENDENCIES} )
 				string( TOUPPER ${_DEPENDENCY} _DEP_UPPER )
 				if( _FIND_DEPENDENCIES )
 					# find and use the dependency. If it fails, utter a warning
-					vista_use_package( V${_DEPENDENCY} )
+					vista_use_package( ${_DEPENDENCY} FIND_DEPENDENCIES )
 					if( NOT V${_DEP_UPPER}_FOUND )
 						message( WARNING "vista_use_package( ${_PACKAGE_NAME} ) - Package depends on \"${_DEPENDENCY}\", but including it failed" )
 					endif( NOT V${_DEP_UPPER}_FOUND )
 				else( _FIND_DEPENDENCIES )
 					# check if dependencies are already included. If not, utter a warning					
 					if( NOT ${_DEP_UPPER}_FOUND AND NOT V${_DEP_UPPER}_FOUND AND NOT _QUIET )
-						message( WARNING "vista_use_package( ${_PACKAGE_NAME} ) - Package depends on \"${_DEPENDENCY}\", which was not found yet" )
+						message( "vista_use_package( ${_PACKAGE_NAME} ) - Package depends on \"${_DEPENDENCY}\", which was not found yet" )
 					endif( NOT ${_DEP_UPPER}_FOUND AND NOT V${_DEP_UPPER}_FOUND AND NOT _QUIET )
 				endif( _FIND_DEPENDENCIES )
 			endforeach( _DEPENDENCY ${${_PACKAGE_NAME_UPPER}_DEPENDENCIES} )
@@ -288,7 +291,7 @@ macro( vista_configure_app APP_NAME )
 						@ONLY
 				)
 			endif( VISTA_SCRIPT_FILE )
-		endif( MSVC )
+		elseif( MSVC )
 			find_file( VISTA_SCRIPT_FILE "set_path.sh_proto" ${CMAKE_MODULE_PATH} )
 			if( VISTA_SCRIPT_FILE )
 				configure_file(
@@ -297,7 +300,7 @@ macro( vista_configure_app APP_NAME )
 						@ONLY
 				)
 			endif( VISTA_SCRIPT_FILE )
-		elseif( WIN32 )
+		endif( WIN32 )
 	endif( VISTA_TARGET_LINK_DIRS )
 		
 	#if we're usign MSVC, we set up a *.vcproj.user file
