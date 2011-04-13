@@ -41,8 +41,14 @@ if( NOT VSOLID_FOUND )
 	endif( SOLID_ROOT_DIR )	
 	
 	macro( vista_use_Solid )
-		include_directories( ${SOLID_INCLUDE_DIRS} )
-		link_directories( ${SOLID_LIBRARY_DIRS} )
+		if( NOT VISTA_USE_SOLID_CALLED )
+			include_directories( ${SOLID_INCLUDE_DIRS} )
+			link_directories(  ${SOLID_LIBRARY_DIRS} )		
+			#set variables for Vista BuildSystem to track dependencies
+			list( APPEND VISTA_TARGET_LINK_DIRS ${SOLID_LIBRARY_DIRS} )
+			list( APPEND VISTA_TARGET_DEPENDENCIES "Solid" )
+			set( VISTA_USE_SOLID_CALLED TRUE )
+		endif( NOT VISTA_USE_SOLID_CALLED )
 	endmacro( vista_use_Solid )
 
 

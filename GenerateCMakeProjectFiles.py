@@ -302,26 +302,21 @@ def GenCMakeForLib( startDir, projectName, renew, version, linkVistaCoreLibs, mu
 		fileHandle.write( "\n" )
 		fileHandle.write( "list( APPEND CMAKE_MODULE_PATH \"$ENV{VISTA_CMAKE_COMMON}\" )\n" )
 		fileHandle.write( "\n" )
-		fileHandle.write( "include( VistaLibCommon )\n" )
+		fileHandle.write( "include( VistaCommon )\n" )
 	else:
 		fileHandle.write( "if( NOT " + str.upper(multiProjectParent) + "_COMMON_BUILD )\n" )
 		fileHandle.write( "\tproject( " + projectName + " )\n" )
 		fileHandle.write( "\n" )
 		fileHandle.write( "\tlist( APPEND CMAKE_MODULE_PATH \"$ENV{VISTA_CMAKE_COMMON}\" )\n" )		
-		fileHandle.write( "\tinclude( VistaLibCommon )\n" )
+		fileHandle.write( "\tinclude( VistaCommon )\n" )
 		fileHandle.write( "endif( NOT " + str.upper(multiProjectParent) + "_COMMON_BUILD )\n" )
 	fileHandle.write( "\n" )
+	if version:
+		fileHandle.write( "vista_set_version( VistaCoreLibs RELEASE HEAD 1 10 1 "$Id: CMakeLists.txt 19647 2010-07-23 15:45:53Z tbeer $" )\n" )
+		fileHandle.write( "\n" )	
 	if linkVistaCoreLibs:
-		fileHandle.write( "find_package_versioned( VistaCoreLibs \"" + linkVistaCoreLibs + "\" REQUIRED )\n" )
-		fileHandle.write( "vista_use_VistaCoreLibs()\n" )
-		fileHandle.write( "\n" )
-	fileHandle.write( "if( WIN32 )\n" )
-	fileHandle.write( "\tif( BUILD_SHARED_LIBS )\n" )
-	fileHandle.write( "\t\tadd_definitions( -D" + str.upper( projectName ) + "_EXPORTS )\n" )
-	fileHandle.write( "\telse( BUILD_SHARED_LIBS )\n" )
-	fileHandle.write( "\t\tadd_definitions( -D" + str.upper( projectName ) + "_STATIC )\n" )
-	fileHandle.write( "\tendif( BUILD_SHARED_LIBS )\n" )
-	fileHandle.write( "endif( WIN32 )\n" )
+		fileHandle.write( "vista_use_package( VistaCoreLibs \"" + linkVistaCoreLibs + "\" REQUIRED )\n" )
+		fileHandle.write( "\n" )	
 	fileHandle.write( "\n" )
 	fileHandle.write( "# Including the source files of all subfolders recursively\n" )
 	for dir in sourceSubDirs:
@@ -329,8 +324,7 @@ def GenCMakeForLib( startDir, projectName, renew, version, linkVistaCoreLibs, mu
 	fileHandle.write( "\n" )
 	fileHandle.write( "add_library( " + projectName + " ${ProjectSources} )\n" )
 	if( multiProjectParent != "" ):
-		fileHandle.write( "#The following line prevent CMake from adding all depencies to other projects that link\n" )
-		fileHandle.write( "# this one from within the same cmake build\n" )
+		fileHandle.write( "#The following line prevent CMake from adding all depencies to other projects that link it from within the same cmake build\n" )
 		fileHandle.write( "set_property( TARGET " + projectName + " PROPERTY LINK_INTERFACE_LIBRARIES \"\" )\n" )
 	fileHandle.write( "target_link_libraries( " + projectName + "\n" )
 	if linkVistaCoreLibs:		
@@ -338,26 +332,20 @@ def GenCMakeForLib( startDir, projectName, renew, version, linkVistaCoreLibs, mu
 	fileHandle.write( ")\n" )
 	fileHandle.write( "\n" )
 	if( multiProjectParent == "" ):
+		fileHandle.write( "vista_configure_lib( " + projectName + " )\n" )
 		fileHandle.write( "vista_install( " + projectName + " )\n" )
-		fileHandle.write( "vista_install_package_config( " + projectName + " )\n" )		
-		if( version ):
-			fileHandle.write( "vista_install_package_version( " + projectName 
-								+ " \"" + version[0] + "\" \"" + version[1] + "\" "
-								+ version[2] + " " + version[3] + " " + version[4] + " )\n" )
+		fileHandle.write( "vista_create_cmake_configs( " + projectName + " )\n" )
 	else:
 		fileHandle.write( "if( " + str.upper(multiProjectParent) + "_COMMON_BUILD )\n" )
-		fileHandle.write( "\tvista_install( " + projectName + " " + projectName + " )\n" )
-		fileHandle.write( "\tvista_install_package_config( " + projectName + " " + projectName + " )\n" )
+		fileHandle.write( "\vista_configure_lib( " + projectName + " )\n" )
+		fileHandle.write( "\vista_install( " + projectName + " " + projectName + " )\n" )
+		fileHandle.write( "vista_create_cmake_configs( " + projectName + " )\n" )
 		if( version ):
 			fileHandle.write( "\tvista_install_package_version( " + projectName + " " + multiProjectParent + " )\n" )
 		fileHandle.write( "else( " + str.upper(multiProjectParent) + "_COMMON_BUILD )\n" )
+		fileHandle.write( "\tvista_configure_lib( " + projectName + " )\n" )
 		fileHandle.write( "\tvista_install( " + projectName + " )\n" )
-		fileHandle.write( "\tvista_install_package_config( " + projectName + " )\n" )		
-		if( version ):
-			fileHandle.write( "\tvista_install_package_version( " + projectName 
-								+ " \"" + str(version[0]) + "\" \"" + str(version[1]) + "\" "
-								+ str(version[2]) + " " + str(version[3]) + " " + str(version[4]) + " )\n" )
-		fileHandle.write( "endif( " + str.upper(multiProjectParent) + "_COMMON_BUILD )\n" )
+		fileHandle.write( "\tvista_create_cmake_configs( " + projectName + " )\n" )
 		fileHandle.write( "\n" )
 		
 	return True

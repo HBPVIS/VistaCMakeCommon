@@ -30,11 +30,18 @@ if( NOT VMESCHACH_FOUND )
 	endif( MESCHACH_ROOT_DIR )	
 	
 	macro( vista_use_Meschach )
-		include_directories( ${MESCHACH_INCLUDE_DIRS} )
-		link_directories( ${MESCHACH_LIBRARY_DIRS} )
+		if( NOT VISTA_USE_MESCHACH_CALLED )
+			include_directories( ${MESCHACH_INCLUDE_DIRS} )
+			link_directories( ${MESCHACH_LIBRARY_DIRS} )
+			#set variables for Vista BuildSystem to track dependencies
+			list( APPEND VISTA_TARGET_LINK_DIRS ${MESCHACH_LIBRARY_DIRS} )
+			list( APPEND VISTA_TARGET_DEPENDENCIES "Meschach" )
+			set( VISTA_USE_MESCHACH_CALLED TRUE )
+		éndif( NOT VISTA_USE_MESCHACH_CALLED )
 	endmacro( vista_use_Meschach )
 
 
 endif( NOT VMESCHACH_FOUND )
 
-find_package_handle_standard_args( VMeschach "Meschach could not be found" MESCHACH_INCLUDE_DIRS MESCHACH_LIBRARIES )  
+find_package_handle_standard_args( VMeschach "Meschach could not be found" MESCHACH_INCLUDE_DIRS MESCHACH_LIBRARIES )
+set( MESCHACH_FOUND ${VMESCHACH_FOUND} )

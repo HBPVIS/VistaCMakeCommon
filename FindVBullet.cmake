@@ -5,7 +5,8 @@ include( FindPackageHandleStandardArgs )
 if( NOT VBULLET_FOUND )
 
 	find_path( BULLET_ROOT_DIR include/btBulletCollisionCommon.h
-				PATHS	$ENV{BULLET_ROOT}/${VISTA_HWARCH} $ENV{BULLET_ROOT} 
+				PATHS	${BULLET_ROOT_DIR}
+						$ENV{BULLET_ROOT}/${VISTA_HWARCH} $ENV{BULLET_ROOT} 
 						$ENV{VRDEV}/SOLID/${VISTA_HWARCH} $ENV{VRDEV}/SOLID/
 				CACHE "Bullet package directory" )
 
@@ -39,12 +40,19 @@ if( NOT VBULLET_FOUND )
 		
 	endif( BULLET_ROOT_DIR )	
 	
-	macro( vista_use_bullet )
+	macro( vista_use_Bullet )
+		if( NOT VISTA_USE_BULLET_CALLED )
 			include_directories( ${BULLET_INCLUDE_DIRS} )
-			link_directories(  ${BULLET_LIBRARY_DIRS} )
+			link_directories( ${BULLET_LIBRARY_DIRS} )		
+			#set variables for Vista BuildSystem to track dependencies
+			list( APPEND VISTA_TARGET_LINK_DIRS ${BULLET_LIBRARY_DIRS} )
+			list( APPEND VISTA_TARGET_DEPENDENCIES "Bullet" )
+			set( VISTA_USE_BULLET_CALLED TRUE )
+		endif( NOT VISTA_USE_BULLET_CALLED )
 	endmacro( vista_use_bullet )
 
 
 endif( NOT VBULLET_FOUND )
 
-find_package_handle_standard_args( VBullet "Bullet could not be found" BULLET_INCLUDE_DIRS BULLET_LIBRARIES )  
+find_package_handle_standard_args( VBullet "Bullet could not be found" BULLET_INCLUDE_DIRS BULLET_LIBRARIES ) 
+set( BULLET_FOUND ${VBULLET_FOUND} )

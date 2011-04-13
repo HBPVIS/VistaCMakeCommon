@@ -11,6 +11,7 @@
 			<DebugSettings
 				Command="$(TargetPath)"
 				WorkingDirectory="@_WORK_DIR@"
+				Environment="@_ENVIRONMENT@"
 			/>
 		</Configuration>
 		<Configuration
@@ -19,6 +20,7 @@
 			<DebugSettings
 				Command="$(TargetPath)"
 				WorkingDirectory="@_WORK_DIR@"
+				Environment="@_ENVIRONMENT@"
 			/>
 		</Configuration>
 		<Configuration
@@ -27,6 +29,7 @@
 			<DebugSettings
 				Command="$(TargetPath)"
 				WorkingDirectory="@_WORK_DIR@"
+				Environment="@_ENVIRONMENT@"
 			/>
 		</Configuration>
 		<Configuration
@@ -35,6 +38,7 @@
 			<DebugSettings
 				Command="$(TargetPath)"
 				WorkingDirectory="@_WORK_DIR@"
+				Environment="@_ENVIRONMENT@"
 			/>
 		</Configuration>
 	</Configurations>

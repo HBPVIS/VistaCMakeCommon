@@ -2,22 +2,14 @@
 # They will be replaced by CMake 
 
 # Add library name variables
-set( @_PACKAGE_NAME_UPPER@_ROOT_DIR "@CMAKE_INSTALL_PREFIX@" )
-set( @_PACKAGE_NAME_UPPER@_INCLUDE_DIR "${@_PACKAGE_NAME_UPPER@_ROOT_DIR}/@_IN_INC_POSTFIX@" )
-set( @_PACKAGE_NAME_UPPER@_LIBRARIES_DIR "${@_PACKAGE_NAME_UPPER@_ROOT_DIR}/@_IN_LIB_POSTFIX@" )
+set( @_PACKAGE_NAME_UPPER@_ROOT_DIR "@_PACKAGE_ROOT_DIR@" )
+set( @_PACKAGE_NAME_UPPER@_INCLUDE_DIRS @_PACKAGE_INCLUDE_DIR@ )
+set( @_PACKAGE_NAME_UPPER@_LIBRARY_DIRS @_PACKAGE_LIBRARY_DIR@ )
 set( @_PACKAGE_NAME_UPPER@_DEFINITIONS "" )
 set( @_PACKAGE_NAME_UPPER@_HWARCH "@VISTA_HWARCH@" )
 set( @_PACKAGE_NAME_UPPER@_LIBRARIES
 		optimized @_PACKAGE_NAME@
 		debug @_PACKAGE_NAME@@CMAKE_DEBUG_POSTFIX@ )
+set( @_PACKAGE_NAME_UPPER@_DEPENDENCIES @VISTA_TARGET_DEPENDENCIES@ )
 	
-# Add the includes and libraries to the compiler/linker
-# search directories
-macro( vista_use_@_PACKAGE_NAME@ )
-	include_directories( ${@_PACKAGE_NAME_UPPER@_INCLUDE_DIR} )
-	link_directories( ${@_PACKAGE_NAME_UPPER@_LIB_DIR} )
-	add_definitions( ${@_PACKAGE_NAME_UPPER@_DEFINITIONS} )
-	if( NOT ${@_PACKAGE_NAME_UPPER@_HWARCH} STREQUAL ${VISTA_HWARCH} )
-		message( "Warning( @_PACKAGE_NAME@Configure.cmake ) - Library was built as ${@_PACKAGE_NAME_UPPER@_HWARCH}, but is used with ${VISTA_HWARCH}" )
-	endif( NOT ${@_PACKAGE_NAME_UPPER@_HWARCH} STREQUAL ${VISTA_HWARCH} )
-endmacro( vista_use_@_PACKAGE_NAME@ )
+set( @_PACKAGE_NAME_UPPER@_FOUND TRUE )
