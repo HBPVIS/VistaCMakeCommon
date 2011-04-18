@@ -73,6 +73,7 @@ include( FindPackageHandleStandardArgs )
 				"${_PATH}/share/VistaCoreLibs*/VistaCoreLibsConfig.cmake"
 				"${_PATH}/share/VistaCoreLibs*/cmake/VistaCoreLibsConfig.cmake"
 				"${_PATH}/share/cmake/VistaCoreLibs*/VistaCoreLibsConfig.cmake"
+				"${_PATH}/VistaCoreLibs*/share/cmake/VistaCoreLibsConfig.cmake"
 				"${_PATH}/lib/VistaCoreLibsConfig.cmake"
 				"${_PATH}/lib/cmake/VistaCoreLibsConfig.cmake"
 				"${_PATH}/lib/VistaCoreLibs*/VistaCoreLibsConfig.cmake"
