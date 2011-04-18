@@ -133,19 +133,13 @@ macro( replace_svn_revision_tag _STRING_VAR )
 	endif( _MATCH_SUCCESS )	
 endmacro( replace_svn_revision_tag VARIABLE_STRING_VAR )
 
-
-macro( clean_former_copied_package_configs _PACKAGE_NAME _PACKAGE_ROOT_DIR )
-	if( UNIX )
-		set( _CMAKE_SUBDIR "share/cmake" )
-	elseif( WIN32 )
-		set( _CMAKE_SUBDIR "cmake" )
-	endif()
-
+# local macro, for use in this file only
+macro( local_clean_old_configs _PACKAGE_NAME _PACKAGE_ROOT_DIR )
 	file( GLOB_RECURSE _ALL_VERSION_FILES "$ENV{VISTA_CMAKE_COMMON}/configs/${_PACKAGE_NAME}*/${_PACKAGE_NAME}ConfigVersion.cmake" )
 	foreach( _FILE ${_ALL_VERSION_FILES} )
 		include( ${_FILE} )
 		if( PACKAGE_REFERENCE_OUTDATED OR ${_PACKAGE_ROOT_DIR} STREQUAL ${PACKAGE_REFERENCE_DIR} )
-			string( REGEX MATCH "($ENV{VISTA_CMAKE_COMMON}/configs/.+)/${_CMAKE_SUBDIR}/.*" _MATCHED ${_FILE} )
+			string( REGEX MATCH "($ENV{VISTA_CMAKE_COMMON}/configs/.+)/.*" _MATCHED ${_FILE} )
 			if( _MATCHED )
 				set( _DIR ${CMAKE_MATCH_1} )			
 				message( STATUS "Removing previous config copied to \"${_DIR}\"" )
@@ -153,7 +147,21 @@ macro( clean_former_copied_package_configs _PACKAGE_NAME _PACKAGE_ROOT_DIR )
 			endif( _MATCHED )
 		endif( PACKAGE_REFERENCE_OUTDATED OR ${_PACKAGE_ROOT_DIR} STREQUAL ${PACKAGE_REFERENCE_DIR} )
 	endforeach( _FILE ${_ALL_VERSION_FILES} )
-endmacro( clean_former_copied_package_configs _PACKAGE_NAME _PACKAGE_ROOT_DIR )
+endmacro( local_clean_old_configs _PACKAGE_NAME _PACKAGE_ROOT_DIR )
+
+# local macro, for use in this file only
+macro( local_use_existing_config_libs _CONFIG_FILE )
+	if( EXISTS ${_CONFIG_FILE} )
+		include( ${_CONFIG_FILE} )
+		if( ${_PACKAGE_NAME_UPPER}_ROOT_DIR STREQUAL _PACKAGE_ROOT_DIR )
+			message( "${_PACKAGE_NAME_UPPER}_LIBRARY_DIRS}=${${_PACKAGE_NAME_UPPER}_LIBRARY_DIRS}" )
+			message( "_PACKAGE_LIBRARY_DIR=${_PACKAGE_LIBRARY_DIR}" )
+			list( APPEND _PACKAGE_LIBRARY_DIR ${${_PACKAGE_NAME_UPPER}_LIBRARY_DIRS} )
+			list( REMOVE_DUPLICATES _PACKAGE_LIBRARY_DIR )
+			message( "_PACKAGE_LIBRARY_DIR=${_PACKAGE_LIBRARY_DIR}" )
+		endif( ${_PACKAGE_NAME_UPPER}_ROOT_DIR STREQUAL _PACKAGE_ROOT_DIR )
+	endif( EXISTS ${_CONFIG_FILE} )
+endmacro( local_use_existing_config_libs )
 
 
 
@@ -489,12 +497,6 @@ macro( vista_create_cmake_configs _TARGET )
 	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
 	set( _PRECONDITION_FAIL FALSE )
 	
-	if( UNIX )
-		set( _CMAKE_SUBDIR "share/cmake" )
-	elseif( WIN32 )
-		set( _CMAKE_SUBDIR "cmake" )
-	endif()
-	
 	if( ${ARGC} GREATER 1 )	
 		#look for custom config file
 		if( EXISTS ${ARGV1} )
@@ -550,13 +552,13 @@ macro( vista_create_cmake_configs _TARGET )
 
 			list( REMOVE_DUPLICATES _PACKAGE_INCLUDE_DIR )
 
-			clean_former_copied_package_configs( ${_PACKAGE_NAME} ${_PACKAGE_ROOT_DIR} )
-			configure_file(	${_CONFIG_PROTO_FILE} "${CMAKE_BINARY_DIR}/${_CMAKE_SUBDIR}/${_PACKAGE_NAME}Config.cmake" @ONLY )
-			file( COPY "${CMAKE_BINARY_DIR}/${_CMAKE_SUBDIR}/${_PACKAGE_NAME}Config.cmake"
-					DESTINATION ${_PACKAGE_CONFIG_TARGET}-build/${_CMAKE_SUBDIR} )
+			local_use_existing_config_libs( ${_PACKAGE_CONFIG_TARGET}-build/${_PACKAGE_NAME}Config.cmake )
+			local_clean_old_configs( ${_PACKAGE_NAME} ${_PACKAGE_ROOT_DIR} )
+			configure_file(	${_CONFIG_PROTO_FILE} "${CMAKE_BINARY_DIR}/cmake/${_PACKAGE_NAME}Config.cmake" @ONLY )
+			file( COPY "${CMAKE_BINARY_DIR}/cmake/${_PACKAGE_NAME}Config.cmake"
+					DESTINATION ${_PACKAGE_CONFIG_TARGET}-build )
 			
 			set( _PACKAGE_ROOT_DIR "${CMAKE_INSTALL_PREFIX}" )
-			clean_former_copied_package_configs( ${_PACKAGE_NAME} ${_PACKAGE_ROOT_DIR} )
 			if( ${${_PACKAGE_NAME_UPPER}_INCLUDE_SUBDIR} )
 				set( _PACKAGE_INCLUDE_DIR "${_PACKAGE_ROOT_DIR}/${${_PACKAGE_NAME_UPPER}_INCLUDE_SUBDIR}" )		
 			else( ${${_PACKAGE_NAME_UPPER}_INCLUDE_SUBDIR} )
@@ -568,28 +570,33 @@ macro( vista_create_cmake_configs _TARGET )
 				set( _PACKAGE_LIBRARY_DIR "${_PACKAGE_ROOT_DIR}/lib" )
 			endif( ${${_PACKAGE_NAME_UPPER}_LIB_SUBDIR} )
 			
+			local_use_existing_config_libs( ${CMAKE_INSTALL_PREFIX}/cmake/${_PACKAGE_NAME}Config.cmake )
+			local_clean_old_configs( ${_PACKAGE_NAME} ${_PACKAGE_ROOT_DIR} )
 			configure_file(	${_CONFIG_PROTO_FILE} "${CMAKE_BINARY_DIR}/toinstall/${_PACKAGE_NAME}Config.cmake" @ONLY )
 			install( FILES
 				"${CMAKE_BINARY_DIR}/toinstall/${_CMAKE_SBDIR}/${_PACKAGE_NAME}Config.cmake"
-				DESTINATION "${CMAKE_INSTALL_PREFIX}/${_CMAKE_SUBDIR}"
+				DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake"
 			)
 			install( FILES
 				"${CMAKE_BINARY_DIR}/toinstall/${_CMAKE_SBDIR}/${_PACKAGE_NAME}Config.cmake"
-				DESTINATION "${_PACKAGE_CONFIG_TARGET}-install/${_CMAKE_SUBDIR}"
+				DESTINATION "${_PACKAGE_CONFIG_TARGET}-install"
 			)
 		else()
 			# we create just the install file			
 			set( _PACKAGE_ROOT_DIR ${CMAKE_INSTALL_PREFIX} )
 			set( _PACKAGE_INCLUDE_DIR ${_PACKAGE_ROOT_DIR}/${${_PACKAGE_NAME_UPPER}_INCLUDE_SUBDIR} )
 			set( _PACKAGE_LIBRARY_DIR ${_PACKAGE_ROOT_DIR}/${${_PACKAGE_NAME_UPPER}_LIB_SUBDIR} )
-			configure_file(	${_CONFIG_PROTO_FILE} ${CMAKE_BINARY_DIR}/${_CMAKE_SUBDIR}/${_PACKAGE_NAME}Config.cmake	@ONLY )
+			
+			local_use_existing_config_libs( ${CMAKE_INSTALL_PREFIX}/cmake/${_PACKAGE_NAME}Config.cmake )
+			local_clean_old_configs( ${_PACKAGE_NAME} ${_PACKAGE_ROOT_DIR} )
+			configure_file(	${_CONFIG_PROTO_FILE} ${CMAKE_BINARY_DIR}/cmake/${_PACKAGE_NAME}Config.cmake	@ONLY )
 			install( FILES
-				${CMAKE_BINARY_DIR}/${_CMAKE_SUBDIR}/${_PACKAGE_NAME}Config.cmake
-				DESTINATION "${CMAKE_INSTALL_PREFIX}/${_CMAKE_SUBDIR}"
+				${CMAKE_BINARY_DIR}/cmake/${_PACKAGE_NAME}Config.cmake
+				DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake"
 			)
 			install( FILES
-				${CMAKE_BINARY_DIR}/${_CMAKE_SUBDIR}/${_PACKAGE_NAME}Config.cmake
-				DESTINATION "${_PACKAGE_CONFIG_TARGET}-install/${_CMAKE_SUBDIR}"
+				${CMAKE_BINARY_DIR}/cmake/${_PACKAGE_NAME}Config.cmake
+				DESTINATION "${_PACKAGE_CONFIG_TARGET}-install"
 			)
 		endif( _PACKAGE_CONFIG_TARGET )
 		
@@ -609,31 +616,31 @@ macro( vista_create_cmake_configs _TARGET )
 				
 				if( _PACKAGE_CONFIG_TARGET )
 					set( _PACKAGE_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}" )
-					configure_file( ${VISTA_VERSION_PROTO_FILE} ${CMAKE_BINARY_DIR}/${_CMAKE_SUBDIR}/${_PACKAGE_NAME}ConfigVersion.cmake @ONLY )
-					file( COPY ${CMAKE_BINARY_DIR}/${_CMAKE_SUBDIR}/${_PACKAGE_NAME}ConfigVersion.cmake 
-							DESTINATION ${_PACKAGE_CONFIG_TARGET}-build/${_CMAKE_SUBDIR} )
+					configure_file( ${VISTA_VERSION_PROTO_FILE} ${CMAKE_BINARY_DIR}/cmake/${_PACKAGE_NAME}ConfigVersion.cmake @ONLY )
+					file( COPY ${CMAKE_BINARY_DIR}/cmake/${_PACKAGE_NAME}ConfigVersion.cmake 
+							DESTINATION ${_PACKAGE_CONFIG_TARGET}-build )
 					
 					set( _PACKAGE_ROOT_DIR ${CMAKE_INSTALL_PREFIX} )
 					configure_file( ${VISTA_VERSION_PROTO_FILE} ${CMAKE_BINARY_DIR}/toinstall/${_PACKAGE_NAME}ConfigVersion.cmake @ONLY )			
 					install( FILES
 						"${CMAKE_BINARY_DIR}/toinstall/${_CMAKE_SBDIR}/${_PACKAGE_NAME}ConfigVersion.cmake"
-						DESTINATION "${CMAKE_INSTALL_PREFIX}/${_CMAKE_SUBDIR}"
+						DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake"
 					)
 					install( FILES
 						"${CMAKE_BINARY_DIR}/toinstall/${_CMAKE_SBDIR}/${_PACKAGE_NAME}ConfigVersion.cmake"
-						DESTINATION "${_PACKAGE_CONFIG_TARGET}-install/${_CMAKE_SUBDIR}"
+						DESTINATION "${_PACKAGE_CONFIG_TARGET}-install"
 					)
 				else()
 					# we create just the install file
 					set( _PACKAGE_ROOT_DIR ${CMAKE_INSTALL_PREFIX} )					
-					configure_file( ${VISTA_VERSION_PROTO_FILE} ${CMAKE_BINARY_DIR}/${_CMAKE_SUBDIR}/${_PACKAGE_NAME}ConfigVersion.cmake @ONLY )
+					configure_file( ${VISTA_VERSION_PROTO_FILE} ${CMAKE_BINARY_DIR}/cmake/${_PACKAGE_NAME}ConfigVersion.cmake @ONLY )
 					install( FILES
-						${CMAKE_BINARY_DIR}/${_CMAKE_SUBDIR}/${_PACKAGE_NAME}ConfigVersion.cmake
-						DESTINATION "${CMAKE_INSTALL_PREFIX}/${_CMAKE_SUBDIR}"
+						${CMAKE_BINARY_DIR}/cmake/${_PACKAGE_NAME}ConfigVersion.cmake
+						DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake"
 					)
 					install( FILES
-						${CMAKE_BINARY_DIR}/${_CMAKE_SUBDIR}/${_PACKAGE_NAME}ConfigVersion.cmake
-						DESTINATION "${_PACKAGE_CONFIG_TARGET}-install/${_CMAKE_SUBDIR}"
+						${CMAKE_BINARY_DIR}/cmake/${_PACKAGE_NAME}ConfigVersion.cmake
+						DESTINATION "${_PACKAGE_CONFIG_TARGET}-install"
 					)
 				endif( _PACKAGE_CONFIG_TARGET )
 			endif( VISTA_VERSION_PROTO_FILE )
