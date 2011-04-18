@@ -1,30 +1,30 @@
-# Search for precompiled SOLID path
-
 include( FindPackageHandleStandardArgs )
+include( VistaFindUtils )
 
 if( NOT VSOLID_FOUND )
-
-	find_path( SOLID_ROOT_DIR include/SOLID.h 
-				PATHS $ENV{SOLID_ROOT}/${VISTA_HWARCH} $ENV{SOLID_ROOT}
-						$ENV{VRDEV}/SOLID/${VISTA_HWARCH} $ENV{VRDEV}/SOLID
-				CACHE "Solid package directory" )
+	vista_find_package_root( Solid include/SOLID.h )	
 
 	if( SOLID_ROOT_DIR )
 		
 		set( SOLID_INCLUDE_DIRS ${SOLID_ROOT_DIR}/include )
 		set( SOLID_LIBRARY_DIRS ${SOLID_ROOT_DIR}/lib )
-		set( SOLID_LIBRARIES
-			optimized solid
-			optimized qhull
-			optimized broad
-			optimized complex
-			optimized convex
-			debug solidD
-			debug qhullD
-			debug broadD
-			debug complexD
-			debug convexD
-		)	
+
+		if( WIN32 )
+			set( SOLID_LIBRARIES
+				optimized solid
+				optimized qhull
+				optimized broad
+				optimized complex
+				optimized convex
+				debug solidD
+				debug qhullD
+				debug broadD
+				debug complexD
+				debug convexD
+			)
+		else()
+			set( SOLID_LIBRARIES solid )
+		endif( WIN32 )	
 		
 		
 		

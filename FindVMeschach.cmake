@@ -1,12 +1,8 @@
-# Search for precompiled MESCHACH path
-
 include( FindPackageHandleStandardArgs )
+include( VistaFindUtils )
 
 if( NOT VMESCHACH_FOUND )
-	find_path( MESCHACH_ROOT_DIR include/zmatrix2.h include/zmatrix2.h include/matrix2.h include/meminfo.h include/machine.h include/sparse2.h 
-				PATHS $ENV{MESCHACH_ROOT}/${VISTA_HWARCH} $ENV{MESCHACH_ROOT}
-						$ENV{VRDEV}/Meschach/${VISTA_HWARCH} $ENV{VRDEV}/Meschach
-				CACHE "Meschach package directory" )
+	vista_find_package_root( Meschach FILES include/zmatrix2.h include/matrix2.h include/meminfo.h )	
 
 	if( MESCHACH_ROOT_DIR )		
 		set( MESCHACH_INCLUDE_DIRS ${MESCHACH_ROOT_DIR}/include )
@@ -29,5 +25,5 @@ if( NOT VMESCHACH_FOUND )
 
 endif( NOT VMESCHACH_FOUND )
 
-find_package_handle_standard_args( VMeschach "Meschach could not be found" MESCHACH_INCLUDE_DIRS MESCHACH_LIBRARIES )
-set( MESCHACH_FOUND ${VMESCHACH_FOUND} )
+find_package_handle_standard_args( VMeschach "Meschach could not be found" MESCHACH_ROOT_DIR MESCHACH_LIBRARIES )
+

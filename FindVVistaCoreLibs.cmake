@@ -56,7 +56,7 @@ include( FindPackageHandleStandardArgs )
 
 	#we first search for installed Config.cmake files for the VstaBase (which has to be there always)
 	foreach( _PATH ${_SEARCH_PREFIXES} )
-		if( WIN32 )					
+		if( WIN32 OR UNIX)					
 			file( GLOB _TMP_FILES 
 				"${_PATH}/VistaCoreLibsConfig.cmake"
 				"${_PATH}/VistaBase/cmake/VistaCoreLibsConfig.cmake"
@@ -64,10 +64,6 @@ include( FindPackageHandleStandardArgs )
 				"${_PATH}/VistaCoreLibs*/VistaCoreLibsConfig.cmake"
 				"${_PATH}/VistaCoreLibs*/cmake/VistaCoreLibsConfig.cmake"
 				"${_PATH}/VistaCoreLibs*/CMake/VistaCoreLibsConfig.cmake"
-			)
-		elseif( UNIX )
-			file( GLOB _TMP_FILES 
-				"${_PATH}/VistaCoreLibsConfig.cmake"
 				"${_PATH}/share/VistaCoreLibsConfig.cmake"
 				"${_PATH}/share/cmake/VistaCoreLibsConfig.cmake"
 				"${_PATH}/share/VistaCoreLibs*/VistaCoreLibsConfig.cmake"
@@ -80,7 +76,7 @@ include( FindPackageHandleStandardArgs )
 				"${_PATH}/lib/VistaCoreLibs*/cmake/VistaCoreLibsConfig.cmake"
 				"${_PATH}/lib/cmake/VistaCoreLibs*/VistaCoreLibsConfig.cmake"						
 			)
-		endif( WIN32 )
+		endif( WIN32 OR UNIX )
 		list( APPEND VISTACORELIBS_EXISTING_CONFIG_FILES ${_TMP_FILES} )
 	endforeach( _PATH ${_PREFIX_PATHES} )
 	
