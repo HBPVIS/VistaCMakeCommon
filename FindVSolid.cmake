@@ -10,7 +10,6 @@ if( NOT VSOLID_FOUND )
 				CACHE "Solid package directory" )
 
 	if( SOLID_ROOT_DIR )
-		message( STATUS "Found Solid in ${SOLID_ROOT_DIR}" )
 		
 		set( SOLID_INCLUDE_DIRS ${SOLID_ROOT_DIR}/include )
 		set( SOLID_LIBRARY_DIRS ${SOLID_ROOT_DIR}/lib )
@@ -54,4 +53,4 @@ if( NOT VSOLID_FOUND )
 
 endif( NOT VSOLID_FOUND )
 
-find_package_handle_standard_args( VSolid "Solid could not be found" SOLID_INCLUDE_DIRS SOLID_LIBRARIES )  
+find_package_handle_standard_args( VSolid "Solid could not be found" SOLID_ROOT_DIR )  

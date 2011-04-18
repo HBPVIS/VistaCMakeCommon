@@ -1,4 +1,7 @@
-if( NOT EXISTS "@_PACKAGE_ROOT_DIR@" )
+# we store the root dir in order to check if a new installation should delete this one
+set( PACKAGE_REFERENCE_DIR "@_PACKAGE_ROOT_DIR@" )
+
+if( NOT EXISTS ${PACKAGE_REFERENCE_DIR} )
 	# we first check if the package we point to is actually still at the place we expect it
 	# if not, we mark the version as unsuitable, and
 	set( PACKAGE_VERSION "Outdated - Directory \"@_PACKAGE_ROOT_DIR@\" does not exist anymore" )	
@@ -7,7 +10,7 @@ if( NOT EXISTS "@_PACKAGE_ROOT_DIR@" )
 	set( PACKAGE_VERSION_UNSUITABLE TRUE )
 	set( PACKAGE_REFERENCE_OUTDATED TRUE )
 
-else( NOT EXISTS "@_PACKAGE_ROOT_DIR@" )
+else( NOT EXISTS ${PACKAGE_REFERENCE_DIR} )
 	set( PACKAGE_REFERENCE_OUTDATED FALSE )
 
 	set( @_PACKAGE_NAME_UPPER@_VERSION_TYPE    "@_VERSION_TYPE@" )
@@ -200,7 +203,7 @@ else( NOT EXISTS "@_PACKAGE_ROOT_DIR@" )
 
 	endif( NOT PACKAGE_FIND_VERSION_EXT )
 
-endif( NOT EXISTS "@_PACKAGE_ROOT_DIR@" )
+endif( NOT EXISTS ${PACKAGE_REFERENCE_DIR} )
 
 
 

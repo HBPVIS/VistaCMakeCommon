@@ -147,6 +147,6 @@ else( _FOUND_CONFIG )
 	#todo - find manually
 endif( _FOUND_CONFIG )
 
-find_package_handle_standard_args( VVistaCoreLibs "VistaCoreLibs could not be found" _FOUND_CONFIG )
+find_package_handle_standard_args( VVistaCoreLibs "VistaCoreLibs could not be found" VISTACORELIBS_ROOT_DIR )
 
 

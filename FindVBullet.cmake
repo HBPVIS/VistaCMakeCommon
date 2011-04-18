@@ -10,9 +10,7 @@ if( NOT VBULLET_FOUND )
 						$ENV{VRDEV}/SOLID/${VISTA_HWARCH} $ENV{VRDEV}/SOLID/
 				CACHE "Bullet package directory" )
 
-	if( BULLET_ROOT_DIR )
-		message( STATUS "Found Bullet in ${BULLET_ROOT_DIR}" )
-		
+	if( BULLET_ROOT_DIR )		
 		set( BULLET_INCLUDE_DIRS ${BULLET_ROOT_DIR}/include )
 		set( BULLET_LIBRARY_DIRS ${BULLET_ROOT_DIR}/lib )
 		set( BULLET_LIBRARIES
@@ -38,19 +36,7 @@ if( NOT VBULLET_FOUND )
 			set( BULLET_LIBRARY_DIRS "" )
 		endif( BULLET_FOUND )
 		
-	endif( BULLET_ROOT_DIR )	
-	
-	macro( vista_use_Bullet )
-		if( NOT VISTA_USE_BULLET_CALLED )
-			include_directories( ${BULLET_INCLUDE_DIRS} )
-			link_directories( ${BULLET_LIBRARY_DIRS} )		
-			#set variables for Vista BuildSystem to track dependencies
-			list( APPEND VISTA_TARGET_LINK_DIRS ${BULLET_LIBRARY_DIRS} )
-			list( APPEND VISTA_TARGET_DEPENDENCIES "Bullet" )
-			set( VISTA_USE_BULLET_CALLED TRUE )
-		endif( NOT VISTA_USE_BULLET_CALLED )
-	endmacro( vista_use_bullet )
-
+	endif( BULLET_ROOT_DIR )
 
 endif( NOT VBULLET_FOUND )
 

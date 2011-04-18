@@ -28,9 +28,9 @@ def CheckIsSourceFile( entry ):
 		return True
 	else:
 		return False
-		
+
 def CheckIsCommented( entry ):
-	return( re.match( findCommented, entry ) )	
+	return( re.match( findCommented, entry ) )
 
 def Backup( fileName ):
 	if os.path.exists( fileName ):
@@ -53,14 +53,14 @@ def GetSourceFilesAndDirs( path ):
 	files.sort()
 	dirs.sort()
 	return files, dirs
-	
+
 def GenSourceListForSubdir( dirName, parentDir, renew, relDir = "", relSourceGroup = "" ):
 	if( dirName in excludeDirs ):
 		return False
-	
+
 	sourceSubDirs = []
-	fullDirName = os.path.join( parentDir, dirName )	
-	
+	fullDirName = os.path.join( parentDir, dirName )
+
 	if( relDir == "" ):
 		relDir = dirName
 	else:
@@ -72,44 +72,44 @@ def GenSourceListForSubdir( dirName, parentDir, renew, relDir = "", relSourceGro
 		relSourceGroup = localSourceGroup
 	else:
 		relSourceGroup = relSourceGroup + "\\\\" + localSourceGroup
-		
+
 	if( relDir == "" ):
 		relDir = "."
 
 	sourceFiles, subDirs = GetSourceFilesAndDirs( fullDirName )
-	
+
 	# recursively generate sourcefiles for subdirs
 	for dir in subDirs:
 		if GenSourceListForSubdir( dir, fullDirName, renew, relDir, relSourceGroup ):
-			sourceSubDirs.append( dir )			
-			
+			sourceSubDirs.append( dir )
+
 	if( len( sourceSubDirs ) == 0 and len( sourceFiles ) == 0 ):
 		return False # no source directory
-		
+
 
 	fileName = os.path.join( fullDirName, "_SourceFiles.cmake" )
-	
+
 	if( os.path.exists( fileName ) and not renew ):
 		# the file already exists, we just need to update it
 		#first,we just read the file
 		fileHandle = open( fileName, "r" )
 		origLines = fileHandle.readlines()
-		fileHandle.close()		
-		
+		fileHandle.close()
+
 		SourceFileGroups = {}
 		existingSourceFiles = []
 		excludedSourceFiles = {}
 		SourceFileGroupsNames = {}
 		dictVariables = {}
-				
+
 		inSet = False
 		currentSet = ""
 		setEntries = []
-		
+
 		#first, we parse the file once and check for all source files already in there
 		for line in origLines:
 			line = line.strip()
-			
+
 			if inSet:
 				# check if the set closes
 				if line == ")":
@@ -119,7 +119,7 @@ def GenSourceListForSubdir( dirName, parentDir, renew, relDir = "", relSourceGro
 				else:
 					if CheckIsSourceFile( line ):
 						setEntries.append( line )
-						existingSourceFiles.append( line )							
+						existingSourceFiles.append( line )
 			else:
 				result = re.match( findSetListRegEx, line )
 				if result:
@@ -140,7 +140,7 @@ def GenSourceListForSubdir( dirName, parentDir, renew, relDir = "", relSourceGro
 							result = re.match( findSourceGroupRegEx, line )
 							if result:
 								SourceFileGroupsNames[currentSet] = result.group(1)
-					
+
 		#now, we check which files are not in the file yet
 		missingFiles = []
 		for file in sourceFiles:
@@ -148,42 +148,42 @@ def GenSourceListForSubdir( dirName, parentDir, renew, relDir = "", relSourceGro
 				missingFiles.append( file )
 			else:
 				existingSourceFiles.remove( file )
-						
+
 		# check if anything changed at all
 		if( len( missingFiles ) == 0 and len( existingSourceFiles ) == 0 ):
 			return True
-				
+
 		#now, files in missingFiles need to be added to the default source group
 		if( len( missingFiles ) > 0 ):
 			if not "DirFiles" in SourceFileGroups:
-				SourceFileGroups["DirFiles"] = []				
+				SourceFileGroups["DirFiles"] = []
 			for file in missingFiles:
 				SourceFileGroups["DirFiles"].append( file )
 			SourceFileGroups["DirFiles"].sort()
-			
+
 		#we also need to remove files that don't exist anymore
 		for file in existingSourceFiles:
 			for group in SourceFileGroups.values():
 				if file in group:
 					group.remove( file )
-				
+
 		# additionally, we default sourcegroups with no prior name
 		for name in SourceFileGroups.keys():
 			if not name in SourceFileGroupsNames:
 				SourceFileGroupsNames[name] = name + "_SourceGroup"
-			
+
 		# we ensure that the SourceFileGroupsNames[name] variable exists, by initializing
 		# non-existing ones to RelativeSourceGroup
 		for name, entry in SourceFileGroupsNames.items():
 			if not entry in dictVariables:
 				dictVariables[entry] = "\"RelativeSourceGroup\""
-		
+
 		# make sure we dont break anything permanently: backup
 		Backup( fileName )
-					
-		# no file there yet, just create a new one		
+
+		# no file there yet, just create a new one
 		fileHandle = open( fileName, "w" )
-			
+
 		# write source files info
 		fileHandle.write( "set( RelativeDir \"" + relDir + "\" )\n" )
 		fileHandle.write( "set( RelativeSourceGroup \"" + relSourceGroup + "\" )" )
@@ -218,16 +218,16 @@ def GenSourceListForSubdir( dirName, parentDir, renew, relDir = "", relSourceGro
 			fileHandle.write( "foreach( SubDirFile ${SubDirFiles} )\n" )
 			fileHandle.write( "\tinclude( ${SubDirFile} )\n" )
 			fileHandle.write( "endforeach()\n" )
-			fileHandle.write( "\n" )	
-		
-		
+			fileHandle.write( "\n" )
+
+
 	else:
 		# make sure we dont break anything permanently: backup
 		Backup( fileName )
-		
-		# no file there yet, or we should overwrite it -> just create a new one		
+
+		# no file there yet, or we should overwrite it -> just create a new one
 		fileHandle = open( fileName, "w" )
-			
+
 		# write source files info
 		fileHandle.write( "set( RelativeDir \"" + relDir + "\" )\n" )
 		fileHandle.write( "set( RelativeSourceGroup \"" + relSourceGroup + "\" )" )
@@ -250,7 +250,7 @@ def GenSourceListForSubdir( dirName, parentDir, renew, relDir = "", relSourceGro
 			fileHandle.write( "\tlist( APPEND LocalSourceGroupFiles \"${RelativeDir}/${File}\" )\n" )
 			fileHandle.write( "\tlist( APPEND ProjectSources \"${RelativeDir}/${File}\" )\n" )
 			fileHandle.write( "endforeach()\n" )
-			fileHandle.write( "source_group( ${DirFiles_SourceGroup} FILES ${LocalSourceGroupFiles} )\n" )		
+			fileHandle.write( "source_group( ${DirFiles_SourceGroup} FILES ${LocalSourceGroupFiles} )\n" )
 			fileHandle.write( "\n" )
 		if( len( sourceSubDirs ) >  0 ):
 			fileHandle.write( "set( SubDirFiles \"\" )\n" )
@@ -262,10 +262,10 @@ def GenSourceListForSubdir( dirName, parentDir, renew, relDir = "", relSourceGro
 			fileHandle.write( "\tinclude( ${SubDirFile} )\n" )
 			fileHandle.write( "endforeach()\n" )
 			fileHandle.write( "\n" )
-		
+
 	return True
 
-	
+
 def GenSourceLists( startDir, renew ):
 	sourceSubDirs = [] # should usually be just src, but oh well
 	sourceFiles, subDirs = GetSourceFilesAndDirs( startDir )
@@ -281,23 +281,23 @@ def GenSourceLists( startDir, renew ):
 				sourceSubDirs.append( dir )
 
 	return sourceSubDirs
-	
+
 
 def GenCMakeForLib( startDir, projectName, renew, version, linkVistaCoreLibs, multiProjectParent = "" ):
 	sourceSubDirs = GenSourceLists( startDir, renew )
-	
+
 	if( len( sourceSubDirs ) == 0 ):
 		if( multiProjectParent != "" ):
 			print( "Project Directory " + startDir + " contains no sources" )
 		return False
-					
+
 	listsFile = os.path.join( startDir, "CMakeLists.txt" )
 	Backup( listsFile )
-		
+
 	fileHandle = open( listsFile, "w" )
-	
+
 	fileHandle.write( "cmake_minimum_required( VERSION 2.6 )\n" )
-	if( multiProjectParent == "" ):		
+	if( multiProjectParent == "" ):
 		fileHandle.write( "project( " + projectName + " )\n" )
 		fileHandle.write( "\n" )
 		fileHandle.write( "list( APPEND CMAKE_MODULE_PATH \"$ENV{VISTA_CMAKE_COMMON}\" )\n" )
@@ -307,16 +307,16 @@ def GenCMakeForLib( startDir, projectName, renew, version, linkVistaCoreLibs, mu
 		fileHandle.write( "if( NOT " + str.upper(multiProjectParent) + "_COMMON_BUILD )\n" )
 		fileHandle.write( "\tproject( " + projectName + " )\n" )
 		fileHandle.write( "\n" )
-		fileHandle.write( "\tlist( APPEND CMAKE_MODULE_PATH \"$ENV{VISTA_CMAKE_COMMON}\" )\n" )		
+		fileHandle.write( "\tlist( APPEND CMAKE_MODULE_PATH \"$ENV{VISTA_CMAKE_COMMON}\" )\n" )
 		fileHandle.write( "\tinclude( VistaCommon )\n" )
 		fileHandle.write( "endif( NOT " + str.upper(multiProjectParent) + "_COMMON_BUILD )\n" )
 	fileHandle.write( "\n" )
 	if version:
-		fileHandle.write( "vista_set_version( " + projectName + " " + version + " )" )
-		fileHandle.write( "\n" )	
+		fileHandle.write( "vista_set_version( " + projectName + " " + version + " )\n" )
+		fileHandle.write( "\n" )
 	if linkVistaCoreLibs:
 		fileHandle.write( "vista_use_package( VistaCoreLibs \"" + linkVistaCoreLibs + "\" REQUIRED FIND_DEPENDENCIES )\n" )
-		fileHandle.write( "\n" )	
+		fileHandle.write( "\n" )
 	fileHandle.write( "\n" )
 	fileHandle.write( "# Including the source files of all source subfolders recursively\n" )
 	for dir in sourceSubDirs:
@@ -327,8 +327,7 @@ def GenCMakeForLib( startDir, projectName, renew, version, linkVistaCoreLibs, mu
 		fileHandle.write( "#The following line prevent CMake from adding all depencies to other projects that link it from within the same cmake build\n" )
 		fileHandle.write( "set_property( TARGET " + projectName + " PROPERTY LINK_INTERFACE_LIBRARIES \"\" )\n" )
 	fileHandle.write( "target_link_libraries( " + projectName + "\n" )
-	if linkVistaCoreLibs:		
-		fileHandle.write( "\t${VISTACORELIBS_LIBRARIES}\n" )	
+	fileHandle.write( "\t${VISTA_USE_PACKAGE_LIBRARIES} # contains all libraries from vista_use_package() calls\n" )
 	fileHandle.write( ")\n" )
 	fileHandle.write( "\n" )
 	if( multiProjectParent == "" ):
@@ -344,26 +343,27 @@ def GenCMakeForLib( startDir, projectName, renew, version, linkVistaCoreLibs, mu
 		fileHandle.write( "\tvista_configure_lib( " + projectName + " )\n" )
 		fileHandle.write( "\tvista_install( " + projectName + " )\n" )
 		fileHandle.write( "\tvista_create_cmake_configs( " + projectName + " )\n" )
+		fileHandle.write( "endif( " + str.upper(multiProjectParent) + "_COMMON_BUILD )\n" )
 		fileHandle.write( "\n" )
-		
+
 	return True
-	
+
 
 def GenCMakeForApp( startDir, projectName, renew, version, linkVistaCoreLibs, multiProjectParent = "" ):
 	sourceSubDirs = GenSourceLists( startDir, renew )
-	
+
 	if( len( sourceSubDirs ) == 0 ):
 		if( multiProjectParent != "" ):
 			print( "Project Directory " + startDir + " contains no sources" )
 		return False
-					
+
 	listsFile = os.path.join( startDir, "CMakeLists.txt" )
 	Backup( listsFile )
-	
+
 	fileHandle = open( listsFile, "w" )
-	
+
 	fileHandle.write( "cmake_minimum_required( VERSION 2.6 )\n" )
-	if( multiProjectParent == "" ):		
+	if( multiProjectParent == "" ):
 		fileHandle.write( "project( " + projectName + " )\n" )
 		fileHandle.write( "\n" )
 		fileHandle.write( "list( APPEND CMAKE_MODULE_PATH \"$ENV{VISTA_CMAKE_COMMON}\" )\n" )
@@ -373,16 +373,16 @@ def GenCMakeForApp( startDir, projectName, renew, version, linkVistaCoreLibs, mu
 		fileHandle.write( "if( NOT " + str.upper(multiProjectParent) + "_COMMON_BUILD )\n" )
 		fileHandle.write( "\tproject( " + projectName + " )\n" )
 		fileHandle.write( "\n" )
-		fileHandle.write( "\tlist( APPEND CMAKE_MODULE_PATH \"$ENV{VISTA_CMAKE_COMMON}\" )\n" )		
+		fileHandle.write( "\tlist( APPEND CMAKE_MODULE_PATH \"$ENV{VISTA_CMAKE_COMMON}\" )\n" )
 		fileHandle.write( "\tinclude( VistaCommon )\n" )
 		fileHandle.write( "endif( NOT " + str.upper(multiProjectParent) + "_COMMON_BUILD )\n" )
 	fileHandle.write( "\n" )
 	if version:
 		fileHandle.write( "vista_set_version( " + projectName + " " + version + " )" )
-		fileHandle.write( "\n" )	
+		fileHandle.write( "\n" )
 	if linkVistaCoreLibs:
 		fileHandle.write( "vista_use_package( VistaCoreLibs \"" + linkVistaCoreLibs + "\" REQUIRED FIND_DEPENDENCIES )\n" )
-		fileHandle.write( "\n" )	
+		fileHandle.write( "\n" )
 	fileHandle.write( "\n" )
 	fileHandle.write( "# Including the source files of all source subfolders recursively\n" )
 	for dir in sourceSubDirs:
@@ -390,21 +390,20 @@ def GenCMakeForApp( startDir, projectName, renew, version, linkVistaCoreLibs, mu
 	fileHandle.write( "\n" )
 	fileHandle.write( "add_executable( " + projectName + " ${ProjectSources} )\n" )
 	fileHandle.write( "target_link_libraries( " + projectName + "\n" )
-	if linkVistaCoreLibs:		
-		fileHandle.write( "\t${VISTACORELIBS_LIBRARIES}\n" )	
+	fileHandle.write( "\t${VISTA_USE_PACKAGE_LIBRARIES} # contains all libraries from vista_use_package() calls\n" )
 	fileHandle.write( ")\n" )
 	fileHandle.write( "\n" )
 	fileHandle.write( "vista_configure_app( " + projectName + " )\n" )
 	fileHandle.write( "\n" )
-	
+
 	return True
 
 def GenMultiProject( mode, startDir, projectName, renew, version, linkVistaCoreLibs ):
-	
+
 	projectSubDirs = []
-	
+
 	files, dirs = GetSourceFilesAndDirs( startDir )
-	
+
 	for dir in dirs:
 		fullDir = os.path.join( startDir, dir )
 		if mode == MODE_SRC:
@@ -416,30 +415,30 @@ def GenMultiProject( mode, startDir, projectName, renew, version, linkVistaCoreL
 		else:
 			if( GenCMakeForLib( fullDir, dir, renew, version, linkVistaCoreLibs, projectName ) ):
 				projectSubDirs.append( dir )
-	
+
 	if( len( projectSubDirs ) == 0 ):
 		print( "No sub-projects found in folder " + startDir )
 		return
-		
+
 	projectNameUpper = str.upper( projectName )
-		
-		
+
+
 	listsFile = os.path.join( startDir, "CMakeLists.txt" )
 	Backup( listsFile )
-	
+
 	fileHandle = open( listsFile, "w" )
-	
+
 	fileHandle.write( "cmake_minimum_required(VERSION 2.6)\n" )
 	fileHandle.write( "project( " + projectName + " )\n" )
 	fileHandle.write( "\n" )
 	fileHandle.write( "list( APPEND CMAKE_MODULE_PATH \"$ENV{VISTA_CMAKE_COMMON}\" )\n" )
-	fileHandle.write( "include( VistaCommon )\n" )	
+	fileHandle.write( "include( VistaCommon )\n" )
 	fileHandle.write( "\n" )
 	if( version ):
 		fileHandle.write( "vista_set_version( " + projectName + " " + version + " )\n" )
 		fileHandle.write( "\n" )
 	fileHandle.write( "\n" )
-	fileHandle.write( "include_directories( ${" + projectName + "_SOURCE_DIR} )\n" )		
+	fileHandle.write( "include_directories( ${" + projectName + "_SOURCE_DIR} )\n" )
 	fileHandle.write( "\n" )
 	fileHandle.write( "# this variable indicates to sub-projects that they are build all together\n" )
 	fileHandle.write( "set( " + projectNameUpper + "_COMMON_BUILD TRUE )\n" )
@@ -455,7 +454,7 @@ if len( sys.argv ) >= 2 and sys.argv[1] != "-h" and sys.argv[1] != "--help" :
 	onlyBuildSourceLists = False
 	projectName = os.path.basename( startDir )
 	renew = False
-	linkVistaCoreLibs = False	
+	linkVistaCoreLibs = False
 	multiProject = False
 	version = False
 	while( argcount < len( sys.argv ) ):
@@ -502,7 +501,7 @@ if len( sys.argv ) >= 2 and sys.argv[1] != "-h" and sys.argv[1] != "--help" :
 			print( "unknown parameter: " + arg )
 		argcount = argcount + 1
 
-	
+
 	if multiProject :
 		GenMultiProject( mode, startDir, projectName, renew, version, linkVistaCoreLibs )
 	elif mode == MODE_SRC:
@@ -510,12 +509,12 @@ if len( sys.argv ) >= 2 and sys.argv[1] != "-h" and sys.argv[1] != "--help" :
 	elif mode == MODE_APP:
 		GenCMakeForApp( startDir, projectName, renew, version, linkVistaCoreLibs )
 	else:
-		GenCMakeForLib( startDir, projectName, renew, version, linkVistaCoreLibs )	
+		GenCMakeForLib( startDir, projectName, renew, version, linkVistaCoreLibs )
 else:
 	print( "Usage:" )
 	print( "GenCakeList MainDir [Options]" )
 	print( "Options" )
-	print( "  -app                     : the project will be configured as an application" )	
+	print( "  -app                     : the project will be configured as an application" )
 	print( "  -lib                     : the project will be configured as a library " )
 	print( "  -src                     : if set, only the " + localSourceFileName + "-files will be updated  [default]" )
 	print( "  -name                    : specify name of the project. if omitted, the directory name will be used instead" )

@@ -3,8 +3,8 @@
 # PACKAGE MACROS
 # find_package_versioned( PACKAGE_NAME _EXTENDED_VERSION_NAME ... )
 # vista_use_package( PACKAGE [VERSION] [EXACT] [[COMPONENTS | REQUIRED] comp1 comp2 ... ] [QUIET] [FIND_DEPENDENCIES] )
-# vista_configure_app( APP_NAME )
-# vista_configure_lib( LIB_NAME )
+# vista_configure_app( _TARGET_NAME )
+# vista_configure_lib( _TARGET_NAME )
 # vista_install( TARGET [INCLUDE_SUBDIRECTORY [LIBRARY_SUBDIRECTORY] ] )
 # vista_create_cmake_configs( TARGET [CUSTOM_CONFIG_FILE] )
 # vista_set_outdir( TARGET DIRECTORY )
@@ -54,46 +54,49 @@ endmacro( vista_set_defaultvalue )
 
 # vista_conditional_add_subdirectory( VARIABLE_NAME DIRECTORY [ON|OFF] [ADVANCED [MSG string] )
 # creates a cache bool variable with the specified name and cache message, initialized to the desired
-# valeu (defaults to ON ). ADVANCED marks the cache variable as advenced.
+# valeu (defaults to ON ). ADVANCED marks the cache variable as advenced. Nothing is done if the specified
+# directory does not exist
 macro( vista_conditional_add_subdirectory )
-	set( _VISTA_CONDITIONAL_SET_STATE ON )
-	set( _VISTA_CONDITIONAL_SET_ADVANCED FALSE )
-	set( _VISTA_CONDITIONAL_SET_MSG "Build the ${ARGV1} library" )
-	set( _VISTA_CONDITIONAL_SET_MSG_NEXT FALSE )
-	set( _VISTA_CONDITIONAL_ADD_TO_LIST_NEXT FALSE )
-	set( _APPEND_TO_LIST "" )
-	
-	foreach( _ARG ${ARGV} )
-		if( _VISTA_CONDITIONAL_SET_MSG_NEXT )
-			set( _VISTA_CONDITIONAL_SET_MSG ${_ARG} ${ARGV0} )
-			set( _VISTA_CONDITIONAL_SET_MSG_NEXT FALSE )
-		elseif( _VISTA_CONDITIONAL_ADD_TO_LIST_NEXT )
-			set( _VISTA_CONDITIONAL_ADD_TO_LIST_NEXT FALSE )
-			set( _APPEND_TO_LIST ${_ARG} )
-		elseif( ${_ARG} STREQUAL "ON" )
-			set( _VISTA_CONDITIONAL_SET_STATE ON )
-		elseif( ${_ARG} STREQUAL "OFF" )
-			set( _VISTA_CONDITIONAL_SET_STATE OFF )
-		elseif( ${_ARG} STREQUAL "ADVANCED" )
-			set( _VISTA_CONDITIONAL_SET_ADVANCED TRUE )
-		elseif( ${_ARG} STREQUAL "MSG" )
-			set( _VISTA_CONDITIONAL_SET_MSG_NEXT TRUE )
-		elseif( ${_ARG} STREQUAL "ADD_TO_LIST" )
-			set( _VISTA_CONDITIONAL_ADD_TO_LIST_NEXT TRUE )
-		endif( _VISTA_CONDITIONAL_SET_MSG_NEXT )
-	endforeach( _ARG ${ARGV} )
-	
-	set( ${ARGV0} ${_VISTA_CONDITIONAL_SET_STATE} CACHE BOOL "${_VISTA_CONDITIONAL_SET_MSG}" )
-	if( _VISTA_CONDITIONAL_SET_ADVANCED )
-		mark_as_advanced( ${ARGV0} )
-	endif( _VISTA_CONDITIONAL_SET_ADVANCED )
-	
-	if( ${ARGV0} )
-		add_subdirectory( ${ARGV1} )
-		if( _APPEND_TO_LIST )
-			list( APPEND ${_APPEND_TO_LIST} ${ARGV1} )
-		endif( _APPEND_TO_LIST )
-	endif( ${ARGV0} )
+	if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ARGV1}" )	
+		set( _VISTA_CONDITIONAL_SET_STATE ON )
+		set( _VISTA_CONDITIONAL_SET_ADVANCED FALSE )
+		set( _VISTA_CONDITIONAL_SET_MSG "Build the ${ARGV1} library" )
+		set( _VISTA_CONDITIONAL_SET_MSG_NEXT FALSE )
+		set( _VISTA_CONDITIONAL_ADD_TO_LIST_NEXT FALSE )
+		set( _APPEND_TO_LIST "" )
+		
+		foreach( _ARG ${ARGV} )
+			if( _VISTA_CONDITIONAL_SET_MSG_NEXT )
+				set( _VISTA_CONDITIONAL_SET_MSG ${_ARG} ${ARGV0} )
+				set( _VISTA_CONDITIONAL_SET_MSG_NEXT FALSE )
+			elseif( _VISTA_CONDITIONAL_ADD_TO_LIST_NEXT )
+				set( _VISTA_CONDITIONAL_ADD_TO_LIST_NEXT FALSE )
+				set( _APPEND_TO_LIST ${_ARG} )
+			elseif( ${_ARG} STREQUAL "ON" )
+				set( _VISTA_CONDITIONAL_SET_STATE ON )
+			elseif( ${_ARG} STREQUAL "OFF" )
+				set( _VISTA_CONDITIONAL_SET_STATE OFF )
+			elseif( ${_ARG} STREQUAL "ADVANCED" )
+				set( _VISTA_CONDITIONAL_SET_ADVANCED TRUE )
+			elseif( ${_ARG} STREQUAL "MSG" )
+				set( _VISTA_CONDITIONAL_SET_MSG_NEXT TRUE )
+			elseif( ${_ARG} STREQUAL "ADD_TO_LIST" )
+				set( _VISTA_CONDITIONAL_ADD_TO_LIST_NEXT TRUE )
+			endif( _VISTA_CONDITIONAL_SET_MSG_NEXT )
+		endforeach( _ARG ${ARGV} )	
+		
+		set( ${ARGV0} ${_VISTA_CONDITIONAL_SET_STATE} CACHE BOOL "${_VISTA_CONDITIONAL_SET_MSG}" )
+		if( _VISTA_CONDITIONAL_SET_ADVANCED )
+			mark_as_advanced( ${ARGV0} )
+		endif( _VISTA_CONDITIONAL_SET_ADVANCED )
+		
+		if( ${ARGV0} )
+			add_subdirectory( ${ARGV1} )
+			if( _APPEND_TO_LIST )
+				list( APPEND ${_APPEND_TO_LIST} ${ARGV1} )
+			endif( _APPEND_TO_LIST )
+		endif( ${ARGV0} )
+	endif( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ARGV1}" )	
 endmacro( vista_conditional_add_subdirectory )
 
 
@@ -131,7 +134,20 @@ macro( replace_svn_revision_tag _STRING_VAR )
 endmacro( replace_svn_revision_tag VARIABLE_STRING_VAR )
 
 
-
+macro( clean_former_copied_package_configs _PACKAGE_NAME _PACKAGE_ROOT_DIR )
+	file( GLOB_RECURSE _ALL_VERSION_FILES "$ENV{VISTA_CMAKE_COMMON}/configs/${_PACKAGE_NAME}*/${_PACKAGE_NAME}ConfigVersion.cmake" )
+	foreach( _FILE ${_ALL_VERSION_FILES} )
+		include( ${_FILE} )
+		if( PACKAGE_REFERENCE_OUTDATED OR ${_PACKAGE_ROOT_DIR} STREQUAL ${PACKAGE_REFERENCE_DIR} )
+			string( REGEX MATCH "($ENV{VISTA_CMAKE_COMMON}/configs/.+)/cmake/.*" _MATCHED ${_FILE} )
+			if( _MATCHED )
+				set( _DIR ${CMAKE_MATCH_1} )			
+				message( STATUS "Removing previous config copied to \"${_DIR}\"" )
+				file( REMOVE_RECURSE ${_DIR} )
+			endif( _MATCHED )
+		endif( PACKAGE_REFERENCE_OUTDATED OR ${_PACKAGE_ROOT_DIR} STREQUAL ${PACKAGE_REFERENCE_DIR} )
+	endforeach( _FILE ${_ALL_VERSION_FILES} )
+endmacro( clean_former_copied_package_configs _PACKAGE_NAME _PACKAGE_ROOT_DIR )
 
 
 
@@ -153,7 +169,9 @@ endmacro( find_package_versioned _PACKAGE_NAME _VERSION_NAME )
 
 
 # vista_use_package( PACKAGE [VERSION] [EXACT] [[COMPONENTS | REQUIRED] comp1 comp2 ... ] [QUIET] [FIND_DEPENDENCIES] )
-# finds the tdesired Package and automatically sets the include dirs, library dirs, definitions, as well as
+# finds the desired Package and automatically sets the include dirs, library dirs, definitions for the project
+# libraries have to be included using the VARIABLE PACKAGENAME_LIBRARIES. Alternatively, VISTA_USE_PACKAGE_LIBRARIES contains
+# all libraries that have linked by vista_use_package calls
 # buildsystem-specific variables. Works like find_package - taking the name, and optionally
 # VERSION - string describing the version - either the normal cmake-format XX.YY.ZZ.WW or the vista-specific extended version string
 # EXACT specifies that the version has to be matched exactly
@@ -162,47 +180,48 @@ endmacro( find_package_versioned _PACKAGE_NAME _VERSION_NAME )
 # QUIET suppresses any warnings and other output except for errors
 # FIND_DEPENDENCIES If set, all packages that are required by the included packages are tried to be found and used automatically
 macro( vista_use_package _PACKAGE_NAME )
-	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
+	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )	
 	
-	if( NOT VISTA_USING_${_PACKAGE_NAME_UPPER} )
+	# parse arguments
+	set( _FIND_PACKAGE_ARGS )
+	set( _FIND_DEPENDENCIES FALSE )
+	set( _PACKAGE_VERSION "" )
+	set( _QUIET FALSE )
+	set( _REQUIRED FALSE )
+	set( _USING_COMPONENTS FALSE )
+	foreach( _ARG ${ARGV} )			
+		if( ${_ARG} STREQUAL "FIND_DEPENDENCIES" )
+			set( _PARSE_COMPONENTS FALSE )
+			set( _FIND_DEPENDENCIES TRUE )
+		elseif( ${_ARG} STREQUAL "QUIET" )
+			set( _PARSE_COMPONENTS FALSE )
+			list( APPEND _FIND_PACKAGE_ARGS "QUIET" )
+			set( _QUIET TRUE )
+		elseif( ${_ARG} STREQUAL "REQUIRED" )
+			set( _PARSE_COMPONENTS TRUE )
+			list( APPEND _FIND_PACKAGE_ARGS "REQUIRED" )
+			set( _REQUIRED TRUE )
+		elseif( ${_ARG} STREQUAL "COMPONENTS" )
+			set( _PARSE_COMPONENTS TRUE )
+			list( APPEND _FIND_PACKAGE_ARGS "COMPONENTS" )
+		elseif( ${_ARG} STREQUAL "EXACT" )
+			set( _PARSE_COMPONENTS FALSE )
+			list( APPEND _FIND_PACKAGE_ARGS "EXACT" )				
+		elseif( ${_ARG} STREQUAL "${ARGV0}" )
+			# it's okay, just the name
+		elseif( ${_ARG} STREQUAL "${ARGV1}" )
+			# the requested version
+			set( _PACKAGE_VERSION ${_ARG} )
+		elseif( _PARSE_COMPONENTS )
+			list( APPEND _FIND_PACKAGE_ARGS ${_ARG} )
+			set( _USING_COMPONENTS TRUE )
+		else()
+			message( WARNING "vista_use_package( ${_PACKAGE_NAME} ) - Unknown argument [${_ARG}]" )
+		endif( ${_ARG} STREQUAL "FIND_DEPENDENCIES" )
+	endforeach( _ARG ${ARGV} )
 	
-		# parse arguments
-		set( _FIND_PACKAGE_ARGS )
-		set( _FIND_DEPENDENCIES FALSE )
-		set( _PACKAGE_VERSION "" )
-		set( _QUIET FALSE )
-		set( _REQUIRED FALSE )
-		foreach( _ARG ${ARGV} )			
-			if( ${_ARG} STREQUAL "FIND_DEPENDENCIES" )
-				set( _PARSE_COMPONENTS FALSE )
-				set( _FIND_DEPENDENCIES TRUE )
-			elseif( ${_ARG} STREQUAL "QUIET" )
-				set( _PARSE_COMPONENTS FALSE )
-				list( APPEND _FIND_PACKAGE_ARGS "QUIET" )
-				set( _QUIET TRUE )
-			elseif( ${_ARG} STREQUAL "REQUIRED" )
-				set( _PARSE_COMPONENTS TRUE )
-				list( APPEND _FIND_PACKAGE_ARGS "REQUIRED" )
-				set( _REQUIRED TRUE )
-			elseif( ${_ARG} STREQUAL "COMPONENTS" )
-				set( _PARSE_COMPONENTS TRUE )
-				list( APPEND _FIND_PACKAGE_ARGS "COMPONENTS" )
-			elseif( ${_ARG} STREQUAL "EXACT" )
-				set( _PARSE_COMPONENTS FALSE )
-				list( APPEND _FIND_PACKAGE_ARGS "EXACT" )				
-			elseif( ${_ARG} STREQUAL "${ARGV0}" )
-				# it's okay, just the name
-			elseif( ${_ARG} STREQUAL "${ARGV1}" )
-				# the requested version
-				set( _PACKAGE_VERSION ${_ARG} )
-			elseif( _PARSE_COMPONENTS )
-				list( APPEND _FIND_PACKAGE_ARGS ${_ARG} )
-			else()
-				message( WARNING "vista_use_package( ${_PACKAGE_NAME} ) - Unknown argument [${_ARG}]" )
-			endif( ${_ARG} STREQUAL "FIND_DEPENDENCIES" )
-		endforeach( _ARG ${ARGV} )	
-
-		# find package
+	if( NOT VISTA_USING_${_PACKAGE_NAME_UPPER} OR _USING_COMPONENTS )
+		# find package		
 		if( _PACKAGE_VERSION )
 			string( REGEX MATCH "^[0-9\\.]*$" _MATCH ${_PACKAGE_VERSION} )
 			if( _MATCH )
@@ -213,13 +232,11 @@ macro( vista_use_package _PACKAGE_NAME )
 		else( _PACKAGE_VERSION )
 			find_package( V${_PACKAGE_NAME} ${_FIND_PACKAGE_ARGS} )
 		endif( _PACKAGE_VERSION )
-		
-		message( "vista_use_package( ${_PACKAGE_NAME} FIND_DEPENDENCIES=${_FIND_DEPENDENCIES} )" )
-		
+				
 		set( ${_PACKAGE_NAME_UPPER}_FOUND ${${_PACKAGE_NAME_UPPER}_FOUND} )
 		
 		#if found - set required variables
-		if( V${_PACKAGE_NAME_UPPER}_FOUND )				
+		if( V${_PACKAGE_NAME_UPPER}_FOUND )
 			include_directories( ${${_PACKAGE_NAME_UPPER}_INCLUDE_DIRS} )
 			link_directories( ${${_PACKAGE_NAME_UPPER}_LIBRARY_DIRS} )
 			add_definitions( ${${_PACKAGE_NAME_UPPER}_DEFINITIONS} )
@@ -229,15 +246,42 @@ macro( vista_use_package _PACKAGE_NAME )
 				message( WARNING "vista_use_package( ${_PACKAGE_NAME} ) - Package was built as ${${_PACKAGE_NAME_UPPER}_HWARCH}, but is used with ${VISTA_HWARCH}" )
 			endif( ${_PACKAGE_NAME_UPPER}_HWARCH AND NOT ${${_PACKAGE_NAME_UPPER}_HWARCH} STREQUAL ${VISTA_HWARCH} )
 			
+			#set variables for Vista BuildSystem to track dependencies
+			list( APPEND VISTA_USE_PACKAGE_LIBRARIES ${${_PACKAGE_NAME_UPPER}_LIBRARIES} )
+			# TODO: removing duplicates also removes optimized and debug flags...
+			#list( REMOVE_DUPLICATES VISTA_USE_PACKAGE_LIBRARIES )
+			list( APPEND VISTA_TARGET_LINK_DIRS ${${_PACKAGE_NAME_UPPER}_LIBRARY_DIRS} )
+			if( _PACKAGE_VERSION )
+				list( APPEND VISTA_TARGET_DEPENDENCIES "${_PACKAGE_NAME}-${_PACKAGE_VERSION}" )
+			else( _PACKAGE_VERSION )
+				list( APPEND VISTA_TARGET_DEPENDENCIES "${_PACKAGE_NAME}" )
+			endif( _PACKAGE_VERSION )
+			set( VISTA_USING_${_PACKAGE_NAME_UPPER} TRUE )
+			
+			# we dont want to add second-level dependencies to VISTA_TARGET_DEPENDENCIES, so be buffer it and reset it later
+			set( _TMP_VISTA_TARGET_DEPENDENCIES ${VISTA_TARGET_DEPENDENCIES} )
+			
 			#handle dependencies
 			foreach( _DEPENDENCY ${${_PACKAGE_NAME_UPPER}_DEPENDENCIES} )
-				string( TOUPPER ${_DEPENDENCY} _DEP_UPPER )
+				string( REGEX MATCH "^([^\\-]+)\\-(.+)$" _MATCHED ${_DEPENDENCY} )
+				if( _MATCHED )
+					set( _DEP_PACKAGE ${CMAKE_MATCH_1} )
+					set( _DEP_VERSION ${CMAKE_MATCH_2} )
+				else( _MATCHED )
+					set( _DEP_PACKAGE ${_DEPENDENCY} )
+				endif( _MATCHED )
+				string( TOUPPER ${_DEP_PACKAGE} _DEP_UPPER )
 				if( _FIND_DEPENDENCIES )
-					# find and use the dependency. If it fails, utter a warning
-					vista_use_package( ${_DEPENDENCY} FIND_DEPENDENCIES )
-					if( NOT V${_DEP_UPPER}_FOUND )
-						message( WARNING "vista_use_package( ${_PACKAGE_NAME} ) - Package depends on \"${_DEPENDENCY}\", but including it failed" )
-					endif( NOT V${_DEP_UPPER}_FOUND )
+					if( NOT ${_DEP_UPPER}_FOUND AND NOT V${_DEP_UPPER}_FOUND )
+						# find and use the dependency. If it fails, utter a warning
+						if( NOT _QUIET )
+							message( STATUS "Automatically adding \"${_PACKAGE_NAME}\" dependency \"${_DEPENDENCY}\"" )
+						endif( NOT _QUIET )
+						vista_use_package( ${_DEP_PACKAGE} ${_DEP_VERSION} FIND_DEPENDENCIES )
+						if( NOT V${_DEP_UPPER}_FOUND AND NOT _QUIET )
+							message( WARNING "vista_use_package( ${_PACKAGE_NAME} ) - Package depends on \"${_DEPENDENCY}\", but including it failed" )
+						endif( NOT V${_DEP_UPPER}_FOUND AND NOT _QUIET )
+					endif( NOT ${_DEP_UPPER}_FOUND AND NOT V${_DEP_UPPER}_FOUND )
 				else( _FIND_DEPENDENCIES )
 					# check if dependencies are already included. If not, utter a warning					
 					if( NOT ${_DEP_UPPER}_FOUND AND NOT V${_DEP_UPPER}_FOUND AND NOT _QUIET )
@@ -245,61 +289,63 @@ macro( vista_use_package _PACKAGE_NAME )
 					endif( NOT ${_DEP_UPPER}_FOUND AND NOT V${_DEP_UPPER}_FOUND AND NOT _QUIET )
 				endif( _FIND_DEPENDENCIES )
 			endforeach( _DEPENDENCY ${${_PACKAGE_NAME_UPPER}_DEPENDENCIES} )
+
+			#restire dependencies before recursive include
+			set( VISTA_TARGET_DEPENDENCIES ${_TMP_VISTA_TARGET_DEPENDENCIES} )			
 			
-			#set variables for Vista BuildSystem to track dependencies
-			list( APPEND VISTA_TARGET_LINK_DIRS ${${_PACKAGE_NAME_UPPER}_LIBRARY_DIRS} )
-			list( APPEND VISTA_TARGET_DEPENDENCIES "{_PACKAGE_NAME}@" )
-			set( VISTA_USING_${_PACKAGE_NAME_UPPER} TRUE )
-			
-		endif( V${_PACKAGE_NAME_UPPER}_FOUND )
-		
-	endif( NOT VISTA_USING_${_PACKAGE_NAME_UPPER} )
+		endif( V${_PACKAGE_NAME_UPPER}_FOUND )	
+	endif( NOT VISTA_USING_${_PACKAGE_NAME_UPPER} OR _USING_COMPONENTS )
 	
 endmacro( vista_use_package _PACKAGE_NAME )
 
-# vista_configure_app( APP_NAME )
+# vista_configure_app( _TARGET_NAME )
 # sets some general properties for the target to configure it as application
 #	sets default value for CMAKE_INSTALL_PREFIX (if not set otherwise) to source directory
-#	sets the Application Name to APP_NAME with "D"-PostFix under Debug
+#	sets the Application Name to _TARGET_NAME with "D"-PostFix under Debug
 #	if not overwritten, sets the outdir to the target's source directory
 #	creates a shell script that sets the path to find required libraries
 #	for MSVC, a *.vcproj.user file is created, setting Working Directory and Path Environment
-macro( vista_configure_app APP_NAME )
+macro( vista_configure_app _TARGET_NAME )
+	string( TOUPPER ${_TARGET_NAME} _TARGET_NAME_UPPER )
 	if( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
 		vista_set_defaultvalue( CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}" CACHE PATH "distribution directory" FORCE )
 	endif( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
 	
-	set( ${APP_NAME}_TARGET_TYPE "APP" )
+	set( ${_TARGET_NAME}_TARGET_TYPE "APP" )
 
-	set_target_properties( ${APP_NAME} PROPERTIES OUTPUT_NAME_DEBUG				"${APP_NAME}D" )
-	set_target_properties( ${APP_NAME} PROPERTIES OUTPUT_NAME_RELEASE			"${APP_NAME}" )
-	set_target_properties( ${APP_NAME} PROPERTIES OUTPUT_NAME_MINSIZEREL 		"${APP_NAME}" )
-	set_target_properties( ${APP_NAME} PROPERTIES OUTPUT_NAME_RELWITHDEBINFO	"${APP_NAME}" )
+	set_target_properties( ${_TARGET_NAME} PROPERTIES OUTPUT_NAME_DEBUG				"${_TARGET_NAME}D" )
+	set_target_properties( ${_TARGET_NAME} PROPERTIES OUTPUT_NAME_RELEASE			"${_TARGET_NAME}" )
+	set_target_properties( ${_TARGET_NAME} PROPERTIES OUTPUT_NAME_MINSIZEREL 		"${_TARGET_NAME}" )
+	set_target_properties( ${_TARGET_NAME} PROPERTIES OUTPUT_NAME_RELWITHDEBINFO	"${_TARGET_NAME}" )
 	
-	if( NOT ${TARGET_NAME}_OUTDIR )
-		vista_set_outdir( ${APP_NAME} ${CMAKE_CURRENT_SOURCE_DIR} )
-	endif( NOT ${TARGET_NAME}_OUTDIR )
-
+	if( NOT DEFINED ${${_TARGET_NAME_UPPER}_TARGET_OUTDIR} )		
+		vista_set_outdir( ${_TARGET_NAME} ${CMAKE_CURRENT_SOURCE_DIR} )
+	endif( NOT DEFINED ${${_TARGET_NAME_UPPER}_TARGET_OUTDIR} )
+	
+	# we store the dependencies as required
+	set( ${_TARGET_NAME_UPPER}_DEPENDENCIES ${VISTA_TARGET_DEPENDENCIES} CACHE INTERNAL "" FORCE )
 	# create a script that sets the path
 	if( VISTA_TARGET_LINK_DIRS )
 		if( WIN32 )
-			find_file( VISTA_SCRIPT_FILE "set_path.bat_proto" ${CMAKE_MODULE_PATH} )
-			if( VISTA_SCRIPT_FILE )
+			find_file( VISTA_ENVIRONMENT_SCRIPT_FILE "set_path.bat_proto" ${CMAKE_MODULE_PATH} )
+			mark_as_advanced( VISTA_ENVIRONMENT_SCRIPT_FILE )
+			if( VISTA_ENVIRONMENT_SCRIPT_FILE )
 				configure_file(
-						${VISTA_SCRIPT_FILE}
-						${${TARGET_NAME}_OUTDIR}/set_path_for_${APP_NAME}.bat
+						${VISTA_ENVIRONMENT_SCRIPT_FILE}
+						${${_TARGET_NAME_UPPER}_TARGET_OUTDIR}/set_path_for_${_TARGET_NAME}.bat
 						@ONLY
 				)
-			endif( VISTA_SCRIPT_FILE )
+			endif( VISTA_ENVIRONMENT_SCRIPT_FILE )
 		elseif( MSVC )
-			find_file( VISTA_SCRIPT_FILE "set_path.sh_proto" ${CMAKE_MODULE_PATH} )
-			if( VISTA_SCRIPT_FILE )
+			find_file( VISTA_ENVIRONMENT_SCRIPT_FILE "set_path.sh_proto" ${CMAKE_MODULE_PATH} )
+			mark_as_advanced( VISTA_ENVIRONMENT_SCRIPT_FILE )
+			if( VISTA_ENVIRONMENT_SCRIPT_FILE )
 				configure_file(
-						${VISTA_SCRIPT_FILE}
-						${${TARGET_NAME}_OUTDIR}/set_path_for_${APP_NAME}.sh
+						${VISTA_ENVIRONMENT_SCRIPT_FILE}
+						${${_TARGET_NAME_UPPER}_TARGET_OUTDIR}/set_path_for_${_TARGET_NAME}.sh
 						@ONLY
 				)
-			endif( VISTA_SCRIPT_FILE )
+			endif( VISTA_ENVIRONMENT_SCRIPT_FILE )
 		endif( WIN32 )
 	endif( VISTA_TARGET_LINK_DIRS )
 		
@@ -322,7 +368,7 @@ macro( vista_configure_app APP_NAME )
 				set( _VERSION_STRING "10,00" )
 			endif( MSVC80 )
 			
-			set( _WORK_DIR ${${TARGET_NAME}_OUTDIR} )			
+			set( _WORK_DIR ${${_TARGET_NAME_UPPER}_TARGET_OUTDIR} )
 		
 			set( _ENVIRONMENT )
 			if( VISTA_TARGET_LINK_DIRS )
@@ -331,41 +377,44 @@ macro( vista_configure_app APP_NAME )
 			
 			configure_file(
 				${VISTA_VCPROJUSER_PROTO_FILE}
-				${CMAKE_CURRENT_BINARY_DIR}/${APP_NAME}.vcproj.user
+				${CMAKE_CURRENT_BINARY_DIR}/${_TARGET_NAME}.vcproj.user
 				@ONLY
 			)
 		else( VISTA_VCPROJUSER_PROTO_FILE )
-			message( WARNING "vista_configure_app( ${APP_NAME} ) - could not find file VisualStudio.vcproj.user_proto" )
+			message( WARNING "vista_configure_app( ${_TARGET_NAME} ) - could not find file VisualStudio.vcproj.user_proto" )
 		endif( VISTA_VCPROJUSER_PROTO_FILE )
 	endif( MSVC )
 endmacro( vista_configure_app )
 
-# vista_configure_lib( LIB_NAME )
+# vista_configure_lib( _TARGET_NAME )
 # sets some general properties for the target to configure it as application
 #	sets default value for CMAKE_INSTALL_PREFIX (if not set otherwise) to /dist/VISTA_HWARCH
 #	if not overwritten, sets the outdir to the target's source directory
 #	adds *_EXPORT or *_STATIC definition
-macro( vista_configure_lib LIB_NAME )
+macro( vista_configure_lib _TARGET_NAME )
 	if( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
 		vista_set_defaultvalue( CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}/dist/${VISTA_HWARCH}" CACHE PATH "distribution directory" FORCE )
 	endif( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
 	
-	set( ${LIB_NAME}_TARGET_TYPE "LIB" )
+	set( ${_TARGET_NAME}_TARGET_TYPE "LIB" )
 		
-	if( NOT ${TARGET_NAME}_OUTDIR )
-		vista_set_outdir( ${LIB_NAME} "${CMAKE_BINARY_DIR}/lib" )
-	endif( NOT ${TARGET_NAME}_OUTDIR )
+	if( NOT ${_TARGET_NAME_UPPER}_TARGET_OUTDIR )
+		vista_set_outdir( ${_TARGET_NAME} "${CMAKE_BINARY_DIR}/lib" )
+	endif( NOT ${_TARGET_NAME_UPPER}_TARGET_OUTDIR )
 	
-	string( TOUPPER ${LIB_NAME} _NAME_UPPER )
+	# we store the dependencies as required
+	set( ${_TARGET_NAME_UPPER}_DEPENDENCIES ${VISTA_TARGET_DEPENDENCIES} CACHE INTERNAL "" FORCE )
+	
+	string( TOUPPER ${_TARGET_NAME} _NAME_UPPER )
 	vista_set_defaultvalue( BUILD_SHARED_LIBS ON CACHE BOOL "Build shared libraries if ON, static libraries if OFF" FORCE )
 	if( WIN32 )
 		if( BUILD_SHARED_LIBS )
-			set_target_properties( ${LIB_NAME} PROPERTIES COMPILE_FLAGS -D${_NAME_UPPER}_EXPORTS )
+			set_target_properties( ${_TARGET_NAME} PROPERTIES COMPILE_FLAGS -D${_NAME_UPPER}_EXPORTS )
 		else( BUILD_SHARED_LIBS )
-			set_target_properties( ${LIB_NAME} PROPERTIES COMPILE_FLAGS -D${_NAME_UPPER}_STATIC )
+			set_target_properties( ${_TARGET_NAME} PROPERTIES COMPILE_FLAGS -D${_NAME_UPPER}_STATIC )
 		endif( BUILD_SHARED_LIBS )	
 	endif( WIN32 )
-endmacro( vista_configure_lib LIB_NAME)
+endmacro( vista_configure_lib _TARGET_NAME)
 
 # vista_install( TARGET [INCLUDE_SUBDIRECTORY [LIBRARY_SUBDIRECTORY] ] )
 # can only be called after vista_configure_[app|lib]
@@ -392,11 +441,11 @@ macro( vista_install _PACKAGE_NAME )
 		set(${_PACKAGE_NAME_UPPER}_LIB_SUBDIR "lib" )
 	endif( ${ARGC} GREATER 2 )	
 	
-	if( ${APP_NAME}_TARGET_TYPE STREQUAL "APP" )
+	if( ${_TARGET_NAME}_TARGET_TYPE STREQUAL "APP" )
 		install( TARGETS ${_PACKAGE_NAME}
 			RUNTIME DESTINATION "./"
 		)
-	else( ${APP_NAME}_TARGET_TYPE STREQUAL "APP" )
+	else( ${_TARGET_NAME}_TARGET_TYPE STREQUAL "APP" )
 		install( TARGETS ${_PACKAGE_NAME}
 			LIBRARY DESTINATION ${${_PACKAGE_NAME_UPPER}_LIB_SUBDIR}
 			ARCHIVE DESTINATION ${${_PACKAGE_NAME_UPPER}_LIB_SUBDIR}
@@ -410,12 +459,12 @@ macro( vista_install _PACKAGE_NAME )
 			PATTERN "CMakeFiles" EXCLUDE
 		)
 		if( MSVC )
-		install( DIRECTORY "${${_PACKAGE_NAME}_OUTDIR}/"
-			DESTINATION ${${_PACKAGE_NAME_UPPER}_LIB_SUBDIR}
-			FILES_MATCHING PATTERN "*.pdb"
-		)
-	endif( MSVC )
-	endif( ${APP_NAME}_TARGET_TYPE STREQUAL "APP" )	
+			install( DIRECTORY "${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR}/"
+				DESTINATION ${${_PACKAGE_NAME_UPPER}_LIB_SUBDIR}
+				FILES_MATCHING PATTERN "*.pdb"
+			)
+		endif( MSVC )
+	endif( ${_TARGET_NAME}_TARGET_TYPE STREQUAL "APP" )	
 endmacro()
 
 # vista_create_cmake_configs( TARGET [CUSTOM_CONFIG_FILE] )
@@ -460,12 +509,6 @@ macro( vista_create_cmake_configs _TARGET )
 			message( WARNING "vista_create_cmake_configs( ${_TARGET} ) - Could not find default config file PackageConfig.cmake_proto" )
 		endif( NOT _DEFAULT_CONFIG_PROTO_FILE )		
 		set( _CONFIG_PROTO_FILE ${_DEFAULT_CONFIG_PROTO_FILE} )
-		
-		if( NOT ( ${_PACKAGE_NAME_UPPER}_INCLUDE_SUBDIR AND ${_PACKAGE_NAME_UPPER}_LIB_SUBDIR ) )
-			message( WARNING "vista_create_cmake_configs( ${_TARGET} ) - required variables not defined" )
-			message( WARNING "\tNote: vista_install has to be run before vista_create_cmake_configs" )
-			set( _PRECONDITION_FAIL TRUE )
-		endif( NOT ( ${_PACKAGE_NAME_UPPER}_INCLUDE_SUBDIR AND ${_PACKAGE_NAME_UPPER}_LIB_SUBDIR ) )
 	endif( ${ARGC} GREATER 1 )
 
 
@@ -496,6 +539,7 @@ macro( vista_create_cmake_configs _TARGET )
 			endif( ${_PACKAGE_NAME_UPPER}_LIBRARY_OUTDIR )
 			
 			set( _PACKAGE_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}" )
+			clean_former_copied_package_configs( ${_PACKAGE_NAME} ${_PACKAGE_ROOT_DIR} )
 			set( _PACKAGE_INCLUDE_DIR "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}" )
 			list( REMOVE_DUPLICATES _PACKAGE_INCLUDE_DIR )
 			configure_file(	${_CONFIG_PROTO_FILE} "${CMAKE_BINARY_DIR}/${_CMAKE_SUBDIR}/${_PACKAGE_NAME}Config.cmake" @ONLY )
@@ -503,8 +547,18 @@ macro( vista_create_cmake_configs _TARGET )
 					DESTINATION ${_PACKAGE_CONFIG_TARGET}-build/${_CMAKE_SUBDIR} )
 			
 			set( _PACKAGE_ROOT_DIR "${CMAKE_INSTALL_PREFIX}" )
-			set( _PACKAGE_INCLUDE_DIR "${_PACKAGE_ROOT_DIR}/${${_PACKAGE_NAME_UPPER}_INCLUDE_SUBDIR}" )
-			set( _PACKAGE_LIBRARY_DIR "${_PACKAGE_ROOT_DIR}/${${_PACKAGE_NAME_UPPER}_LIB_SUBDIR}" )
+			clean_former_copied_package_configs( ${_PACKAGE_NAME} ${_PACKAGE_ROOT_DIR} )
+			if( ${${_PACKAGE_NAME_UPPER}_INCLUDE_SUBDIR} )
+				set( _PACKAGE_INCLUDE_DIR "${_PACKAGE_ROOT_DIR}/${${_PACKAGE_NAME_UPPER}_INCLUDE_SUBDIR}" )		
+			else( ${${_PACKAGE_NAME_UPPER}_INCLUDE_SUBDIR} )
+				set( _PACKAGE_INCLUDE_DIR "${_PACKAGE_ROOT_DIR}/include" )		
+			endif( ${${_PACKAGE_NAME_UPPER}_INCLUDE_SUBDIR} )
+			if( ${${_PACKAGE_NAME_UPPER}_LIB_SUBDIR} )
+				set( _PACKAGE_LIBRARY_DIR "${_PACKAGE_ROOT_DIR}/${${_PACKAGE_NAME_UPPER}_LIB_SUBDIR}" )
+			else( ${${_PACKAGE_NAME_UPPER}_LIB_SUBDIR} )
+				set( _PACKAGE_LIBRARY_DIR "${_PACKAGE_ROOT_DIR}/lib" )
+			endif( ${${_PACKAGE_NAME_UPPER}_LIB_SUBDIR} )
+			
 			configure_file(	${_CONFIG_PROTO_FILE} "${CMAKE_BINARY_DIR}/toinstall/${_PACKAGE_NAME}Config.cmake" @ONLY )
 			install( FILES
 				"${CMAKE_BINARY_DIR}/toinstall/${_CMAKE_SBDIR}/${_PACKAGE_NAME}Config.cmake"
@@ -522,7 +576,7 @@ macro( vista_create_cmake_configs _TARGET )
 			configure_file(	${_CONFIG_PROTO_FILE} ${CMAKE_BINARY_DIR}/${_CMAKE_SUBDIR}/${_PACKAGE_NAME}Config.cmake	@ONLY )
 			install( FILES
 				${CMAKE_BINARY_DIR}/${_CMAKE_SUBDIR}/${_PACKAGE_NAME}Config.cmake
-				DESTINATION "${CMAKE_INSTALL_PREFIX}/${_CMAKE_SUBDIR"
+				DESTINATION "${CMAKE_INSTALL_PREFIX}/${_CMAKE_SUBDIR}"
 			)
 			install( FILES
 				${CMAKE_BINARY_DIR}/${_CMAKE_SUBDIR}/${_PACKAGE_NAME}Config.cmake
@@ -582,23 +636,24 @@ endmacro( vista_create_cmake_configs )
 # vista_set_outdir( TARGET DIRECTORY )
 # sets the outdir of the target to the directory
 # should be used after calling vista_configuer_[app|lib]
-macro( vista_set_outdir TARGET_NAME TARGET_DIR )
-	set_target_properties( ${TARGET_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG ${TARGET_DIR} )
-	set_target_properties( ${TARGET_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE ${TARGET_DIR} )
-	set_target_properties( ${TARGET_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL ${TARGET_DIR} )
-	set_target_properties( ${TARGET_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${TARGET_DIR} )
-	if( NOT ${TARGET_NAME}_TARGET_TYPE OR ${TARGET_NAME}_TARGET_TYPE STREQUAL "LIB" )
-		set_target_properties( ${TARGET_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY_DEBUG ${TARGET_DIR} )
-		set_target_properties( ${TARGET_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY_RELEASE ${TARGET_DIR} )
-		set_target_properties( ${TARGET_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL ${TARGET_DIR} )
-		set_target_properties( ${TARGET_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO ${TARGET_DIR} )
-		set_target_properties( ${TARGET_NAME} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${TARGET_DIR} )
-		set_target_properties( ${TARGET_NAME} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${TARGET_DIR} )
-		set_target_properties( ${TARGET_NAME} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_MINSIZEREL ${TARGET_DIR} )
-		set_target_properties( ${TARGET_NAME} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO ${TARGET_DIR} )
-	endif( NOT ${TARGET_NAME}_TARGET_TYPE OR ${TARGET_NAME}_TARGET_TYPE STREQUAL "LIB" )
-	set( ${TARGET_NAME}_OUTDIR ${TARGET_DIR} CACHE INTERNAL "" FORCE )
-endmacro( vista_set_outdir TARGET_NAME TARGET_DIR )
+macro( vista_set_outdir _TARGET_NAME _TARGET_DIR )
+	string( TOUPPER ${_TARGET_NAME} _TARGET_NAME_UPPER )
+	set_target_properties( ${_TARGET_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG ${_TARGET_DIR} )
+	set_target_properties( ${_TARGET_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE ${_TARGET_DIR} )
+	set_target_properties( ${_TARGET_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL ${_TARGET_DIR} )
+	set_target_properties( ${_TARGET_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${_TARGET_DIR} )
+	if( NOT VISTA_${_TARGET_NAME}_TARGET_TYPE OR VISTA_${_TARGET_NAME}_TARGET_TYPE STREQUAL "LIB" )
+		set_target_properties( ${_TARGET_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY_DEBUG ${_TARGET_DIR} )
+		set_target_properties( ${_TARGET_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY_RELEASE ${_TARGET_DIR} )
+		set_target_properties( ${_TARGET_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL ${_TARGET_DIR} )
+		set_target_properties( ${_TARGET_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO ${_TARGET_DIR} )
+		set_target_properties( ${_TARGET_NAME} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${_TARGET_DIR} )
+		set_target_properties( ${_TARGET_NAME} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${_TARGET_DIR} )
+		set_target_properties( ${_TARGET_NAME} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_MINSIZEREL ${_TARGET_DIR} )
+		set_target_properties( ${_TARGET_NAME} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO ${_TARGET_DIR} )
+	endif( NOT VISTA_${_TARGET_NAME}_TARGET_TYPE OR VISTA_${_TARGET_NAME}_TARGET_TYPE STREQUAL "LIB" )
+	set( ${_TARGET_NAME_UPPER}_TARGET_OUTDIR ${_TARGET_DIR} CACHE INTERNAL "" FORCE )
+endmacro( vista_set_outdir _TARGET_NAME TARGET_DIR )
 
 # vista_set_version( PACKAGE TYPE NAME [ MAJOR [ MINOR [ PATCH [ TWEAK ]]]] )
 # sets the extended version info for the package

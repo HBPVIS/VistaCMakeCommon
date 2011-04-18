@@ -8,7 +8,5 @@ if( NOT VOPENGL_FOUND )
 
 endif( NOT VOPENGL_FOUND )
 
-message( "OPENGL_LIBRARIES = ${OPENGL_LIBRARIES}" )
-
 find_package_handle_standard_args( VOpenGL "OpenGL could not be found" OPENGL_LIBRARIES ) 
 

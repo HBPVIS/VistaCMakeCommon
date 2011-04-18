@@ -1,17 +1,10 @@
 include( FindPackageHandleStandardArgs )
+include( VistaFindUtils )
 
 if( NOT VOPENSG_FOUND )
-
-	find_path( OPENSG_ROOT_DIR include/OpenSG/OSGAction.h 
-				PATHS ${OPENSG_ROOT_DIR}
-						$ENV{OPENSG_ROOT}/${VISTA_HWARCH} $ENV{OPENSG_ROOT} 
-						$ENV{VRDEV}/OpenSG/${VISTA_HWARCH} $ENV{VRDEV}/OpenSG
-				CACHE PATH "OpenSG package directory" )
+	vista_find_package_root( OpenSG include/OpenSG/OSGAction.h )	
 
 	if( OPENSG_ROOT_DIR )
-		set( OpenSG_FOUND "YES" )
-		message( STATUS "Found OpenSG in ${OPENSG_ROOT_DIR}" )
-
 		if( UNIX )
 			set( OPENSG_LIBRARY_DIRS ${OPENSG_ROOT_DIR}/lib/opt )
 			set( OPENSG_LIBRARIES
@@ -32,12 +25,12 @@ if( NOT VOPENSG_FOUND )
 		endif( UNIX )
 		set( OPENSG_INCLUDE_DIR ${OPENSG_ROOT_DIR}/include )		
 		set( OPENSG_DEFINITIONS -DOSG_WITH_GLUT -DOSG_WITH_GIF -DOSG_WITH_TIF -DOSG_WITH_JPG -DOSG_BUILD_DLL -D_OSG_HAVE_CONFIGURED_H_ )
-		set( OPENSG_DEPENDENCIES OpenGL )
+		set( OPENSG_DEPENDENCIES GLUT )
 	endif( OPENSG_ROOT_DIR )
 
 endif( NOT VOPENSG_FOUND )
 
-find_package_handle_standard_args( VOpenSG "OpenSG could not be found" OPENSG_INCLUDE_DIR OPENSG_LIBRARIES )
+find_package_handle_standard_args( VOpenSG "OpenSG could not be found" OPENSG_ROOT_DIR )
 
 
 

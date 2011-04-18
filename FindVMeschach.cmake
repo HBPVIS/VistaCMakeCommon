@@ -8,9 +8,7 @@ if( NOT VMESCHACH_FOUND )
 						$ENV{VRDEV}/Meschach/${VISTA_HWARCH} $ENV{VRDEV}/Meschach
 				CACHE "Meschach package directory" )
 
-	if( MESCHACH_ROOT_DIR )
-		message( STATUS "Found Meschach in ${MESCHACH_ROOT_DIR}" )
-		
+	if( MESCHACH_ROOT_DIR )		
 		set( MESCHACH_INCLUDE_DIRS ${MESCHACH_ROOT_DIR}/include )
 		set( MESCHACH_LIBRARY_DIRS ${MESCHACH_ROOT_DIR}/lib )
 		set( MESCHACH_LIBRARIES
@@ -28,18 +26,6 @@ if( NOT VMESCHACH_FOUND )
 		#endif( MESCHACH_FOUND )
 		
 	endif( MESCHACH_ROOT_DIR )	
-	
-	macro( vista_use_Meschach )
-		if( NOT VISTA_USE_MESCHACH_CALLED )
-			include_directories( ${MESCHACH_INCLUDE_DIRS} )
-			link_directories( ${MESCHACH_LIBRARY_DIRS} )
-			#set variables for Vista BuildSystem to track dependencies
-			list( APPEND VISTA_TARGET_LINK_DIRS ${MESCHACH_LIBRARY_DIRS} )
-			list( APPEND VISTA_TARGET_DEPENDENCIES "Meschach" )
-			set( VISTA_USE_MESCHACH_CALLED TRUE )
-		éndif( NOT VISTA_USE_MESCHACH_CALLED )
-	endmacro( vista_use_Meschach )
-
 
 endif( NOT VMESCHACH_FOUND )
 
