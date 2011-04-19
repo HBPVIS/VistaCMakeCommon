@@ -1,5 +1,4 @@
 # Search for precompiled GLUT path
-
 include( FindPackageHandleStandardArgs )
 
 if( NOT VGLUT_FOUND )

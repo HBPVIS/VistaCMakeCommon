@@ -1,5 +1,3 @@
-# Search for precompiled BULLET path
-
 include( FindPackageHandleStandardArgs )
 include( VistaFindUtils )
 

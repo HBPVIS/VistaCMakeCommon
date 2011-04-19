@@ -296,7 +296,7 @@ def GenCMakeForLib( startDir, projectName, renew, version, linkVistaCoreLibs, mu
 
 	fileHandle = open( listsFile, "w" )
 
-	fileHandle.write( "cmake_minimum_required( VERSION 2.6 )\n" )
+	fileHandle.write( "cmake_minimum_required( VERSION 2.8 )\n" )
 	if( multiProjectParent == "" ):
 		fileHandle.write( "project( " + projectName + " )\n" )
 		fileHandle.write( "\n" )
@@ -362,7 +362,7 @@ def GenCMakeForApp( startDir, projectName, renew, version, linkVistaCoreLibs, mu
 
 	fileHandle = open( listsFile, "w" )
 
-	fileHandle.write( "cmake_minimum_required( VERSION 2.6 )\n" )
+	fileHandle.write( "cmake_minimum_required( VERSION 2.8 )\n" )
 	if( multiProjectParent == "" ):
 		fileHandle.write( "project( " + projectName + " )\n" )
 		fileHandle.write( "\n" )
@@ -428,7 +428,7 @@ def GenMultiProject( mode, startDir, projectName, renew, version, linkVistaCoreL
 
 	fileHandle = open( listsFile, "w" )
 
-	fileHandle.write( "cmake_minimum_required(VERSION 2.6)\n" )
+	fileHandle.write( "cmake_minimum_required( VERSION 2.8 )\n" )
 	fileHandle.write( "project( " + projectName + " )\n" )
 	fileHandle.write( "\n" )
 	fileHandle.write( "list( APPEND CMAKE_MODULE_PATH \"$ENV{VISTA_CMAKE_COMMON}\" )\n" )
