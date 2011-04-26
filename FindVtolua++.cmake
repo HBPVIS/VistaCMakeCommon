@@ -16,6 +16,8 @@ if( NOT VTOLUA++_FOUND )
 			set( TOLUA++_LIBRARIES tolua++ )
 		endif( WIN32 )
 		
+		set( TOLUA++_DEPENDENCIES package LUA REQUIRED )
+		
 	endif( TOLUA++_ROOT_DIR )
 
 endif( NOT VTOLUA++_FOUND )

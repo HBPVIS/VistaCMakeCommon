@@ -240,7 +240,7 @@ macro( vista_find_package _PACKAGE_NAME )
 						\n\tpreviously found version will be used again" )
 				set( _PACKAGE_VERSION ${${_PACKAGE_NAME_UPPER}_FOUND_VERSION} )
 			endif( NOT ${_PACKAGE_NAME_UPPER}_FOUND_VERSION STREQUAL ${_PACKAGE_VERSION} )
-		endif( ${_PACKAGE_NAME_UPPER}_FOUND_VERSION AND ${_PACKAGE_VERSION} )
+		endif( "${${_PACKAGE_NAME_UPPER}_FOUND_VERSION}" AND "${_PACKAGE_VERSION}" )
 		
 		if( _PARSE_COMPONENTS )
 			# we need to check if the components are already included or not
@@ -260,8 +260,8 @@ macro( vista_find_package _PACKAGE_NAME )
 		
 	if( _DO_FIND )		
 		
-		if( ${_PACKAGE_VERSION} )
-			# argument is no find_package keyword -> its a version
+		if( _PACKAGE_VERSION )
+			# check if it is a "normal" or an extended version
 			string( REGEX MATCH "^[0-9\\.]*$" _MATCH ${_PACKAGE_VERSION} )
 			if( NOT _MATCH )
 				# its an extended version
@@ -269,7 +269,7 @@ macro( vista_find_package _PACKAGE_NAME )
 				set( PACKAGE_FIND_VERSION_EXT ${_PACKAGE_VERSION} )
 				set( ${_PACKAGE_NAME}_FIND_VERSION_EXT ${_PACKAGE_VERSION} )
 			endif( NOT _MATCH )
-		endif( ${_PACKAGE_VERSION} )
+		endif( _PACKAGE_VERSION )
 		
 		# two options: either there is a special FindV<package-name>.cmake file,
 		# or we try a regular find_apckage( <package-name> to find config files
@@ -283,14 +283,12 @@ macro( vista_find_package _PACKAGE_NAME )
 		endforeach( _PATH ${CMAKE_MODULE_PATH} )
 
 		if( _FIND_V_EXISTS )
-			message( "find_package( V${_PACKAGE_NAME} ${_PACKAGE_VERSION} ${_FIND_PACKAGE_ARGS} )" )
 			find_package( V${_PACKAGE_NAME} ${_PACKAGE_VERSION} ${_FIND_PACKAGE_ARGS} )
-			set( {_PACKAGE_NAME_UPPER}_FOUND V${_PACKAGE_NAME_UPPER}_FOUND )
+			set( ${_PACKAGE_NAME_UPPER}_FOUND V${_PACKAGE_NAME_UPPER}_FOUND )
 		else( _FIND_V_EXISTS )
-			message( "find_package( ${_PACKAGE_NAME} ${_PACKAGE_VERSION} ${_FIND_PACKAGE_ARGS} )" )
 			find_package( ${_PACKAGE_NAME} ${_PACKAGE_VERSION} ${_FIND_PACKAGE_ARGS} )
 		endif( _FIND_V_EXISTS )
-		
+				
 	endif( _DO_FIND )
 endmacro( vista_find_package )
 
@@ -363,11 +361,7 @@ macro( vista_use_package _PACKAGE_NAME )
 			
 		# finding will handle differences to already run find's
 		vista_find_package( ${ARGV} )
-		
-		set( ${_PACKAGE_NAME_UPPER}_FOUND ${V${_PACKAGE_NAME_UPPER}_FOUND} )
-		
-		message( "${_PACKAGE_NAME_UPPER}_FOUND = ${${_PACKAGE_NAME_UPPER}_FOUND}" )
-		
+						
 		#if found - set required variables
 		if( ${_PACKAGE_NAME_UPPER}_FOUND )
 			include_directories( ${${_PACKAGE_NAME_UPPER}_INCLUDE_DIRS} )
@@ -389,20 +383,20 @@ macro( vista_use_package _PACKAGE_NAME )
 			
 			# we dont want to add second-level dependencies to VISTA_TARGET_DEPENDENCIES, so be buffer it and reset it later
 			set( _TMP_VISTA_TARGET_DEPENDENCIES ${VISTA_TARGET_DEPENDENCIES} )
-			
+						
 			#handle dependencies
 			set( _DEPENDENCY_ARGS )
 			foreach( _DEPENDENCY ${${_PACKAGE_NAME_UPPER}_DEPENDENCIES} )
 				string( REGEX MATCH "^([^\\-]+)\\-(.+)$" _MATCHED ${_DEPENDENCY} )
 				if( _DEPENDENCY STREQUAL "package" )
-					if( _DEPENDENCY_ARGS )
-						list( GET_AT _DEPENDENCY_ARGS 0 _DEPENDENCY_NAME )
-						string( TOUPPER "_DEPENDENCY_NAME" _DEPENDENCY_NAME_UPPER )
+					if( _DEPENDENCY_ARGS AND NOT "${_DEPENDENCY_ARGS}" STREQUAL "" )
+						list( GET _DEPENDENCY_ARGS 0 _DEPENDENCY_NAME )
+						string( TOUPPER "${_DEPENDENCY_NAME}" _DEPENDENCY_NAME_UPPER )
 						if( _FIND_DEPENDENCIES )
 							if( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND )
 								# find and use the dependency. If it fails, utter a warning
 								if( NOT _QUIET )
-									message( STATUS "Automatically adding \"${_PACKAGE_NAME}\" dependency \"${_DEPENDENCY_ARGS}\"" )
+									message( STATUS "Automatically adding ${_PACKAGE_NAME}-dependency \"${_DEPENDENCY_ARGS}\"" )
 								endif( NOT _QUIET )
 								vista_use_package( ${_DEPENDENCY_ARGS} FIND_DEPENDENCIES )
 								if( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND AND NOT _QUIET )
@@ -412,14 +406,38 @@ macro( vista_use_package _PACKAGE_NAME )
 						else( _FIND_DEPENDENCIES )
 							# check if dependencies are already included. If not, utter a warning					
 							if( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND AND NOT _QUIET )
-								message( "vista_use_package( ${_PACKAGE_NAME} ) - Package depends on \"${_DEPENDENCY}\", which was not found yet" )
+								message( "vista_use_package( ${_PACKAGE_NAME} ) - Package depends on \"${_DEPENDENCY_ARGS}\", which was not found yet" )
 							endif( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND AND NOT _QUIET )
 						endif( _FIND_DEPENDENCIES )
-					endif( _DEPENDENCY_ARGS )
+						set( _DEPENDENCY_ARGS )
+					endif( _DEPENDENCY_ARGS AND NOT "${_DEPENDENCY_ARGS}" STREQUAL ""  )
 				else()
 					list( APPEND _DEPENDENCY_ARGS ${_DEPENDENCY} )
 				endif( _DEPENDENCY STREQUAL "package" )
 			endforeach( _DEPENDENCY ${${_PACKAGE_NAME_UPPER}_DEPENDENCIES} )
+			
+			# again, since the last package was not yet included
+			if( _DEPENDENCY_ARGS AND NOT "${_DEPENDENCY_ARGS}" STREQUAL "" )
+				list( GET _DEPENDENCY_ARGS 0 _DEPENDENCY_NAME )
+				string( TOUPPER "${_DEPENDENCY_NAME}" _DEPENDENCY_NAME_UPPER )
+				if( _FIND_DEPENDENCIES )
+					if( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND )
+						# find and use the dependency. If it fails, utter a warning
+						if( NOT _QUIET )
+							message( STATUS "Automatically adding ${_PACKAGE_NAME}-dependency \"${_DEPENDENCY_ARGS}\"" )
+						endif( NOT _QUIET )
+						vista_use_package( ${_DEPENDENCY_ARGS} FIND_DEPENDENCIES )
+						if( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND AND NOT _QUIET )
+							message( WARNING "vista_use_package( ${_PACKAGE_NAME} ) - Package depends on \"${_DEPENDENCY_ARGS}\", but including it failed" )
+						endif( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND AND NOT _QUIET )
+					endif( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND )
+				else( _FIND_DEPENDENCIES )
+					# check if dependencies are already included. If not, utter a warning					
+					if( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND AND NOT _QUIET )
+						message( "vista_use_package( ${_PACKAGE_NAME} ) - Package depends on \"${_DEPENDENCY_ARGS}\", which was not found yet" )
+					endif( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND AND NOT _QUIET )
+				endif( _FIND_DEPENDENCIES )
+			endif( _DEPENDENCY_ARGS AND NOT "${_DEPENDENCY_ARGS}" STREQUAL ""  )
 
 			#restore dependencies as they were before FIND_DEPENDENCY calls
 			set( VISTA_TARGET_DEPENDENCIES ${_TMP_VISTA_TARGET_DEPENDENCIES} )			
@@ -709,8 +727,9 @@ macro( vista_create_cmake_configs _TARGET )
 			set( _LIBRARY_NAME ${${_PACKAGE_NAME_UPPER}_OUTPUT_NAME} )
 			
 			set( _PACKAGE_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}" )
-			set( _PACKAGE_INCLUDE_DIR "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}" ) 
-
+			set( _PACKAGE_INCLUDE_DIR "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}"  ) 
+			get_filename_component( _PATH_UP "${CMAKE_CURRENT_SOURCE_DIR}/.." REALPATH  )
+			list( APPEND _PACKAGE_INCLUDE_DIR ${_PATH_UP} )
 			list( REMOVE_DUPLICATES _PACKAGE_INCLUDE_DIR )
 
 			local_use_existing_config_libs( "${_PACKAGE_CONFIG_TARGET}-build/${_PACKAGE_NAME}Config.cmake" )

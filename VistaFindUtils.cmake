@@ -199,7 +199,7 @@ macro( vista_find_package_root _PACKAGE_NAME )
 			endif( EXISTS "$ENV{VRDEV}" )
 		endforeach( _FOLDER _PACKAGE_FOLDER_NAMES )
 
-		if( DEFINED _REQUESTED_VERSION )
+		if( DEFINED _REQUESTED_VERSION )			
 			set( ${_PACKAGE_NAME_UPPER}_ROOT_DIR "OpenSGDIR-NOTFOUND" )
 			find_path( ${_PACKAGE_NAME_UPPER}_ROOT_DIR 
 				${_SEARCH_FILES}
