@@ -524,4 +524,3 @@ else:
 	print( "  -renew                   : if set, no file will be updated, but instead all files are created completely new" )
 	print( "  -linkcorelibs [version]  : the project will be configured to link the VistaCoreLibs (takes optional version, defaults to latest release)" )
 
-print("note: underlines in foldernames will cause errors!")

@@ -1,3 +1,113 @@
+macro( vista_check_version_entry INPUT_VERSION OWN_VERSION DIFFERENCE_OUTPUT_VAR )
+	set( ${DIFFERENCE_OUTPUT_VAR} -1 )
+	
+	if( "${INPUT_VERSION}" STREQUAL "" OR "${OWN_VERSION}" STREQUAL "" )
+		# fine for us, just accept
+		set( ${DIFFERENCE_OUTPUT_VAR} 0 )
+	else()
+		string( REGEX MATCH "([0-9]+)\\+$" _STRING_IS_MIN ${INPUT_VERSION} )
+		if( _STRING_IS_MIN )
+			if( ( ${OWN_VERSION} EQUAL ${CMAKE_MATCH_1} ) OR ( ${OWN_VERSION} GREATER ${CMAKE_MATCH_1} ) )
+				set( ${DIFFERENCE_OUTPUT_VAR} 0 )
+			endif( ( ${OWN_VERSION} EQUAL ${CMAKE_MATCH_1} ) OR ( ${OWN_VERSION} GREATER ${CMAKE_MATCH_1} ) )
+		else()
+			string( REGEX MATCH "([0-9]+)\\-([0-9]+)$" _STRING_IS_RANGE ${INPUT_VERSION} )
+			if( _STRING_IS_RANGE )
+				if( ( ${OWN_VERSION} EQUAL ${CMAKE_MATCH_1} ) OR ( ${OWN_VERSION} GREATER ${CMAKE_MATCH_1} ) )
+					if( ( ${OWN_VERSION} EQUAL ${CMAKE_MATCH_2} ) OR ( ${OWN_VERSION} LESS ${CMAKE_MATCH_2} ) )
+						set( ${DIFFERENCE_OUTPUT_VAR} 0 )
+					endif( ( ${OWN_VERSION} EQUAL ${CMAKE_MATCH_2} ) OR ( ${OWN_VERSION} LESS ${CMAKE_MATCH_2} ) )
+				endif( ( ${OWN_VERSION} EQUAL ${CMAKE_MATCH_1} ) OR ( ${OWN_VERSION} GREATER ${CMAKE_MATCH_1} ) )
+			elseif( "${INPUT_VERSION}" VERSION_EQUAL "${OWN_VERSION}" )
+				# exact match
+				set( ${DIFFERENCE_OUTPUT_VAR} 0 )
+			elseif( "${INPUT_VERSION}" VERSION_LESS "${OWN_VERSION}" )
+				# compatible match
+				math( EXPR ${DIFFERENCE_OUTPUT_VAR}  "${OWN_VERSION} - ${INPUT_VERSION}" )
+			endif( _STRING_IS_RANGE )
+		endif( _STRING_IS_MIN )		
+	endif( "${INPUT_VERSION}" STREQUAL "" OR  "${OWN_VERSION}" STREQUAL "" )
+	
+	#message( "vista_check_version_entry( ${INPUT_VERSION} <-> ${OWN_VERSION} )  = ${${DIFFERENCE_OUTPUT_VAR}}" )
+endmacro( vista_check_version_entry )
+
+macro( vista_extract_version_part _TARGET _ENTRY _SEPARATOR  )
+	set( ${_TARGET} )
+	
+	if( _REMAINING_VERSION )
+		string( REGEX MATCH "^(${_ENTRY})${_SEPARATOR}(.*)$" _MATCH_SUCCESS ${_REMAINING_VERSION} )
+		if( _MATCH_SUCCESS )
+			# we found a textual start -> type
+			set( ${_TARGET} ${CMAKE_MATCH_1} )
+			set( _REMAINING_VERSION ${CMAKE_MATCH_2} )
+		else( _MATCH_SUCCESS )
+			string( REGEX MATCH "^(${_ENTRY})$" _MATCH2_SUCCESS ${_REMAINING_VERSION} )
+			if( _MATCH2_SUCCESS )
+				# we found a textual start -> type
+				set( ${_TARGET} ${CMAKE_MATCH_1} )
+				set( _REMAINING_VERSION ${CMAKE_MATCH_2} )
+			endif( _MATCH2_SUCCESS )
+		endif( _MATCH_SUCCESS )
+	endif( _REMAINING_VERSION )
+endmacro( vista_extract_version_part )
+
+macro( vista_string_to_version VERSION_STRING VERSION_VARIABLES_PREFIX )
+	set( _REMAINING_VERSION ${VERSION_STRING} )
+			
+	vista_extract_version_part( ${VERSION_VARIABLES_PREFIX}_VERSION_TYPE  "[a-zA-Z]+"         "_" )
+	vista_extract_version_part( ${VERSION_VARIABLES_PREFIX}_VERSION_NAME  "[a-zA-Z][^\\\\-]+" "\\\\-" )
+	vista_extract_version_part( ${VERSION_VARIABLES_PREFIX}_VERSION_MAJOR "[0-9\\\\+\\\\-]+"  "\\\\." )
+	vista_extract_version_part( ${VERSION_VARIABLES_PREFIX}_VERSION_MINOR "[0-9\\\\+\\\\-]+"  "\\\\." )
+	vista_extract_version_part( ${VERSION_VARIABLES_PREFIX}_VERSION_PATCH "[0-9\\\\+\\\\-]+"  "\\\\." )
+	vista_extract_version_part( ${VERSION_VARIABLES_PREFIX}_VERSION_TWEAK "[0-9\\\\+\\\\-]+"  "[$]" )
+	
+	#if there is just one (textual) entry, it's the name
+	if( ${VERSION_VARIABLES_PREFIX}_VERSION_TYPE AND NOT ${VERSION_VARIABLES_PREFIX}_VERSION_NAME AND NOT ${VERSION_VARIABLES_PREFIX}_VERSION_MAJOR )
+		set( ${VERSION_VARIABLES_PREFIX}_VERSION_NAME ${${VERSION_VARIABLES_PREFIX}_VERSION_TYPE} )
+		set( ${VERSION_VARIABLES_PREFIX}_VERSION_TYPE "" )
+	endif( ${VERSION_VARIABLES_PREFIX}_VERSION_TYPE AND NOT ${VERSION_VARIABLES_PREFIX}_VERSION_NAME AND NOT ${VERSION_VARIABLES_PREFIX}_VERSION_MAJOR )	
+	
+endmacro( vista_string_to_version )
+
+macro( vista_compare_versions INPUT_VERSION_PREFIX OWN_VERSION_PREFIX DIFFERENCE_OUTPUT_VAR )
+	set( _MATCHED FALSE )
+	set( ${DIFFERENCE_OUTPUT_VAR} -1 )
+	
+	# check if type matches
+	if( NOT ${INPUT_VERSION_PREFIX}_VERSION_TYPE
+			OR ${INPUT_VERSION_PREFIX}_VERSION_TYPE STREQUAL "RELEASE" )
+		# if no version type is given - we assume release is requested
+		if( ${INPUT_VERSION_PREFIX}_VERSION_NAME STREQUAL ${OWN_VERSION_PREFIX}_VERSION_NAME )
+			set( _MATCHED TRUE )
+		elseif( ${OWN_VERSION_PREFIX}_VERSION_TYPE STREQUAL "RELEASE" AND ( ${INPUT_VERSION_PREFIX}_VERSION_NAME STREQUAL "" ) )
+				# for release, we accept either the matching name, or none at all
+				set( _MATCHED TRUE )
+		endif( ${INPUT_VERSION_PREFIX}_VERSION_NAME STREQUAL ${OWN_VERSION_PREFIX}_VERSION_NAME )
+	elseif( ${INPUT_VERSION_PREFIX}_VERSION_TYPE STREQUAL "HEAD" 
+			OR ${INPUT_VERSION_PREFIX}_VERSION_TYPE STREQUAL "BRANCH" 
+			OR ${INPUT_VERSION_PREFIX}_VERSION_TYPE STREQUAL "TAG" )
+		# 'normal' test - name has to match
+		if( ${INPUT_VERSION_PREFIX}_VERSION_NAME STREQUAL ${OWN_VERSION_PREFIX}_VERSION_NAME )
+			set( _MATCHED TRUE )
+		endif( ${INPUT_VERSION_PREFIX}_VERSION_NAME STREQUAL ${OWN_VERSION_PREFIX}_VERSION_NAME )
+	else()
+		message( WARNING "vista_compare_versions() - version type ${INPUT_VERSION_PREFIX}_VERSION_TYPE = ${${INPUT_VERSION_PREFIX}_VERSION_TYPE} is unknown" )
+	endif( NOT ${INPUT_VERSION_PREFIX}_VERSION_TYPE
+			OR ${INPUT_VERSION_PREFIX}_VERSION_TYPE STREQUAL "RELEASE" )
+			
+	message( "head+type correct? ${_MATCHED}")
+	if( _MATCHED )
+		# version type and name are okay - check number
+		vista_check_version_entry( "${${INPUT_VERSION_PREFIX}_VERSION_MAJOR}" "${${OWN_VERSION_PREFIX}_VERSION_MAJOR}" _DIFFERENCE_MAJOR )
+		vista_check_version_entry( "${${INPUT_VERSION_PREFIX}_VERSION_MINOR}" "${${OWN_VERSION_PREFIX}_VERSION_MINOR}" _DIFFERENCE_MINOR )
+		vista_check_version_entry( "${${INPUT_VERSION_PREFIX}_VERSION_PATCH}" "${${OWN_VERSION_PREFIX}_VERSION_PATCH}" _DIFFERENCE_PATCH )
+		vista_check_version_entry( "${${INPUT_VERSION_PREFIX}_VERSION_TWEAK}" "${${OWN_VERSION_PREFIX}_VERSION_TWEAK}" _DIFFERENCE_TWEAK )
+		if( _DIFFERENCE_MAJOR GREATER -1 AND _DIFFERENCE_MINOR GREATER -1 AND _DIFFERENCE_PATCH GREATER -1 AND _DIFFERENCE_TWEAK GREATER -1 )
+			set( ${DIFFERENCE_OUTPUT_VAR} "${_DIFFERENCE_MAJOR}.${_DIFFERENCE_MINOR}.${_DIFFERENCE_PATCH}.${_DIFFERENCE_TWEAK}" )
+		endif( _DIFFERENCE_MAJOR GREATER -1 AND _DIFFERENCE_MINOR GREATER -1 AND _DIFFERENCE_PATCH GREATER -1 AND _DIFFERENCE_TWEAK GREATER -1 )
+	endif( _MATCHED )
+endmacro( vista_compare_versions )
+
 # vista_find_package_root( PACKAGE [EXAMPLE_FILE | FILES file1 file2 ...] [DONT_ALLOW_UNVERSIONED] [QUIET] [FOLDERS folder1 folder2 ...] )
 macro( vista_find_package_root _PACKAGE_NAME )
 	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )

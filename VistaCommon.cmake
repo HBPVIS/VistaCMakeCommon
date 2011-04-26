@@ -135,11 +135,11 @@ endmacro( replace_svn_revision_tag VARIABLE_STRING_VAR )
 
 # local macro, for use in this file only
 macro( local_clean_old_configs _PACKAGE_NAME _PACKAGE_ROOT_DIR )
-	file( GLOB_RECURSE _ALL_VERSION_FILES "$ENV{VISTA_CMAKE_COMMON}/configs/${_PACKAGE_NAME}*/${_PACKAGE_NAME}ConfigVersion.cmake" )
+	file( GLOB_RECURSE _ALL_VERSION_FILES "${VISTA_CMAKE_COMMON}/configs/${_PACKAGE_NAME}*/${_PACKAGE_NAME}ConfigVersion.cmake" )
 	foreach( _FILE ${_ALL_VERSION_FILES} )
 		include( ${_FILE} )
 		if( PACKAGE_REFERENCE_OUTDATED OR ${_PACKAGE_ROOT_DIR} STREQUAL ${PACKAGE_REFERENCE_DIR} )
-			string( REGEX MATCH "($ENV{VISTA_CMAKE_COMMON}/configs/.+)/.*" _MATCHED ${_FILE} )
+			string( REGEX MATCH "(${VISTA_CMAKE_COMMON}/configs/.+)/.*" _MATCHED ${_FILE} )
 			if( _MATCHED )
 				set( _DIR ${CMAKE_MATCH_1} )			
 				message( STATUS "Removing previous config copied to \"${_DIR}\"" )
@@ -151,7 +151,7 @@ endmacro( local_clean_old_configs _PACKAGE_NAME _PACKAGE_ROOT_DIR )
 
 # local macro, for use in this file only
 macro( local_use_existing_config_libs _CONFIG_FILE )
-	if( EXISTS ${_CONFIG_FILE} )
+	if( EXISTS "${_CONFIG_FILE}" )
 		include( ${_CONFIG_FILE} )
 		if( ${_PACKAGE_NAME_UPPER}_ROOT_DIR STREQUAL _PACKAGE_ROOT_DIR )
 			if( {${_PACKAGE_NAME_UPPER}_LIBRARY_DIRS )
@@ -159,7 +159,7 @@ macro( local_use_existing_config_libs _CONFIG_FILE )
 				list( REMOVE_DUPLICATES _PACKAGE_LIBRARY_DIR )
 			endif( {${_PACKAGE_NAME_UPPER}_LIBRARY_DIRS )
 		endif( ${_PACKAGE_NAME_UPPER}_ROOT_DIR STREQUAL _PACKAGE_ROOT_DIR )
-	endif( EXISTS ${_CONFIG_FILE} )
+	endif( EXISTS "${_CONFIG_FILE}" )
 endmacro( local_use_existing_config_libs )
 
 
@@ -170,6 +170,8 @@ endmacro( local_use_existing_config_libs )
 
 # find_package_versioned( PACKAGE_NAME _EXTENDED_VERSION_NAME ... )
 # works like the normal find_package, but allows to use an extended version
+# works for both module and config mode - specialist API!
+# Usually, use vista-find_package instead
 macro( find_package_versioned _PACKAGE_NAME _VERSION_NAME )
 	set( _ARGS_LIST ${ARGV} )
 	list( REMOVE_ITEM _ARGS_LIST ${_PACKAGE_NAME} ${_VERSION_NAME} )
@@ -180,25 +182,14 @@ macro( find_package_versioned _PACKAGE_NAME _VERSION_NAME )
 	set( ${_PACKAGE_NAME}_FIND_VERSION_EXT )
 endmacro( find_package_versioned _PACKAGE_NAME _VERSION_NAME )
 
-
-# vista_use_package( PACKAGE [VERSION] [EXACT] [[COMPONENTS | REQUIRED] comp1 comp2 ... ] [QUIET] [FIND_DEPENDENCIES] )
-# finds the desired Package and automatically sets the include dirs, library dirs, definitions for the project
-# libraries have to be included using the VARIABLE PACKAGENAME_LIBRARIES. Alternatively, VISTA_USE_PACKAGE_LIBRARIES contains
-# all libraries that have linked by vista_use_package calls
-# buildsystem-specific variables. Works like find_package - taking the name, and optionally
-# VERSION - string describing the version - either the normal cmake-format XX.YY.ZZ.WW or the vista-specific extended version string
-# EXACT specifies that the version has to be matched exactly
-# REQUIRED specifies that the package must be found to continue. can optionally be followed by a list of required components
-# COMPONENTS can be followed by a list of optional, desired components
-# QUIET suppresses any warnings and other output except for errors
-# FIND_DEPENDENCIES If set, all packages that are required by the included packages are tried to be found and used automatically
-macro( vista_use_package _PACKAGE_NAME )
+macro( vista_find_package _PACKAGE_NAME )
 	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )	
 	
 	# parse arguments
 	set( _FIND_PACKAGE_ARGS )
 	set( _FIND_DEPENDENCIES FALSE )
-	set( _PACKAGE_VERSION "" )
+	set( _PACKAGE_VERSION )
+	set( _PACKAGE_COMPONENTS )
 	set( _QUIET FALSE )
 	set( _REQUIRED FALSE )
 	set( _USING_COMPONENTS FALSE )
@@ -219,7 +210,10 @@ macro( vista_use_package _PACKAGE_NAME )
 			list( APPEND _FIND_PACKAGE_ARGS "COMPONENTS" )
 		elseif( ${_ARG} STREQUAL "EXACT" )
 			set( _PARSE_COMPONENTS FALSE )
-			list( APPEND _FIND_PACKAGE_ARGS "EXACT" )				
+			list( APPEND _FIND_PACKAGE_ARGS "EXACT" )
+		elseif( ${_ARG} STREQUAL "NO_POLICY_SCOPE" )
+			set( _PARSE_COMPONENTS FALSE )
+			list( APPEND _FIND_PACKAGE_ARGS "NO_POLICY_SCOPE" )	
 		elseif( ${_ARG} STREQUAL "${ARGV0}" )
 			# it's okay, just the name
 		elseif( ${_ARG} STREQUAL "${ARGV1}" )
@@ -227,29 +221,155 @@ macro( vista_use_package _PACKAGE_NAME )
 			set( _PACKAGE_VERSION ${_ARG} )
 		elseif( _PARSE_COMPONENTS )
 			list( APPEND _FIND_PACKAGE_ARGS ${_ARG} )
+			list( APPEND _PACKAGE_COMPONENTS ${_ARG} )
 			set( _USING_COMPONENTS TRUE )
 		else()
 			message( WARNING "vista_use_package( ${_PACKAGE_NAME} ) - Unknown argument [${_ARG}]" )
 		endif( ${_ARG} STREQUAL "FIND_DEPENDENCIES" )
 	endforeach( _ARG ${ARGV} )
 	
-	if( NOT VISTA_USING_${_PACKAGE_NAME_UPPER} OR _USING_COMPONENTS )
-		# find package		
-		if( _PACKAGE_VERSION )
+	set( _DO_FIND TRUE )
+	
+	if( ${_PACKAGE_NAME_UPPER}_FOUND )
+	
+		if( "${${_PACKAGE_NAME_UPPER}_FOUND_VERSION}" AND "${_PACKAGE_VERSION}" )
+			# we have to check that we don't include different versions!
+			if( NOT ${${_PACKAGE_NAME_UPPER}_FOUND_VERSION} STREQUAL ${_PACKAGE_VERSION} )
+				message( WARNING "vista_find_package( ${_PACKAGE_NAME} - Requested version \"${_PACKAGE_VERSION}\",
+						but was already found with version \"${${_PACKAGE_NAME_UPPER}_FOUND_VERSION}\"  
+						\n\tpreviously found version will be used again" )
+				set( _PACKAGE_VERSION ${${_PACKAGE_NAME_UPPER}_FOUND_VERSION} )
+			endif( NOT ${_PACKAGE_NAME_UPPER}_FOUND_VERSION STREQUAL ${_PACKAGE_VERSION} )
+		endif( ${_PACKAGE_NAME_UPPER}_FOUND_VERSION AND ${_PACKAGE_VERSION} )
+		
+		if( _PARSE_COMPONENTS )
+			# we need to check if the components are already included or not
+			# NOTE: this relies on the Find<Package> or <Package>Config file to
+			# correctly set the PACKAGE_FOUND_COMPONENTS variable - otherwise, a rerun
+			# will be performed even if previous finds were sufficient
+			foreach( _COMPONENT ${_PACKAGE_COMPONENTS} )
+				list( FIND PACKAGE_FOUND_COMPONENTS ${_COMPONENT} _COMPONENT_FOUND )
+				if( NOT _COMPONENT_FOUND )
+					set( _DO_FIND TRUE )
+					break()
+				endif( NOT _COMPONENT_FOUND )
+			endforeach( _COMPONENT ${_PACKAGE_COMPONENTS} )
+		endif( _PARSE_COMPONENTS )
+		
+	endif( ${_PACKAGE_NAME_UPPER}_FOUND )
+		
+	if( _DO_FIND )		
+		
+		if( ${_PACKAGE_VERSION} )
+			# argument is no find_package keyword -> its a version
 			string( REGEX MATCH "^[0-9\\.]*$" _MATCH ${_PACKAGE_VERSION} )
-			if( _MATCH )
-				find_package( V${_PACKAGE_NAME} ${_PACKAGE_VERSION} ${_FIND_PACKAGE_ARGS} )
-			else( _MATCH )
-				find_package_versioned( V${_PACKAGE_NAME} ${_PACKAGE_VERSION} ${_FIND_PACKAGE_ARGS} )
-			endif( _MATCH )
-		else( _PACKAGE_VERSION )
-			find_package( V${_PACKAGE_NAME} ${_FIND_PACKAGE_ARGS} )
-		endif( _PACKAGE_VERSION )
-				
-		set( ${_PACKAGE_NAME_UPPER}_FOUND ${${_PACKAGE_NAME_UPPER}_FOUND} )
+			if( NOT _MATCH )
+				# its an extended version
+				set( _PACKAGE_VERSION 0.0.0.0 )
+				set( PACKAGE_FIND_VERSION_EXT ${_PACKAGE_VERSION} )
+				set( ${_PACKAGE_NAME}_FIND_VERSION_EXT ${_PACKAGE_VERSION} )
+			endif( NOT _MATCH )
+		endif( ${_PACKAGE_VERSION} )
+		
+		# two options: either there is a special FindV<package-name>.cmake file,
+		# or we try a regular find_apckage( <package-name> to find config files
+		# so first, we look for the V-package
+		set( _FIND_V_EXISTS FALSE )
+		foreach( _PATH ${CMAKE_MODULE_PATH} )
+			if( EXISTS "${_PATH}/FindV${_PACKAGE_NAME}.cmake" )
+				set( _FIND_V_EXISTS TRUE )
+				break()
+			endif( EXISTS "${_PATH}/FindV${_PACKAGE_NAME}.cmake" )
+		endforeach( _PATH ${CMAKE_MODULE_PATH} )
+
+		if( _FIND_V_EXISTS )
+			message( "find_package( V${_PACKAGE_NAME} ${_PACKAGE_VERSION} ${_FIND_PACKAGE_ARGS} )" )
+			find_package( V${_PACKAGE_NAME} ${_PACKAGE_VERSION} ${_FIND_PACKAGE_ARGS} )
+			set( {_PACKAGE_NAME_UPPER}_FOUND V${_PACKAGE_NAME_UPPER}_FOUND )
+		else( _FIND_V_EXISTS )
+			message( "find_package( ${_PACKAGE_NAME} ${_PACKAGE_VERSION} ${_FIND_PACKAGE_ARGS} )" )
+			find_package( ${_PACKAGE_NAME} ${_PACKAGE_VERSION} ${_FIND_PACKAGE_ARGS} )
+		endif( _FIND_V_EXISTS )
+		
+	endif( _DO_FIND )
+endmacro( vista_find_package )
+
+
+# vista_use_package( PACKAGE [VERSION] [EXACT] [[COMPONENTS | REQUIRED] comp1 comp2 ... ] [QUIET] [FIND_DEPENDENCIES] )
+# finds the desired Package and automatically sets the include dirs, library dirs, definitions for the project
+# libraries have to be included using the VARIABLE PACKAGENAME_LIBRARIES. Alternatively, VISTA_USE_PACKAGE_LIBRARIES contains
+# all libraries that have linked by vista_use_package calls
+# buildsystem-specific variables. Works like find_package - taking the name, and optionally
+# VERSION - string describing the version - either the normal cmake-format XX.YY.ZZ.WW or the vista-specific extended version string
+# EXACT specifies that the version has to be matched exactly
+# REQUIRED specifies that the package must be found to continue. can optionally be followed by a list of required components
+# COMPONENTS can be followed by a list of optional, desired components
+# QUIET suppresses any warnings and other output except for errors
+# FIND_DEPENDENCIES If set, all packages that are required by the included packages are tried to be found and used automatically
+macro( vista_use_package _PACKAGE_NAME )
+	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
+
+	# check if we need to rerun. this is the case it has not been used yet,
+	# or if it has been used, but now additional dependencies are requested
+	set( _REQUIRES_RERUN TRUE )	
+	if( VISTA_USE_${_PACKAGE_NAME_UPPER} )
+		# extract components, to see if they are met already or not
+		set( _REQUESTED_COMPONENTS )
+		set( _PARSE_COMPONENTS FALSE )
+		set( _COMPONENTS_FOUND FALSE )
+		foreach( _ARG ${ARGV} )			
+			if( ${_ARG} STREQUAL "COMPONENTS" OR ${_ARG} STREQUAL "REQUIRED" )
+				set( _PARSE_COMPONENTS TRUE )
+			elseif( ${_ARG} STREQUAL "QUIET"
+					OR ${_ARG} STREQUAL "EXACT"
+					OR ${_ARG} STREQUAL "NO_POLICY_SCOPE" )
+				set( _PARSE_COMPONENTS FALSE )
+			elseif( _PARSE_COMPONENTS )
+				list( APPEND _REQUESTED_COMPONENTS ${_ARG} )
+				set( _COMPONENTS_FOUND TRUE )
+			endif( ${_ARG} STREQUAL "FIND_DEPENDENCIES" )
+		endforeach( _ARG ${ARGV} )
+		
+		# todo: check against components
+		if( NOT _COMPONENTS_FOUND )
+			set( _REQUIRES_RERUN FALSE )
+			# todo: check version
+		endif( NOT _COMPONENTS_FOUND )			
+		
+	endif( VISTA_USE_${_PACKAGE_NAME_UPPER} )
+		
+	if( _REQUIRES_RERUN )	
+		# package has not yet been used
+	
+		# we firstextract some parameters, then try to find the package		
+		
+		set( _ARGUMENTS ${ARGV} )
+	
+		# parse arguments
+		list( FIND _ARGUMENTS "FIND_DEPENDENCIES" _FIND_DEPENDENCIES_FOUND )
+		if( _FIND_DEPENDENCIES_FOUND )
+			set( _FIND_DEPENDENCIES TRUE )
+			list( REMOVE_ITEM _ARGUMENTS "FIND_DEPENDENCIES" )
+		else( _FIND_DEPENDENCIES_FOUND )
+			set( _FIND_DEPENDENCIES FALSE )
+		endif( _FIND_DEPENDENCIES_FOUND )
+		
+		list( FIND _ARGUMENTS "QUIET" _QUIET_FOUND )
+		if( _QUIET_FOUND )
+			set( _QUIET TRUE )
+		else( _QUIET_FOUND )
+			set( _QUIET FALSE )
+		endif( _QUIET_FOUND )
+			
+		# finding will handle differences to already run find's
+		vista_find_package( ${ARGV} )
+		
+		set( ${_PACKAGE_NAME_UPPER}_FOUND ${V${_PACKAGE_NAME_UPPER}_FOUND} )
+		
+		message( "${_PACKAGE_NAME_UPPER}_FOUND = ${${_PACKAGE_NAME_UPPER}_FOUND}" )
 		
 		#if found - set required variables
-		if( V${_PACKAGE_NAME_UPPER}_FOUND )
+		if( ${_PACKAGE_NAME_UPPER}_FOUND )
 			include_directories( ${${_PACKAGE_NAME_UPPER}_INCLUDE_DIRS} )
 			link_directories( ${${_PACKAGE_NAME_UPPER}_LIBRARY_DIRS} )
 			add_definitions( ${${_PACKAGE_NAME_UPPER}_DEFINITIONS} )
@@ -264,61 +384,59 @@ macro( vista_use_package _PACKAGE_NAME )
 			# TODO: removing duplicates also removes optimized and debug flags...
 			#list( REMOVE_DUPLICATES VISTA_USE_PACKAGE_LIBRARIES )
 			list( APPEND VISTA_TARGET_LINK_DIRS ${${_PACKAGE_NAME_UPPER}_LIBRARY_DIRS} )
-			if( _PACKAGE_VERSION )
-				list( APPEND VISTA_TARGET_DEPENDENCIES "${_PACKAGE_NAME}-${_PACKAGE_VERSION}" )
-			else( _PACKAGE_VERSION )
-				list( APPEND VISTA_TARGET_DEPENDENCIES "${_PACKAGE_NAME}" )
-			endif( _PACKAGE_VERSION )
+			list( APPEND VISTA_TARGET_DEPENDENCIES "package" ${ARGV} )
 			set( VISTA_USING_${_PACKAGE_NAME_UPPER} TRUE )
 			
 			# we dont want to add second-level dependencies to VISTA_TARGET_DEPENDENCIES, so be buffer it and reset it later
 			set( _TMP_VISTA_TARGET_DEPENDENCIES ${VISTA_TARGET_DEPENDENCIES} )
 			
 			#handle dependencies
+			set( _DEPENDENCY_ARGS )
 			foreach( _DEPENDENCY ${${_PACKAGE_NAME_UPPER}_DEPENDENCIES} )
 				string( REGEX MATCH "^([^\\-]+)\\-(.+)$" _MATCHED ${_DEPENDENCY} )
-				if( _MATCHED )
-					set( _DEP_PACKAGE ${CMAKE_MATCH_1} )
-					set( _DEP_VERSION ${CMAKE_MATCH_2} )
-				else( _MATCHED )
-					set( _DEP_PACKAGE ${_DEPENDENCY} )
-				endif( _MATCHED )
-				string( TOUPPER ${_DEP_PACKAGE} _DEP_UPPER )
-				if( _FIND_DEPENDENCIES )
-					if( NOT ${_DEP_UPPER}_FOUND AND NOT V${_DEP_UPPER}_FOUND )
-						# find and use the dependency. If it fails, utter a warning
-						if( NOT _QUIET )
-							message( STATUS "Automatically adding \"${_PACKAGE_NAME}\" dependency \"${_DEPENDENCY}\"" )
-						endif( NOT _QUIET )
-						vista_use_package( ${_DEP_PACKAGE} ${_DEP_VERSION} FIND_DEPENDENCIES )
-						if( NOT V${_DEP_UPPER}_FOUND AND NOT _QUIET )
-							message( WARNING "vista_use_package( ${_PACKAGE_NAME} ) - Package depends on \"${_DEPENDENCY}\", but including it failed" )
-						endif( NOT V${_DEP_UPPER}_FOUND AND NOT _QUIET )
-					endif( NOT ${_DEP_UPPER}_FOUND AND NOT V${_DEP_UPPER}_FOUND )
-				else( _FIND_DEPENDENCIES )
-					# check if dependencies are already included. If not, utter a warning					
-					if( NOT ${_DEP_UPPER}_FOUND AND NOT V${_DEP_UPPER}_FOUND AND NOT _QUIET )
-						message( "vista_use_package( ${_PACKAGE_NAME} ) - Package depends on \"${_DEPENDENCY}\", which was not found yet" )
-					endif( NOT ${_DEP_UPPER}_FOUND AND NOT V${_DEP_UPPER}_FOUND AND NOT _QUIET )
-				endif( _FIND_DEPENDENCIES )
+				if( _DEPENDENCY STREQUAL "package" )
+					if( _DEPENDENCY_ARGS )
+						list( GET_AT _DEPENDENCY_ARGS 0 _DEPENDENCY_NAME )
+						string( TOUPPER "_DEPENDENCY_NAME" _DEPENDENCY_NAME_UPPER )
+						if( _FIND_DEPENDENCIES )
+							if( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND )
+								# find and use the dependency. If it fails, utter a warning
+								if( NOT _QUIET )
+									message( STATUS "Automatically adding \"${_PACKAGE_NAME}\" dependency \"${_DEPENDENCY_ARGS}\"" )
+								endif( NOT _QUIET )
+								vista_use_package( ${_DEPENDENCY_ARGS} FIND_DEPENDENCIES )
+								if( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND AND NOT _QUIET )
+									message( WARNING "vista_use_package( ${_PACKAGE_NAME} ) - Package depends on \"${_DEPENDENCY_ARGS}\", but including it failed" )
+								endif( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND AND NOT _QUIET )
+							endif( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND )
+						else( _FIND_DEPENDENCIES )
+							# check if dependencies are already included. If not, utter a warning					
+							if( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND AND NOT _QUIET )
+								message( "vista_use_package( ${_PACKAGE_NAME} ) - Package depends on \"${_DEPENDENCY}\", which was not found yet" )
+							endif( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND AND NOT _QUIET )
+						endif( _FIND_DEPENDENCIES )
+					endif( _DEPENDENCY_ARGS )
+				else()
+					list( APPEND _DEPENDENCY_ARGS ${_DEPENDENCY} )
+				endif( _DEPENDENCY STREQUAL "package" )
 			endforeach( _DEPENDENCY ${${_PACKAGE_NAME_UPPER}_DEPENDENCIES} )
 
-			#restire dependencies before recursive include
+			#restore dependencies as they were before FIND_DEPENDENCY calls
 			set( VISTA_TARGET_DEPENDENCIES ${_TMP_VISTA_TARGET_DEPENDENCIES} )			
 			
-		endif( V${_PACKAGE_NAME_UPPER}_FOUND )	
-	endif( NOT VISTA_USING_${_PACKAGE_NAME_UPPER} OR _USING_COMPONENTS )
+		endif( ${_PACKAGE_NAME_UPPER}_FOUND )	
+	endif( _REQUIRES_RERUN )
 	
 endmacro( vista_use_package _PACKAGE_NAME )
 
-# vista_configure_app( _PACKAGE_NAME )
+# vista_configure_app( _PACKAGE_NAME [OUT_NAME] )
 # sets some general properties for the target to configure it as application
 #	sets default value for CMAKE_INSTALL_PREFIX (if not set otherwise) to source directory
 #	sets the Application Name to _PACKAGE_NAME with "D"-PostFix under Debug
 #	if not overwritten, sets the outdir to the target's source directory
 #	creates a shell script that sets the path to find required libraries
 #	for MSVC, a *.vcproj.user file is created, setting Working Directory and Path Environment
-macro( vista_configure_app _PACKAGE_NAME [OUT_NAME] )
+macro( vista_configure_app _PACKAGE_NAME )
 	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
 	if( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
 		vista_set_defaultvalue( CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}/dist/${VISTA_HWARCH}" CACHE PATH "distribution directory" FORCE )
@@ -337,9 +455,11 @@ macro( vista_configure_app _PACKAGE_NAME [OUT_NAME] )
 	set_target_properties( ${_PACKAGE_NAME} PROPERTIES OUTPUT_NAME_MINSIZEREL 		"${${_PACKAGE_NAME_UPPER}_OUTPUT_NAME}" )
 	set_target_properties( ${_PACKAGE_NAME} PROPERTIES OUTPUT_NAME_RELWITHDEBINFO	"${${_PACKAGE_NAME_UPPER}_OUTPUT_NAME}" )
 	
-	if( NOT DEFINED ${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR} )		
+	if( NOT DEFINED ${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR )
 		vista_set_outdir( ${_PACKAGE_NAME} ${CMAKE_CURRENT_SOURCE_DIR} )
-	endif( NOT DEFINED ${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR} )
+	else( NOT DEFINED ${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR )
+		vista_set_outdir( ${_PACKAGE_NAME} ${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR} )
+	endif( NOT DEFINED ${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR )
 	
 	# we store the dependencies as required
 	set( ${_PACKAGE_NAME_UPPER}_DEPENDENCIES ${VISTA_TARGET_DEPENDENCIES} CACHE INTERNAL "" FORCE )
@@ -427,9 +547,11 @@ macro( vista_configure_lib _PACKAGE_NAME )
 
 	set_target_properties( ${_PACKAGE_NAME} PROPERTIES OUTPUT_NAME	"${${_PACKAGE_NAME_UPPER}_OUTPUT_NAME}" )
 		
-	if( NOT ${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR )
-		vista_set_outdir( ${_PACKAGE_NAME} "${CMAKE_BINARY_DIR}/lib" )
-	endif( NOT ${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR )
+	if( NOT DEFINED ${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR )
+		vista_set_outdir( ${_PACKAGE_NAME} "${CMAKE_BINARY_DIR}/lib" )	
+	else( NOT DEFINED ${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR )
+		vista_set_outdir( ${_PACKAGE_NAME} ${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR} )
+	endif( NOT DEFINED ${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR )
 	
 	# we store the dependencies as required
 	set( ${_PACKAGE_NAME_UPPER}_DEPENDENCIES ${VISTA_TARGET_DEPENDENCIES} CACHE INTERNAL "" FORCE )
@@ -565,14 +687,14 @@ macro( vista_create_cmake_configs _TARGET )
 	endif( NOT EXISTS ${_CONFIG_PROTO_FILE} )
 	
 	if( NOT _PRECONDITION_FAIL )
-		if( EXISTS $ENV{VISTA_CMAKE_COMMON} )
-			set( _PACKAGE_CONFIG_TARGET "$ENV{VISTA_CMAKE_COMMON}/configs/${_PACKAGE_NAME}" )
+		if( EXISTS "${VISTA_CMAKE_COMMON}" )
+			set( _PACKAGE_CONFIG_TARGET "${VISTA_CMAKE_COMMON}/configs/${_PACKAGE_NAME}" )
 			if( DEFINED ${_PACKAGE_NAME_UPPER}_VERSION_EXT )
 				set( _PACKAGE_CONFIG_TARGET "${_PACKAGE_CONFIG_TARGET}-${${_PACKAGE_NAME_UPPER}_VERSION_EXT}" )
 			else( DEFINED ${_PACKAGE_NAME_UPPER}_VERSION_EXT )
 				set( _PACKAGE_CONFIG_TARGET "${_PACKAGE_CONFIG_TARGET}-${VISTA_HWARCH}" )
 			endif( DEFINED ${_PACKAGE_NAME_UPPER}_VERSION_EXT )		
-		endif( EXISTS $ENV{VISTA_CMAKE_COMMON} )
+		endif( EXISTS "${VISTA_CMAKE_COMMON}" )
 		
 		if( _PACKAGE_CONFIG_TARGET )
 			# we create two files: one for the build, one for the install version
@@ -582,9 +704,8 @@ macro( vista_create_cmake_configs _TARGET )
 			if( ${_PACKAGE_NAME_UPPER}_LIBRARY_OUTDIR )
 				set( _PACKAGE_LIBRARY_DIR ${${_PACKAGE_NAME_UPPER}_LIBRARY_OUTDIR} )
 			else()
-				set( _PACKAGE_LIBRARY_DIR ${${_PACKAGE_NAME_UPPER}_LIBRARY_OUTDIR} )
+				set( _PACKAGE_LIBRARY_DIR ${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR} )
 			endif( ${_PACKAGE_NAME_UPPER}_LIBRARY_OUTDIR )
-			
 			set( _LIBRARY_NAME ${${_PACKAGE_NAME_UPPER}_OUTPUT_NAME} )
 			
 			set( _PACKAGE_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}" )
@@ -592,11 +713,11 @@ macro( vista_create_cmake_configs _TARGET )
 
 			list( REMOVE_DUPLICATES _PACKAGE_INCLUDE_DIR )
 
-			local_use_existing_config_libs( ${_PACKAGE_CONFIG_TARGET}-build/${_PACKAGE_NAME}Config.cmake )
+			local_use_existing_config_libs( "${_PACKAGE_CONFIG_TARGET}-build/${_PACKAGE_NAME}Config.cmake" )
 			local_clean_old_configs( ${_PACKAGE_NAME} ${_PACKAGE_ROOT_DIR} )
 			configure_file(	${_CONFIG_PROTO_FILE} "${CMAKE_BINARY_DIR}/cmake/${_PACKAGE_NAME}Config.cmake" @ONLY )
 			file( COPY "${CMAKE_BINARY_DIR}/cmake/${_PACKAGE_NAME}Config.cmake"
-					DESTINATION ${_PACKAGE_CONFIG_TARGET}-build )
+					DESTINATION "${_PACKAGE_CONFIG_TARGET}-build" )
 			
 			set( _PACKAGE_ROOT_DIR "${CMAKE_INSTALL_PREFIX}" )
 			if( ${${_PACKAGE_NAME_UPPER}_INC_INSTALLDIR} )
@@ -610,7 +731,7 @@ macro( vista_create_cmake_configs _TARGET )
 				set( _PACKAGE_LIBRARY_DIR "${_PACKAGE_ROOT_DIR}/lib" )
 			endif( ${${_PACKAGE_NAME_UPPER}_LIB_INSTALLDIR} )
 			
-			local_use_existing_config_libs( ${CMAKE_INSTALL_PREFIX}/cmake/${_PACKAGE_NAME}Config.cmake )
+			local_use_existing_config_libs( "${CMAKE_INSTALL_PREFIX}/cmake/${_PACKAGE_NAME}Config.cmake" )
 			local_clean_old_configs( ${_PACKAGE_NAME} ${_PACKAGE_ROOT_DIR} )
 			configure_file(	${_CONFIG_PROTO_FILE} "${CMAKE_BINARY_DIR}/toinstall/${_PACKAGE_NAME}Config.cmake" @ONLY )
 			install( FILES
@@ -628,6 +749,7 @@ macro( vista_create_cmake_configs _TARGET )
 			set( _PACKAGE_INCLUDE_DIR ${_PACKAGE_ROOT_DIR}/${${_PACKAGE_NAME_UPPER}_INC_INSTALLDIR} )
 			set( _PACKAGE_LIBRARY_DIR ${_PACKAGE_ROOT_DIR}/${${_PACKAGE_NAME_UPPER}_LIB_INSTALLDIR} )
 			
+			local_use_existing_config_libs( ${CMAKE_INSTALL_PREFIX}/cmake/${_PACKAGE_NAME}Config.cmake )
 			local_use_existing_config_libs( ${CMAKE_INSTALL_PREFIX}/cmake/${_PACKAGE_NAME}Config.cmake )
 			local_clean_old_configs( ${_PACKAGE_NAME} ${_PACKAGE_ROOT_DIR} )
 			configure_file(	${_CONFIG_PROTO_FILE} ${CMAKE_BINARY_DIR}/cmake/${_PACKAGE_NAME}Config.cmake	@ONLY )
@@ -788,117 +910,123 @@ endmacro( vista_adopt_version _NAME _ADOPT_PARENT )
 ###########################
 ###   General Settings  ###
 ###########################
-if( NOT ALREADY_CONFIGURED_ONCE OR FIRST_CONFIGURE_RUN )
-	set( ALREADY_CONFIGURED_ONCE TRUE CACHE INTERNAL "defines if this is the first config run or not" )
-	set( FIRST_CONFIGURE_RUN TRUE )
-else( NOT ALREADY_CONFIGURED_ONCE OR FIRST_CONFIGURE_RUN )
-	set( FIRST_CONFIGURE_RUN FALSE )
-endif( NOT ALREADY_CONFIGURED_ONCE OR FIRST_CONFIGURE_RUN )
+if( NOT DEFINED VISTA_HWARCH ) # this shows we did not include it yet
+	if( EXISTS "${VISTA_CMAKE_COMMON}" )
+		list( APPEND CMAKE_MODULE_PATH "${VISTA_CMAKE_COMMON}/configs" )
+		list( APPEND CMAKE_PREFIX_PATH "${VISTA_CMAKE_COMMON}" "${VISTA_CMAKE_COMMON}/configs" )
+	endif( EXISTS "${VISTA_CMAKE_COMMON}" )
 
-if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-	SET( VISTA_64BIT TRUE )
-else( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-	SET( VISTA_64BIT FALSE )
-endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+	if( NOT ALREADY_CONFIGURED_ONCE OR FIRST_CONFIGURE_RUN )
+		set( ALREADY_CONFIGURED_ONCE TRUE CACHE INTERNAL "defines if this is the first config run or not" )
+		set( FIRST_CONFIGURE_RUN TRUE )
+	else( NOT ALREADY_CONFIGURED_ONCE OR FIRST_CONFIGURE_RUN )
+		set( FIRST_CONFIGURE_RUN FALSE )
+	endif( NOT ALREADY_CONFIGURED_ONCE OR FIRST_CONFIGURE_RUN )
 
-if( WIN32 )
-	if( VISTA_64BIT )
-		set( VISTA_HWARCH "win32-x64" )
-	else( VISTA_64BIT )
-		set( VISTA_HWARCH "win32" )
-	endif( VISTA_64BIT )
-	
-	if( MSVC )
-		if( MSVC80 )
-			set( VISTA_HWARCH "${VISTA_HWARCH}.vc8" )
-		elseif( MSVC90 )
-			set( VISTA_HWARCH "${VISTA_HWARCH}.v90" )
-		elseif( MSVC10 )
-			set( VISTA_HWARCH "${VISTA_HWARCH}.vc10" )
-		else( MSVC80 )
-			message( WARNING "VistaCommon - Unknown MSVC version" )
-			set( VISTA_HWARCH "${VISTA_HWARCH}.vc" )
-		endif( MSVC80 )
-	else( MSVC )
-		message( WARNING "VistaCommon - using WIN32 without Visual Studio - this will probably fail - use at your own risk!" )
-	endif( MSVC )
-elseif( APPLE )
-	set( VISTA_HWARCH "DARWIN" )
-elseif( UNIX )
-	if( VISTA_64BIT )
-		set( VISTA_HWARCH "LINUX.X86_64" )
-	else( VISTA_64BIT )
-		set( VISTA_HWARCH "LINUX.X86" )
-	endif( VISTA_64BIT )
-else( WIN32 )
-	message( WARNING "VistaCpmmon - Unsupported hardware architecture - use at your own risk!" )
-	set( VISTA_HWARCH "UNKOWN_ARCHITECTURE" )
-endif( WIN32 )
+	if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+		SET( VISTA_64BIT TRUE )
+	else( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+		SET( VISTA_64BIT FALSE )
+	endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
 
-set( CMAKE_DEBUG_POSTFIX "D" )
-set_property( GLOBAL PROPERTY USE_FOLDERS ON )
-set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG" )
-# Should we use rpath? This enables us to use OpenSG etc. within the Vista* libraries without having
-# to set a LIBRARY_PATH while linking against these libraries
-set( VISTA_USE_RPATH ON CACHE BOOL "Use rpath" )
-mark_as_advanced( VISTA_USE_RPATH )
+	if( WIN32 )
+		if( VISTA_64BIT )
+			set( VISTA_HWARCH "win32-x64" )
+		else( VISTA_64BIT )
+			set( VISTA_HWARCH "win32" )
+		endif( VISTA_64BIT )
+		
+		if( MSVC )
+			if( MSVC80 )
+				set( VISTA_HWARCH "${VISTA_HWARCH}.vc8" )
+			elseif( MSVC90 )
+				set( VISTA_HWARCH "${VISTA_HWARCH}.v90" )
+			elseif( MSVC10 )
+				set( VISTA_HWARCH "${VISTA_HWARCH}.vc10" )
+			else( MSVC80 )
+				message( WARNING "VistaCommon - Unknown MSVC version" )
+				set( VISTA_HWARCH "${VISTA_HWARCH}.vc" )
+			endif( MSVC80 )
+		else( MSVC )
+			message( WARNING "VistaCommon - using WIN32 without Visual Studio - this will probably fail - use at your own risk!" )
+		endif( MSVC )
+	elseif( APPLE )
+		set( VISTA_HWARCH "DARWIN" )
+	elseif( UNIX )
+		if( VISTA_64BIT )
+			set( VISTA_HWARCH "LINUX.X86_64" )
+		else( VISTA_64BIT )
+			set( VISTA_HWARCH "LINUX.X86" )
+		endif( VISTA_64BIT )
+	else( WIN32 )
+		message( WARNING "VistaCpmmon - Unsupported hardware architecture - use at your own risk!" )
+		set( VISTA_HWARCH "UNKOWN_ARCHITECTURE" )
+	endif( WIN32 )
 
-# Platform dependent definitions
-if( UNIX )
-    add_definitions( -DLINUX )
-elseif( WIN32 )
-	add_definitions( -DWIN32 )
-    if( MSVC )
-		vista_set_defaultvalue( CMAKE_CONFIGURATION_TYPES "Release;Debug" CACHE STRING "CMake configuration types" )
-		# msvc disable some warnings
-		set( VISTA_DISABLE_GENERIC_MSVC_WARNINGS ON CACHE BOOL "If true, generic warnings (4251, 4275, 4503, CRT_SECURE_NO_WARNINGS) will be set for Visual Studio" )
-		mark_as_advanced( VISTA_DISABLE_GENERIC_MSVC_WARNINGS )
-		if( VISTA_DISABLE_GENERIC_MSVC_WARNINGS )
-			add_definitions( /D_CRT_SECURE_NO_WARNINGS /wd4251 /wd4275 /wd4503 )
-		endif( VISTA_DISABLE_GENERIC_MSVC_WARNINGS )
-		#Enable string pooling
-		add_definitions( -GF )
-		# Parallel build for Visual Studio?
-		set( VISTA_USE_PARALLEL_MSVC_BUILD ON CACHE BOOL "Add /MP flag for parallel build on Visual Studio" )
-		mark_as_advanced( VISTA_USE_PARALLEL_MSVC_BUILD )
-		if( VISTA_USE_PARALLEL_MSVC_BUILD )
-            add_definitions( /MP )
-        else()
-            remove_definitions(/MP)
-        endif(VISTA_USE_PARALLEL_MSVC_BUILD)
-		# Check for sse optimization
-		if( NOT VISTA_64BIT )
-			set( VISTA_USE_MSVC_SSE_OPTIMIZATION ON CACHE BOOL "Use automatic SSE2 optimizations of Visual Studio")
-			mark_as_advanced( VISTA_USE_MSVC_SSE_OPTIMIZATION )
-			if( VISTA_USE_MSVC_SSE_OPTIMIZATION )
-				add_definitions( /arch:SSE2 )
+	set( CMAKE_DEBUG_POSTFIX "D" )
+	set_property( GLOBAL PROPERTY USE_FOLDERS ON )
+	set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG" )
+	# Should we use rpath? This enables us to use OpenSG etc. within the Vista* libraries without having
+	# to set a LIBRARY_PATH while linking against these libraries
+	set( VISTA_USE_RPATH ON CACHE BOOL "Use rpath" )
+	mark_as_advanced( VISTA_USE_RPATH )
+
+	# Platform dependent definitions
+	if( UNIX )
+		add_definitions( -DLINUX )
+	elseif( WIN32 )
+		add_definitions( -DWIN32 )
+		if( MSVC )
+			vista_set_defaultvalue( CMAKE_CONFIGURATION_TYPES "Release;Debug" CACHE STRING "CMake configuration types" )
+			# msvc disable some warnings
+			set( VISTA_DISABLE_GENERIC_MSVC_WARNINGS ON CACHE BOOL "If true, generic warnings (4251, 4275, 4503, CRT_SECURE_NO_WARNINGS) will be set for Visual Studio" )
+			mark_as_advanced( VISTA_DISABLE_GENERIC_MSVC_WARNINGS )
+			if( VISTA_DISABLE_GENERIC_MSVC_WARNINGS )
+				add_definitions( /D_CRT_SECURE_NO_WARNINGS /wd4251 /wd4275 /wd4503 )
+			endif( VISTA_DISABLE_GENERIC_MSVC_WARNINGS )
+			#Enable string pooling
+			add_definitions( -GF )
+			# Parallel build for Visual Studio?
+			set( VISTA_USE_PARALLEL_MSVC_BUILD ON CACHE BOOL "Add /MP flag for parallel build on Visual Studio" )
+			mark_as_advanced( VISTA_USE_PARALLEL_MSVC_BUILD )
+			if( VISTA_USE_PARALLEL_MSVC_BUILD )
+				add_definitions( /MP )
 			else()
-				remove_definitions( /arch:SSE2 )
-			endif( VISTA_USE_MSVC_SSE_OPTIMIZATION )
-		endif( NOT VISTA_64BIT )
-    endif( MSVC )
-endif( UNIX )
+				remove_definitions(/MP)
+			endif(VISTA_USE_PARALLEL_MSVC_BUILD)
+			# Check for sse optimization
+			if( NOT VISTA_64BIT )
+				set( VISTA_USE_MSVC_SSE_OPTIMIZATION ON CACHE BOOL "Use automatic SSE2 optimizations of Visual Studio")
+				mark_as_advanced( VISTA_USE_MSVC_SSE_OPTIMIZATION )
+				if( VISTA_USE_MSVC_SSE_OPTIMIZATION )
+					add_definitions( /arch:SSE2 )
+				else()
+					remove_definitions( /arch:SSE2 )
+				endif( VISTA_USE_MSVC_SSE_OPTIMIZATION )
+			endif( NOT VISTA_64BIT )
+		endif( MSVC )
+	endif( UNIX )
 
 
-
-
-
-
-
-
-# TODO: think where to put this
-if( EXISTS $ENV{VISTA_CMAKE_COMMON} AND NOT VISTA_CHECKED_COPIED_CONFIG_FILES )
-	set( VISTA_CHECKED_COPIED_CONFIG_FILES TRUE )	
-	file( GLOB_RECURSE _ALL_VERSION_FILES "$ENV{VISTA_CMAKE_COMMON}/configs/*ConfigVersion.cmake" )
-	foreach( _FILE ${_ALL_VERSION_FILES} )
-		include( ${_FILE} )
-		if( PACKAGE_REFERENCE_OUTDATED )
-		string( REGEX MATCH "($ENV{VISTA_CMAKE_COMMON}/configs/.+)/cmake/.*" _MATCHED ${_FILE} )
-		if( _MATCHED )
-			set( _DIR ${CMAKE_MATCH_1} )			
-			message( STATUS "Removing outdated configs copied to \"${_DIR}\"" )
-			file( REMOVE_RECURSE ${_DIR} )
-		endif( _MATCHED )
-		endif( PACKAGE_REFERENCE_OUTDATED )
-	endforeach( _FILE ${_ALL_VERSION_FILES} )
-endif( EXISTS $ENV{VISTA_CMAKE_COMMON} AND NOT VISTA_CHECKED_COPIED_CONFIG_FILES )
+	# TODO: think where to put this
+	if( EXISTS "${VISTA_CMAKE_COMMON}" AND NOT VISTA_CHECKED_COPIED_CONFIG_FILES )
+		set( VISTA_CHECKED_COPIED_CONFIG_FILES TRUE )	
+		file( GLOB_RECURSE _ALL_VERSION_FILES "${VISTA_CMAKE_COMMON}/configs/*ConfigVersion.cmake" )
+		foreach( _FILE ${_ALL_VERSION_FILES} )
+			include( ${_FILE} )
+			if( PACKAGE_REFERENCE_OUTDATED )
+			string( REGEX MATCH "(${VISTA_CMAKE_COMMON}/configs/.+)/cmake/.*" _MATCHED ${_FILE} )
+			if( _MATCHED )
+				set( _DIR ${CMAKE_MATCH_1} )			
+				message( STATUS "Removing outdated configs copied to \"${_DIR}\"" )
+				file( REMOVE_RECURSE ${_DIR} )
+			endif( _MATCHED )
+			endif( PACKAGE_REFERENCE_OUTDATED )
+		endforeach( _FILE ${_ALL_VERSION_FILES} )
+	endif( EXISTS "${VISTA_CMAKE_COMMON}" AND NOT VISTA_CHECKED_COPIED_CONFIG_FILES )
+	
+	if( EXISTS "$ENV{VISTA_CMAKE_COMMON}" )
+		file( TO_CMAKE_PATH $ENV{VISTA_CMAKE_COMMON} VISTA_CMAKE_COMMON )
+	endif( EXISTS "$ENV{VISTA_CMAKE_COMMON}" )
+	
+endif( NOT DEFINED VISTA_HWARCH ) # this shows we did not include it yet
