@@ -265,9 +265,10 @@ macro( vista_find_package _PACKAGE_NAME )
 			string( REGEX MATCH "^[0-9\\.]*$" _MATCH ${_PACKAGE_VERSION} )
 			if( NOT _MATCH )
 				# its an extended version
-				set( _PACKAGE_VERSION 0.0.0.0 )
 				set( PACKAGE_FIND_VERSION_EXT ${_PACKAGE_VERSION} )
 				set( ${_PACKAGE_NAME}_FIND_VERSION_EXT ${_PACKAGE_VERSION} )
+				set( V${_PACKAGE_NAME}_FIND_VERSION_EXT ${_PACKAGE_VERSION} )
+				set( _PACKAGE_VERSION 0.0.0.0 )
 			endif( NOT _MATCH )
 		endif( _PACKAGE_VERSION )
 		
