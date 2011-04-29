@@ -968,7 +968,7 @@ if( NOT DEFINED VISTA_HWARCH ) # this shows we did not include it yet
 			if( MSVC80 )
 				set( VISTA_HWARCH "${VISTA_HWARCH}.vc8" )
 			elseif( MSVC90 )
-				set( VISTA_HWARCH "${VISTA_HWARCH}.v90" )
+				set( VISTA_HWARCH "${VISTA_HWARCH}.vc9" )
 			elseif( MSVC10 )
 				set( VISTA_HWARCH "${VISTA_HWARCH}.vc10" )
 			else( MSVC80 )

@@ -30,7 +30,8 @@ include( FindPackageHandleStandardArgs )
 
 	#message( "searching for files" )	
 	
-	set( _SEARCH_PREFIXES 
+	set( _SEARCH_PREFIXES
+		${VistaCoreLibs_DIR}
 		"$ENV{VISTA_CMAKE_COMMON}/configs"
 		"${CMAKE_MODULE_PATH}"
 		"${CMAKE_PREFIX_PATH}"
@@ -125,7 +126,11 @@ if( VVistaCoreLibs_FIND_VERSION OR VVistaCoreLibs_FIND_VERSION_EXT )
 	endforeach( _VERSION_FILE ${VISTACORELIBS_EXISTING_VERSION_FILES} )	
 	
 	if( NOT _FOUND_CONFIG )
-		message( "FindVistaCoreLibs - no config with requested version \"${PACKAGE_FIND_VERSION}${PACKAGE_FIND_VERSION_EXT}\" has been found. Considered versions:" )
+		if( VVistaCoreLibs_FIND_VERSION_EXT )
+			message( "FindVistaCoreLibs - no config with requested version \"${VVistaCoreLibs_FIND_VERSION_EXT}\" has been found. Considered versions:" )
+		else( VVistaCoreLibs_FIND_VERSION_EXT )
+			message( "FindVistaCoreLibs - no config with requested version \"${VVistaCoreLibs_FIND_VERSION}\" has been found. Considered versions:" )
+		endif( VVistaCoreLibs_FIND_VERSION_EXT )
 		foreach( _SUB ${_CONSIDERED_VERSIONS} )
 			message( "\t${_SUB}" )
 		endforeach( _SUB ${_CONSIDERED_VERSIONS} )
@@ -148,8 +153,10 @@ endif( VVistaCoreLibs_FIND_VERSION OR VVistaCoreLibs_FIND_VERSION_EXT )
 if( _FOUND_CONFIG )
 	set( VistaCoreLibs_FIND_COMPONENTS ${VVistaCoreLibs_FIND_COMPONENTS} )
 	include( ${_FOUND_CONFIG} )
+	set( VISTACORELIBS_ROOT_DIR ${VISTACORELIBS_ROOT_DIR} CACHE PATH "VistaCoreLibs package root directory" FORCE )
 else( _FOUND_CONFIG )
 	#todo - find manually
+	set( VistaCoreLibs_DIR "VistaCoreLibs_DIR-NOTFOUND" CACHE PATH "path to VistaCoreLibsConfig.cmake file" )
 endif( _FOUND_CONFIG )
 
 find_package_handle_standard_args( VVistaCoreLibs "VistaCoreLibs could not be found" VISTACORELIBS_ROOT_DIR )
