@@ -991,7 +991,7 @@ if( NOT DEFINED VISTA_HWARCH ) # this shows we did not include it yet
 			set( VISTA_HWARCH "LINUX.X86" )
 		endif( VISTA_64BIT )
 	else( WIN32 )
-		message( WARNING "VistaCpmmon - Unsupported hardware architecture - use at your own risk!" )
+		message( WARNING "VistaCommon - Unsupported hardware architecture - use at your own risk!" )
 		set( VISTA_HWARCH "UNKOWN_ARCHITECTURE" )
 	endif( WIN32 )
 
