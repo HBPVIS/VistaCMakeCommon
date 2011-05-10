@@ -379,6 +379,7 @@ macro( vista_use_package _PACKAGE_NAME )
 			# TODO: removing duplicates also removes optimized and debug flags...
 			#list( REMOVE_DUPLICATES VISTA_USE_PACKAGE_LIBRARIES )
 			list( APPEND VISTA_TARGET_LINK_DIRS ${${_PACKAGE_NAME_UPPER}_LIBRARY_DIRS} )
+			#list( REMOVE_DUPLICATES VISTA_TARGET_LINK_DIRS )
 			list( APPEND VISTA_TARGET_DEPENDENCIES "package" ${ARGV} )
 			set( VISTA_USING_${_PACKAGE_NAME_UPPER} TRUE )
 			
@@ -660,6 +661,21 @@ macro( vista_install _PACKAGE_NAME )
 		endif( MSVC )
 	endif( ${_PACKAGE_NAME}_TARGET_TYPE STREQUAL "APP" )	
 endmacro()
+
+# vista_install_files_by_extension( SEARCH_ROOT INSTALL_SUBDIR EXTENSION1 [EXTENSION2 ...] )
+macro( vista_install_files_by_extension _SEARCH_ROOT _INSTALL_SUBDIR )
+	set( _EXTENSIONS )
+	foreach( _ARG ${ARGV} )
+		if( NOT "${_ARG}" STREQUAL "${ARGV0}" AND NOT "${_ARG}" STREQUAL "${ARGV2}" )
+			list( APPEND _EXTENSIONS ${_ARG} )
+		endif( NOT "${_ARG}" STREQUAL "${ARGV0}" AND NOT "${_ARG}" STREQUAL "${ARGV2}" )
+	endforeach( _ARG ${ARGV} )
+	foreach( _EXT ${_EXTENSIONS} )
+		file( GLOB_RECURSE _FOUND_FILES "${_SEARCH_ROOT}/*.${_EXT}" "${_SEARCH_ROOT}/**/*.${_EXT}" )
+		install( FILES ${_FOUND_FILES} DESTINATION ${CMAKE_INSTALL_PREFIX}/${_INSTALL_SUBDIR} )
+	endforeach( _EXT ${_EXTENSIONS} )
+	
+endmacro( vista_install_files_by_extension )
 
 # vista_create_cmake_configs( TARGET [CUSTOM_CONFIG_FILE] )
 # can only be called after vista_configure_[app|lib]

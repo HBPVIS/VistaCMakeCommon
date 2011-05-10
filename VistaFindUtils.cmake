@@ -112,7 +112,7 @@ endmacro( vista_compare_versions )
 macro( vista_find_package_root _PACKAGE_NAME )
 	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
 	string( TOLOWER ${_PACKAGE_NAME} _PACKAGE_NAME_LOWER )
-
+	
 	if( NOT ${_PACKAGE_NAME_UPPER}_ROOT_DIR )
 	
 		if( V${_PACKAGE_NAME}_FIND_VERSION_EXT )
@@ -200,7 +200,7 @@ macro( vista_find_package_root _PACKAGE_NAME )
 		endforeach( _FOLDER _PACKAGE_FOLDER_NAMES )
 
 		if( DEFINED _REQUESTED_VERSION )			
-			set( ${_PACKAGE_NAME_UPPER}_ROOT_DIR "OpenSGDIR-NOTFOUND" )
+			set( ${_PACKAGE_NAME_UPPER}_ROOT_DIR "${_PACKAGE_NAME}DIR-NOTFOUND" )
 			find_path( ${_PACKAGE_NAME_UPPER}_ROOT_DIR 
 				${_SEARCH_FILES}
 				PATHS ${_SEARCH_PATHES_VERSIONED}

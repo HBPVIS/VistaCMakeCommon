@@ -2,7 +2,7 @@ include( FindPackageHandleStandardArgs )
 include( VistaFindUtils )
 
 if( NOT VALUT_FOUND )
-	vista_find_package_root( ALUT include/AL/alut.h )
+	vista_find_package_root( ALUT include/AL/alut.h NAMES alut freealut )
 
 	if( ALUT_ROOT_DIR )
 		set( ALUT_INCLUDE_DIRS ${ALUT_ROOT_DIR}/include/AL )

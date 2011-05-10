@@ -6,7 +6,7 @@ if( NOT VVTK_FOUND )
 
 	if( VTK_ROOT_DIR )
 		set( VTK_INCLUDE_DIRS ${VTK_ROOT_DIR}/include )
-		set( VTK_LIBRARY_DIRS ${VTK_ROOT_DIR}/lib )
+		set( VTK_LIBRARY_DIRS ${VTK_ROOT_DIR}/lib ${VTK_ROOT_DIR}/bin )
 		set( VTK_LIBRARIES
 			optimized vtkCommon
 			optimized vtkDICOMParser
