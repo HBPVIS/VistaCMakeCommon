@@ -1242,10 +1242,18 @@ if( NOT DEFINED VISTA_HWARCH ) # this shows we did not include it yet
 	set( CMAKE_DEBUG_POSTFIX "D" )
 	set_property( GLOBAL PROPERTY USE_FOLDERS ON )
 	set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG" )
-	# Should we use rpath? This enables us to use OpenSG etc. within the Vista* libraries without having
-	# to set a LIBRARY_PATH while linking against these libraries
-	set( VISTA_USE_RPATH ON CACHE BOOL "Use rpath" )
-	mark_as_advanced( VISTA_USE_RPATH )
+
+	if( UNIX )
+		# Should we use rpath? This enables us to use OpenSG etc. within the Vista* libraries without having
+		# to set a LIBRARY_PATH while linking against these libraries
+		set( VISTA_USE_RPATH ON CACHE BOOL "Automatically set the rpath for external libs" )
+		if( VISTA_USE_RPATH )
+			set( CMAKE_SKIP_BUILD_RPATH FALSE )
+			set( CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE )
+		else( VISTA_USE_RPATH )
+			set( CMAKE_SKIP_RPATH TRUE )
+		endif( VISTA_USE_RPATH )
+	endif( UNIX )
 
 	# Platform dependent definitions
 	if( UNIX )
