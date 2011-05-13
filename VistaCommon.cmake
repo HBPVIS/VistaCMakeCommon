@@ -29,7 +29,7 @@
 #	conditionally adds DEBUG and OS definitions
 #	some visual studio flags
 #	VISTA_USE_RPATH cache flag to enable/disable use of RPATH
-#	currently scans XYZConfig.cmake files in VISTA_CMAKE_COMMON/configs, and deletes outdated ones
+#	currently scans XYZConfig.cmake files in VISTA_CMAKE_COMMON/shared, and deletes outdated ones
 
 
 ###########################
@@ -161,23 +161,29 @@ macro( replace_svn_revision_tag _STRING_VAR )
 endmacro( replace_svn_revision_tag VARIABLE_STRING_VAR )
 
 # local macro, for use in this file only
-macro( local_clean_old_configs _PACKAGE_NAME _PACKAGE_ROOT_DIR )
-	if( NOT ${_PACKAGE_NAME}_OLD_CONFIGS_PURGED )
-		set( NOT ${_PACKAGE_NAME}_OLD_CONFIGS_PURGED TRUE )
-		file( GLOB_RECURSE _ALL_VERSION_FILES "${VISTA_CMAKE_COMMON}/configs/${_PACKAGE_NAME}*/${_PACKAGE_NAME}ConfigVersion.cmake" )
-		foreach( _FILE ${_ALL_VERSION_FILES} )
+function( local_clean_old_config_references _PACKAGE_NAME _PACKAGE_TARGET_FILE _EXCLUDE_DIR )
+	string( TOUPPER _PACKAGE_NAME_UPPER ${_PACKAGE_NAME} )	
+	set( PACKAGE_REFERENCE_EXISTS_TEST TRUE )
+	
+	set( _OWN_FILE "${_EXCLUDE_DIR}/${_PACKAGE_NAME}Config.cmake" )
+	file( GLOB_RECURSE _ALL_VERSION_FILES "${VISTA_CMAKE_COMMON}/shared/${_PACKAGE_NAME}*/${_PACKAGE_NAME}Config.cmake" )
+	foreach( _FILE ${_ALL_VERSION_FILES} )
+		file( TO_CMAKE_PATH ${_FILE} _FILE )
+		if( NOT _FILE STREQUAL _OWN_FILE )
 			include( ${_FILE} )
-			if( PACKAGE_REFERENCE_OUTDATED OR "${_PACKAGE_ROOT_DIR}" STREQUAL "${PACKAGE_REFERENCE_DIR}" )
-				string( REGEX MATCH "(${VISTA_CMAKE_COMMON}/configs/.+)/.*" _MATCHED ${_FILE} )
+			if( PACKAGE_REFERENCE_OUTDATED OR "${_PACKAGE_TARGET_FILE}" STREQUAL "${${_PACKAGE_NAME_UPPER}_REFERENCED_FILE}" )
+				string( REGEX MATCH "(${VISTA_CMAKE_COMMON}/shared/.+)/.*" _MATCHED ${_FILE} )
 				if( _MATCHED )
 					set( _DIR ${CMAKE_MATCH_1} )			
-					message( STATUS "Removing previous config copied to \"${_DIR}\"" )
+					message( STATUS "Removing old config reference copied to \"${_DIR}\"" )
 					file( REMOVE_RECURSE ${_DIR} )
 				endif( _MATCHED )
-			endif( PACKAGE_REFERENCE_OUTDATED OR "${_PACKAGE_ROOT_DIR}" STREQUAL "${PACKAGE_REFERENCE_DIR}" )
-		endforeach( _FILE ${_ALL_VERSION_FILES} )
-	endif( NOT ${_PACKAGE_NAME}_OLD_CONFIGS_PURGED )
-endmacro( local_clean_old_configs _PACKAGE_NAME _PACKAGE_ROOT_DIR )
+			endif( PACKAGE_REFERENCE_OUTDATED OR "${_PACKAGE_TARGET_FILE}" STREQUAL "${${_PACKAGE_NAME_UPPER}_REFERENCED_FILE}" )
+		endif( NOT _FILE STREQUAL _OWN_FILE )
+	endforeach( _FILE ${_ALL_VERSION_FILES} )
+	
+	set( PACKAGE_REFERENCE_EXISTS_TEST )
+endfunction( local_clean_old_config_references _PACKAGE_NAME _PACKAGE_ROOT_DIR )
 
 # local macro, for use in this file only
 function( local_use_existing_config_libs _NAME _ROOT_DIR _CONFIG_FILE _LIBRARY_DIR_LIST )
@@ -764,22 +770,25 @@ endmacro( vista_install_files_by_extension )
 
 
 
-
-
-
-
-
-# vista_create_cmake_config( PACKAGE_NAME CONFIG_PROTO_FILE TARGET_FILENAME [REFERENCE_DIR] )
-macro( vista_create_cmake_config_build _PACKAGE_NAME _CONFIG_PROTO_FILE _TARGET_FILENAME )
+# vista_create_cmake_config( PACKAGE_NAME CONFIG_PROTO_FILE TARGET_DIR )
+macro( vista_create_cmake_config_build _PACKAGE_NAME _CONFIG_PROTO_FILE _TARGET_DIR )
 	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
+	
+	# store the directory - it may be used by the versioning lateron
+	set( ${_PACKAGE_NAME_UPPER}_BUILD_CONFIG_DIR ${_TARGET_DIR} )
+	
+	#if VISTA_CMAKE_COMMON exisits, we give the user the cache options to toggle copying of references
+	# to CISTA_CMAKE_COMMON/shared on and off
+	if( EXISTS "$ENV{VISTA_CMAKE_COMMON}" )
+		set( VISTA_COPY_BUILD_CONFIGS_REFS_TO_CMAKECOMMON TRUE CACHE BOOL 
+			"if enabled, References to <Package>Config.cmake files will be copied to VistaCMakeCommon/shared for easier finding" )
+	endif( EXISTS "$ENV{VISTA_CMAKE_COMMON}" )	
+	
+	
+	# configure the temporary variables for configuring
 	
 	set( _PACKAGE_LIBRARY_NAME ${${_PACKAGE_NAME_UPPER}_OUTPUT_NAME} )
 	
-	set( _REFERENCE_DIR )
-	if( ${ARGC} GREATER 3 )
-		set( _REFERENCE_DIR ${ARGV3} )		
-	endif( ${ARGC} GREATER 3 )
-
 	# check if the library outdir should be overwritten
 	set( _PACKAGE_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}" )
 	if( ${_PACKAGE_NAME_UPPER}_LIBRARY_OUTDIR )
@@ -794,14 +803,25 @@ macro( vista_create_cmake_config_build _PACKAGE_NAME _CONFIG_PROTO_FILE _TARGET_
 		list( REMOVE_DUPLICATES _PACKAGE_INCLUDE_DIRS )
 	endif( ${_PACKAGE_NAME_UPPER}_INCLUDE_OUTDIR )
 	
-	if( _REFERENCE_DIR )
-		set( _REFERENCE_FILENAME "${_REFERENCE_DIR}-build/${_PACKAGE_NAME}Config.cmake")	
-
-		# use any lib dirs already specified in prior copied versions
-		local_use_existing_config_libs( ${_PACKAGE_NAME} ${_PACKAGE_ROOT_DIR} ${_REFERENCE_FILENAME} _PACKAGE_LIBRARY_DIRS )	
-	endif( _REFERENCE_DIR )
+	# if we should create a referenced config file, we create it's target dir
+	if( VISTA_COPY_BUILD_CONFIGS_REFS_TO_CMAKECOMMON )
+		set( ${_PACKAGE_NAME_UPPER}_BUILD_CONFIG_REFERENCE_DIR "${VISTA_CMAKE_COMMON}/shared/${_PACKAGE_NAME}" )
+		if( DEFINED ${_PACKAGE_NAME_UPPER}_VERSION_EXT )
+			set( ${_PACKAGE_NAME_UPPER}_BUILD_CONFIG_REFERENCE_DIR 
+					"${${_PACKAGE_NAME_UPPER}_BUILD_CONFIG_REFERENCE_DIR}-${${_PACKAGE_NAME_UPPER}_VERSION_EXT}-build" )
+		else( DEFINED ${_PACKAGE_NAME_UPPER}_VERSION_EXT )
+			set( ${_PACKAGE_NAME_UPPER}_BUILD_CONFIG_REFERENCE_DIR 
+					"${${_PACKAGE_NAME_UPPER}_BUILD_CONFIG_REFERENCE_DIR}-${VISTA_HWARCH}-build" )
+		endif( DEFINED ${_PACKAGE_NAME_UPPER}_VERSION_EXT )
+		
+		# if any reference already exists, we aparse it and append its library dirs to the current one
+		# this helps if several different build types are used in different cmake-build-dirs, but
+		local_use_existing_config_libs( ${_PACKAGE_NAME} ${_PACKAGE_ROOT_DIR} 
+									"${${_PACKAGE_NAME_UPPER}_BUILD_CONFIG_REFERENCE_DIR}/${_PACKAGE_NAME}Config.cmake" 
+									_PACKAGE_LIBRARY_DIRS )	
+	endif( VISTA_COPY_BUILD_CONFIGS_REFS_TO_CMAKECOMMON )
 	
-	#retrieve relative pathes for library/include dirs
+	# retrieve relative pathes for library/include dirs
 	set( _PACKAGE_RELATIVE_INCLUDE_DIRS )
 	foreach( _DIR ${_PACKAGE_INCLUDE_DIRS} )
 		file( RELATIVE_PATH _REL_DIR ${_PACKAGE_ROOT_DIR} ${_DIR} )		
@@ -824,38 +844,55 @@ macro( vista_create_cmake_config_build _PACKAGE_NAME _CONFIG_PROTO_FILE _TARGET_
 	
 	#get_filename_component( _PATH_UP "${CMAKE_CURRENT_SOURCE_DIR}/.." REALPATH  )
 	#list( APPEND _PACKAGE_INCLUDE_DIR ${_PATH_UP} )
-	#list( REMOVE_DUPLICATES _PACKAGE_INCLUDE_DIR )
-
-	#if we should create a reference file, we do so
-	if( _REFERENCE_DIR )
+	#list( REMOVE_DUPLICATES _PACKAGE_INCLUDE_DIR )	
+	
+	set( _TARGET_FILENAME "${${_PACKAGE_NAME_UPPER}_BUILD_CONFIG_DIR}/${_PACKAGE_NAME}Config.cmake" )
+	
+	#  configure the actual file
+	configure_file(	${_CONFIG_PROTO_FILE} ${_TARGET_FILENAME} @ONLY )
+	
+	#if we should create the reference - do so now
+	set( _REFERENCED_FILE ${_TARGET_FILENAME} )
+	if( VISTA_COPY_BUILD_CONFIGS_REFS_TO_CMAKECOMMON )
+		# since prior configure runs may have already added it (before the cache was turned off), we
+		# delete any prior copied versions to this location
+		local_clean_old_config_references( ${_PACKAGE_NAME} ${_REFERENCED_FILE} ${${_PACKAGE_NAME_UPPER}_BUILD_CONFIG_REFERENCE_DIR} )
 		# find proto file
 		find_file( VISTA_REFERENCE_CONFIG_PROTO_FILE "PackageConfigReference.cmake_proto" PATH ${CMAKE_MODULE_PATH} $ENV{CMAKE_MODULE_PATH} )
 		set( VISTA_REFERENCE_CONFIG_PROTO_FILE ${VISTA_REFERENCE_CONFIG_PROTO_FILE} CACHE INTERNAL "" FORCE )
 		if( VISTA_REFERENCE_CONFIG_PROTO_FILE )
 			# configure the actual reference file			
-			local_clean_old_configs( ${_PACKAGE_NAME} ${_PACKAGE_ROOT_DIR} )
-			set( _REFERENCED_FILE ${_TARGET_FILENAME} )
-			configure_file(	${VISTA_REFERENCE_CONFIG_PROTO_FILE} ${_REFERENCE_FILENAME} @ONLY )
+			set( _REFERENCE_TARGET_FILENAME "${${_PACKAGE_NAME_UPPER}_BUILD_CONFIG_REFERENCE_DIR}/${_PACKAGE_NAME}Config.cmake" )
+			configure_file(	${VISTA_REFERENCE_CONFIG_PROTO_FILE} ${_REFERENCE_TARGET_FILENAME} @ONLY )
 		endif( VISTA_REFERENCE_CONFIG_PROTO_FILE )
-	endif( _REFERENCE_DIR )
-	
-	# finally, configure the actual file
-	configure_file(	${_CONFIG_PROTO_FILE} ${_TARGET_FILENAME} @ONLY )
+	else( VISTA_COPY_BUILD_CONFIGS_REFS_TO_CMAKECOMMON )
+		# since prior configure runs may have already added it (before the cache was turned off), we
+		# delete any prior copied versions to this location
+		local_clean_old_config_references( ${_PACKAGE_NAME} ${_REFERENCED_FILE} "" )
+	endif( VISTA_COPY_BUILD_CONFIGS_REFS_TO_CMAKECOMMON )
 endmacro( vista_create_cmake_config_build )
 
-# vista_create_cmake_config_install( PACKAGE_NAME CONFIG_PROTO_FILE [REFERENCE_DIR] )
-macro( vista_create_cmake_config_install _PACKAGE_NAME _CONFIG_PROTO_FILE )
+# vista_create_cmake_config_install( PACKAGE_NAME CONFIG_PROTO_FILE  )
+macro( vista_create_cmake_config_install _PACKAGE_NAME _CONFIG_PROTO_FILE _TARGET_DIR )
 	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
+	
+	# store the directory - it may be used by the versioning lateron
+	set( ${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_DIR ${_TARGET_DIR} )
+	
+	#if VISTA_CMAKE_COMMON exisits, we give the user the cache options to toggle copying of references
+	# to VISTA_CMAKE_COMMON/shared on and off
+	if( EXISTS ${VISTA_CMAKE_COMMON} )
+		set( VISTA_COPY_INSTALL_CONFIGS_REFS_TO_CMAKECOMMON TRUE CACHE BOOL 
+			"if enabled, References to <Package>Config.cmake files will be copied to VistaCMakeCommon/shared for easier finding" )
+	endif( EXISTS ${VISTA_CMAKE_COMMON} )	
+
+	
+	# configure the temporary variables for configuring
 	
 	set( _PACKAGE_LIBRARY_NAME ${${_PACKAGE_NAME_UPPER}_OUTPUT_NAME} )
 	
-	set( _REFERENCE_DIR )
-	if( ${ARGC} GREATER 2 )
-		set( _REFERENCE_DIR ${ARGV2} )		
-	endif( ${ARGC} GREATER 2 )
-	
 	set( _TARGET_FILENAME "${CMAKE_BINARY_DIR}/toinstall/${_PACKAGE_NAME}Config.cmake" )
-	set( _TARGET_REF_FILENAME "${CMAKE_BINARY_DIR}/toinstall/reference/${_PACKAGE_NAME}Config.cmake" )
+	set( _TARGET_REF_FILENAME "${CMAKE_BINARY_DIR}/toinstall/references/${_PACKAGE_NAME}Config.cmake" )
 
 	set( _PACKAGE_ROOT_DIR "${CMAKE_INSTALL_PREFIX}" )
 	if( ${${_PACKAGE_NAME_UPPER}_INC_INSTALLDIR} )
@@ -889,44 +926,55 @@ macro( vista_create_cmake_config_install _PACKAGE_NAME _CONFIG_PROTO_FILE )
 			list( APPEND _PACKAGE_RELATIVE_LIBRARY_DIRS "." )
 		endif( _REL_DIR )
 	endforeach( _DIR ${_PACKAGE_LIBRARY_DIRS} )
+			
+	set( _TEMPORARY_FILENAME "${CMAKE_BINARY_DIR}/toinstall/${_PACKAGE_NAME}Config.cmake" )
+	# configure the actual file to a local folder, and add it for install
+	configure_file(	${_CONFIG_PROTO_FILE} ${_TEMPORARY_FILENAME} @ONLY )
+	install( FILES ${_TEMPORARY_FILENAME} DESTINATION "${${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_DIR}" )
 	
-	# configure the actual file
-	configure_file(	${_CONFIG_PROTO_FILE} ${_TARGET_FILENAME} @ONLY )
-	install( FILES ${_TARGET_FILENAME} DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake" )
 	
-	if( _REFERENCE_DIR )
+	
+	set( _REFERENCED_FILE "${${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_DIR}/${_PACKAGE_NAME}Config.cmake" )
+	
+	
+	if( VISTA_COPY_INSTALL_CONFIGS_REFS_TO_CMAKECOMMON )		
 		# find proto file
 		find_file( VISTA_REFERENCE_CONFIG_PROTO_FILE "PackageConfigReference.cmake_proto" PATH ${CMAKE_MODULE_PATH} $ENV{CMAKE_MODULE_PATH} )
 		set( VISTA_REFERENCE_CONFIG_PROTO_FILE ${VISTA_REFERENCE_CONFIG_PROTO_FILE} CACHE INTERNAL "" FORCE )
-				
+		
+		#determine dir (and store it for later use of versions)
+		set( ${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_REFERENCE_DIR "${VISTA_CMAKE_COMMON}/shared/${_PACKAGE_NAME}" )
+		if( DEFINED ${_PACKAGE_NAME_UPPER}_VERSION_EXT )
+			set( ${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_REFERENCE_DIR
+					"${${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_REFERENCE_DIR}-${${_PACKAGE_NAME_UPPER}_VERSION_EXT}-install" )
+		else( DEFINED ${_PACKAGE_NAME_UPPER}_VERSION_EXT )
+			set( ${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_REFERENCE_DIR
+					"${${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_REFERENCE_DIR}-${VISTA_HWARCH}-install" )
+		endif( DEFINED ${_PACKAGE_NAME_UPPER}_VERSION_EXT )	
+	
 		if( VISTA_REFERENCE_CONFIG_PROTO_FILE )
+			#eliminate older installed configs
+			local_clean_old_config_references( ${_PACKAGE_NAME} ${_REFERENCED_FILE} ${${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_REFERENCE_DIR} )
 			# configure the reference file
-			local_clean_old_configs( ${_PACKAGE_NAME} ${_PACKAGE_ROOT_DIR} )
-			set( _REFERENCED_FILE "${CMAKE_INSTALL_PREFIX}/cmake/${_PACKAGE_NAME}Config.cmake" )
+			set( _TEMPORARY_REF_FILENAME "${CMAKE_BINARY_DIR}/toinstall/references/${_PACKAGE_NAME}Config.cmake" )			
 			configure_file(	${VISTA_REFERENCE_CONFIG_PROTO_FILE} ${_TARGET_REF_FILENAME} @ONLY )
-			install( FILES ${_TARGET_REF_FILENAME} DESTINATION "${_REFERENCE_DIR}-install" )
+			install( FILES ${_TARGET_REF_FILENAME} DESTINATION ${${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_REFERENCE_DIR} )
 		endif( VISTA_REFERENCE_CONFIG_PROTO_FILE )
-	endif( _REFERENCE_DIR )
+	else( VISTA_COPY_INSTALL_CONFIGS_REFS_TO_CMAKECOMMON )
+		# since prior configure runs may have already added it (before the cache was turned off), we
+		# delete any prior copied versions to this location
+		local_clean_old_config_references( ${_PACKAGE_NAME} ${_REFERENCED_FILE} "" )
+	endif( VISTA_COPY_INSTALL_CONFIGS_REFS_TO_CMAKECOMMON )
 endmacro( vista_create_cmake_config_install )
 
-# vista_create_version_config ( PACKAGE_NAME VERSION_PROTO_FILE TARGET_FILE [install] [_REFERENCE_DIR]
-macro( vista_create_version_config _PACKAGE_NAME _VERSION_PROTO_FILE _TARGET_FILE )
+# vista_create_version_config ( PACKAGE_NAME VERSION_PROTO_FILE 
+macro( vista_create_version_config _PACKAGE_NAME _VERSION_PROTO_FILE )
 	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
 	
-	set( _PACKAGE_LIBRARY_NAME ${${_PACKAGE_NAME_UPPER}_OUTPUT_NAME} )
+	find_file( VISTA_REFERENCE_CONFIG_PROTO_FILE "PackageConfigReference.cmake_proto" PATH ${CMAKE_MODULE_PATH} $ENV{CMAKE_MODULE_PATH} )
+	set( VISTA_REFERENCE_CONFIG_PROTO_FILE ${VISTA_REFERENCE_CONFIG_PROTO_FILE} CACHE INTERNAL "" FORCE )
 	
-	set( _REFERENCE_DIR )
-	set( _INSTALL false )
-	if( ${ARGC} GREATER 3 )
-		if( "${ARGV3}" STREQUAL "install" )
-			set( _INSTALL true )
-			if( ${ARGC} GREATER 4 )
-				set( _REFERENCE_DIR ${ARGV4} )				
-			endif( ${ARGC} GREATER 4 )
-		else()
-			set( _REFERENCE_DIR ${ARGV3} )
-		endif( "${ARGV3}" STREQUAL "install" )		
-	endif( ${ARGC} GREATER 3 )
+	set( _PACKAGE_LIBRARY_NAME ${${_PACKAGE_NAME_UPPER}_OUTPUT_NAME} )
 	
 	if( EXISTS ${_VERSION_PROTO_FILE} )
 		set( _VERSION_TYPE 	${${_PACKAGE_NAME_UPPER}_VERSION_TYPE} )
@@ -938,33 +986,31 @@ macro( vista_create_version_config _PACKAGE_NAME _VERSION_PROTO_FILE _TARGET_FIL
 		set( _VERSION 		${${_PACKAGE_NAME_UPPER}_VERSION} )
 		set( _VERSION_EXT 	${${_PACKAGE_NAME_UPPER}_VERSION_EXT} )
 		
-		configure_file( ${_VERSION_PROTO_FILE} ${_TARGET_FILE} @ONLY )
-		if( _INSTALL )
-			set( _INSTALL_FILENAME "${CMAKE_BINARY_DIR}/toinstall/${_PACKAGE_NAME}ConfigVersion.cmake" )
-			set( _INSTALL_REF_FILENAME "${CMAKE_BINARY_DIR}/toinstall/reference/${_PACKAGE_NAME}ConfigVersion.cmake" )
-			configure_file( ${_VERSION_PROTO_FILE} ${_INSTALL_FILENAME} @ONLY )
-			install( FILES "${_INSTALL_FILENAME}" DESTINATION "${CMAKE_INSTALL_PREFIX}/cmake" )
-		endif( _INSTALL )
+		if( ${_PACKAGE_NAME_UPPER}_BUILD_CONFIG_DIR )
+			set( _BUILD_VERSION_TARGET "${${_PACKAGE_NAME_UPPER}_BUILD_CONFIG_DIR}/${_PACKAGE_NAME}ConfigVersion.cmake" )
+			configure_file( ${_VERSION_PROTO_FILE} ${_BUILD_VERSION_TARGET} @ONLY )
+			
+			if( VISTA_COPY_BUILD_CONFIGS_REFS_TO_CMAKECOMMON )
+				set( _REFERENCED_FILE ${_BUILD_VERSION_TARGET} )
+				set( _REFERENCE_TARGET_FILENAME "${${_PACKAGE_NAME_UPPER}_BUILD_CONFIG_REFERENCE_DIR}/${_PACKAGE_NAME}ConfigVersion.cmake" )
+				configure_file( ${VISTA_REFERENCE_CONFIG_PROTO_FILE} ${_REFERENCE_TARGET_FILENAME} @ONLY )
+			endif( VISTA_COPY_BUILD_CONFIGS_REFS_TO_CMAKECOMMON )
+		endif( ${_PACKAGE_NAME_UPPER}_BUILD_CONFIG_DIR )
 		
-		if( _REFERENCE_DIR )
-			# find proto file
-			find_file( VISTA_REFERENCE_CONFIG_PROTO_FILE "PackageConfigReference.cmake_proto" PATH ${CMAKE_MODULE_PATH} $ENV{CMAKE_MODULE_PATH} )
-			set( VISTA_REFERENCE_CONFIG_PROTO_FILE ${VISTA_REFERENCE_CONFIG_PROTO_FILE} CACHE INTERNAL "" FORCE )
+		if( ${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_DIR )
+			set( _TEMPORARY_FILENAME "${CMAKE_BINARY_DIR}/toinstall/${_PACKAGE_NAME}ConfigVersion.cmake" )
+			set( _INSTALL_DIR  ${${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_DIR} )
+			configure_file( ${_VERSION_PROTO_FILE} ${_TEMPORARY_FILENAME} @ONLY )
+			install( FILES ${_TEMPORARY_FILENAME} DESTINATION ${_INSTALL_DIR} )
+			
+			if( VISTA_COPY_INSTALL_CONFIGS_REFS_TO_CMAKECOMMON )
+				set( _REFERENCED_FILE "${_INSTALL_DIR}/${_PACKAGE_NAME}ConfigVersion.cmake" )
+				set( _REFERENCE_TEMPORARY_FILENAME "${CMAKE_BINARY_DIR}/toinstall/references/${_PACKAGE_NAME}ConfigVersion.cmake" )
+				configure_file( ${VISTA_REFERENCE_CONFIG_PROTO_FILE} ${_REFERENCE_TEMPORARY_FILENAME} @ONLY )
+				install( FILES ${_REFERENCE_TEMPORARY_FILENAME} DESTINATION ${${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_REFERENCE_DIR} )
+			endif( VISTA_COPY_INSTALL_CONFIGS_REFS_TO_CMAKECOMMON )
+		endif( ${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_DIR )		
 		
-			if( VISTA_REFERENCE_CONFIG_PROTO_FILE )
-				# configure the actual reference file
-				set( _REFERENCE_FILENAME "${_REFERENCE_DIR}-build/${_PACKAGE_NAME}ConfigVersion.cmake" )
-				set( _REFERENCED_FILE ${_TARGET_FILE} )
-				configure_file(	${VISTA_REFERENCE_CONFIG_PROTO_FILE} ${_REFERENCE_FILENAME} @ONLY )
-				
-				if( _INSTALL )
-					set( _REFERENCE_FILENAME ${_INSTALL_REF_FILENAME} )
-					set( _REFERENCED_FILE "${CMAKE_INSTALL_PREFIX}/cmake/${_PACKAGE_NAME}ConfigVersion.cmake" )
-					configure_file(	${VISTA_REFERENCE_CONFIG_PROTO_FILE} ${_REFERENCE_FILENAME} @ONLY )
-					install( FILES ${_INSTALL_REF_FILENAME} DESTINATION "${_REFERENCE_DIR}-install")
-				endif( _INSTALL )
-			endif( VISTA_REFERENCE_CONFIG_PROTO_FILE )
-		endif( _REFERENCE_DIR )
 	endif( EXISTS ${_VERSION_PROTO_FILE} )	
 endmacro( vista_create_version_config )
 
@@ -974,7 +1020,7 @@ endmacro( vista_create_version_config )
 # from the optional specified one. Each configfile is created twice: one for the build version, and one
 # for the install version, which point to different locations
 # If the VISTA_CMAKE_ROOT environment variable is set, the XYZConfig.cmake files will also be copied to
-# VISTA_CMAKE_ROOT/configs into a subfolder composed from the name, the (optional) version, and either -build or -install
+# VISTA_CMAKE_ROOT/shared into a subfolder composed from the name, the (optional) version, and either -build or -install
 # NOTE: these will be overwritten at the next configure/install, so make sure different versions of the same project
 # have different version names
 # In Addition to the XYZConfig.cmake files, a generic XYZConfigVersion.cmake file is created if the version has been specified
@@ -1018,34 +1064,21 @@ macro( vista_create_cmake_configs _TARGET )
 	endif( ${ARGC} GREATER 1 )
 
 
-	if( NOT _PRECONDITION_FAIL )
-		if( EXISTS "${VISTA_CMAKE_COMMON}" )
-			set( _PACKAGE_CONFIG_TARGET "${VISTA_CMAKE_COMMON}/configs/${_PACKAGE_NAME}" )
-			if( DEFINED ${_PACKAGE_NAME_UPPER}_VERSION_EXT )
-				set( _PACKAGE_CONFIG_TARGET "${_PACKAGE_CONFIG_TARGET}-${${_PACKAGE_NAME_UPPER}_VERSION_EXT}" )
-			else( DEFINED ${_PACKAGE_NAME_UPPER}_VERSION_EXT )
-				set( _PACKAGE_CONFIG_TARGET "${_PACKAGE_CONFIG_TARGET}-${VISTA_HWARCH}" )
-			endif( DEFINED ${_PACKAGE_NAME_UPPER}_VERSION_EXT )		
-		endif( EXISTS "${VISTA_CMAKE_COMMON}" )
-		
+	if( NOT _PRECONDITION_FAIL )		
 		vista_create_cmake_config_build( ${_PACKAGE_NAME}
 											"${_CONFIG_PROTO_FILE_BUILD}"
-											"${CMAKE_BINARY_DIR}/cmake/${_PACKAGE_NAME}Config.cmake"
-											"${_PACKAGE_CONFIG_TARGET}" )
+											"${CMAKE_BINARY_DIR}/cmake" )
 		vista_create_cmake_config_install( ${_PACKAGE_NAME}
 											"${_CONFIG_PROTO_FILE_INSTALL}"
-											"${_PACKAGE_CONFIG_TARGET}" )
+											"${CMAKE_INSTALL_PREFIX}/cmake" )
 		
 		# if there is a version set, we also configure the corresponding version file
 		if( DEFINED ${_PACKAGE_NAME_UPPER}_VERSION_EXT )
 			find_file( VISTA_VERSION_PROTO_FILE "PackageConfigVersion.cmake_proto" PATHS ${CMAKE_MODULE_PATH} )
 			set( VISTA_VERSION_PROTO_FILE ${VISTA_VERSION_PROTO_FILE} CACHE INTERNAL "" )
 			if( VISTA_VERSION_PROTO_FILE )
-				vista_create_version_config( ${_PACKAGE_NAME}
-											"${VISTA_VERSION_PROTO_FILE}"
-											"${CMAKE_BINARY_DIR}/cmake/${_PACKAGE_NAME}ConfigVersion.cmake"
-											install
-											"${_PACKAGE_CONFIG_TARGET}" )				
+				vista_create_version_config( ${_PACKAGE_NAME} "${VISTA_VERSION_PROTO_FILE}"
+											"${CMAKE_BINARY_DIR}/cmake/${_PACKAGE_NAME}ConfigVersion.cmake" )				
 			endif( VISTA_VERSION_PROTO_FILE )
 		endif( DEFINED ${_PACKAGE_NAME_UPPER}_VERSION_EXT )			
 		
@@ -1155,8 +1188,8 @@ endmacro( vista_adopt_version _NAME _ADOPT_PARENT )
 ###########################
 if( NOT DEFINED VISTA_HWARCH ) # this shows we did not include it yet
 	if( EXISTS "${VISTA_CMAKE_COMMON}" )
-		list( APPEND CMAKE_MODULE_PATH "${VISTA_CMAKE_COMMON}/configs" )
-		list( APPEND CMAKE_PREFIX_PATH "${VISTA_CMAKE_COMMON}" "${VISTA_CMAKE_COMMON}/configs" )
+		list( APPEND CMAKE_MODULE_PATH "${VISTA_CMAKE_COMMON}/shared" )
+		list( APPEND CMAKE_PREFIX_PATH "${VISTA_CMAKE_COMMON}" "${VISTA_CMAKE_COMMON}/shared" )
 	endif( EXISTS "${VISTA_CMAKE_COMMON}" )
 
 	if( NOT ALREADY_CONFIGURED_ONCE OR FIRST_CONFIGURE_RUN )
@@ -1255,17 +1288,13 @@ if( NOT DEFINED VISTA_HWARCH ) # this shows we did not include it yet
 	if( EXISTS "$ENV{VISTA_CMAKE_COMMON}" AND NOT VISTA_CHECKED_COPIED_CONFIG_FILES )
 		set( VISTA_CHECKED_COPIED_CONFIG_FILES TRUE )
 		set( PACKAGE_REFERENCE_EXISTS_TEST TRUE )
-		file( GLOB_RECURSE _ALL_VERSION_FILES "$ENV{VISTA_CMAKE_COMMON}/configs/*Config.cmake" )
+		file( GLOB_RECURSE _ALL_VERSION_FILES "$ENV{VISTA_CMAKE_COMMON}/shared/*Config.cmake" )
 		foreach( _FILE ${_ALL_VERSION_FILES} )
 			include( ${_FILE} )
 			if( PACKAGE_REFERENCE_OUTDATED )
 				get_filename_component( _DIR ${_FILE} PATH )
-				#string( REGEX MATCH "(${VISTA_CMAKE_COMMON}/configs/.+)/cmake/.*" _MATCHED ${_FILE} )
-				#if( _MATCHED )
-				#	set( _DIR ${CMAKE_MATCH_1} )			
-					message( STATUS "Removing outdated configs copied to \"${_DIR}\"" )
-					file( REMOVE_RECURSE ${_DIR} )
-				#endif( _MATCHED )
+				message( STATUS "Removing outdated configs copied to \"${_DIR}\"" )
+				file( REMOVE_RECURSE ${_DIR} )
 			endif( PACKAGE_REFERENCE_OUTDATED )
 		endforeach( _FILE ${_ALL_VERSION_FILES} )
 		set( PACKAGE_REFERENCE_EXISTS_TEST FALSE )
@@ -1273,7 +1302,7 @@ if( NOT DEFINED VISTA_HWARCH ) # this shows we did not include it yet
 	
 	if( EXISTS "$ENV{VISTA_CMAKE_COMMON}" )
 		file( TO_CMAKE_PATH $ENV{VISTA_CMAKE_COMMON} VISTA_CMAKE_COMMON )
-		list( APPEND CMAKE_PREFIX_PATH ${VISTA_CMAKE_COMMON} ${VISTA_CMAKE_COMMON}/configs )
+		list( APPEND CMAKE_PREFIX_PATH ${VISTA_CMAKE_COMMON} ${VISTA_CMAKE_COMMON}/shared )
 	endif( EXISTS "$ENV{VISTA_CMAKE_COMMON}" )	
 	
 endif( NOT DEFINED VISTA_HWARCH ) # this shows we did not include it yet

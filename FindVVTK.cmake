@@ -11,18 +11,20 @@ if( NOT VVTK_FOUND )
 				"$ENV{${_PACKAGE_NAME_UPPER}_ROOT}/lib/*"
 		)
 	endif( EXISTS "$ENV{${_PACKAGE_NAME_UPPER}_ROOT}" )
-	if( EXISTS "$ENV{VRDEV}" )
+	
+	foreach( _PATH $ENV{VRDEV} $ENV{VISTA_EXTERNAL_LIBS}  ${CMAKE_PREFIX_PATH} $ENV{CMAKE_PREFIX_PATH} )
+		file( TO_CMAKE_PATH ${_PATH} _PATH )
 		list( APPEND _SEARCH_PREFIXES
-				"$ENV{VRDEV}/VTK*/${VISTA_HWARCH}/lib/*"
-				"$ENV{VRDEV}/VTK*/lib/*"
-				"$ENV{VRDEV}/VTK/*/${VISTA_HWARCH}/lib/*"
-				"$ENV{VRDEV}/VTK/*/lib/*"
-				"$ENV{VRDEV}/vtk*/${VISTA_HWARCH}/lib/*"
-				"$ENV{VRDEV}/vtk*/lib/*"
-				"$ENV{VRDEV}/vtk/*/${VISTA_HWARCH}/lib/*"
-				"$ENV{VRDEV}/vtk/*/lib/*"
+				"${_PATH}/VTK*/${VISTA_HWARCH}/lib/*"
+				"${_PATH}/VTK*/lib/*"
+				"${_PATH}/VTK/*/${VISTA_HWARCH}/lib/*"
+				"${_PATH}/VTK/*/lib/*"
+				"${_PATH}/vtk*/${VISTA_HWARCH}/lib/*"
+				"${_PATH}/vtk*/lib/*"
+				"${_PATH}/vtk/*/${VISTA_HWARCH}/lib/*"
+				"${_PATH}/vtk/*/lib/*"
 		)
-	endif( EXISTS "$ENV{VRDEV}" )
+	endforeach( _PATH $ENV{VRDEV} $ENV{VISTA_EXTERNAL_LIBS} ${CMAKE_PREFIX_PATH} $ENV{CMAKE_PREFIX_PATH} )
 		
 	foreach( _PATH ${_SEARCH_PREFIXES} )
 		file( GLOB _TMP_FILES "${_PATH}/VTKConfig.cmake" )
@@ -50,6 +52,7 @@ if( NOT VVTK_FOUND )
 		else( _TMP_VTK_DEBUG_LIB )
 			set( _DEBUG_AVAILABLE TRUE )
 		endif( _TMP_VTK_DEBUG_LIB )
+		set( _TMP_VTK_DEBUG_LIB "_TMP_VTK_DEBUG_LIB-NOTFOUND" CACHE INTERNAL "" FORCE )
 		
 		if( _DEBUG_AVAILABLE )
 			set( VTK_LIBRARIES	optimized vtkCommon
