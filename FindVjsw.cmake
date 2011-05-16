@@ -2,7 +2,7 @@ include( FindPackageHandleStandardArgs )
 include( VistaFindUtils )
 
 if( NOT VJSW_FOUND )
-	vista_find_package_root( JSW include/jsw.h )
+	vista_find_package_root( jsw include/jsw.h )
 
 	if( JSW_ROOT_DIR )
 		set( JSW_INCLUDE_DIRS ${JSW_ROOT_DIR}/include )
@@ -12,7 +12,7 @@ if( NOT VJSW_FOUND )
 	
 endif( NOT VJSW_FOUND )
 
-find_package_handle_standard_args( VJSW "JSW could not be found" JSW_ROOT_DIR )
+find_package_handle_standard_args( Vjsw "JSW could not be found" JSW_ROOT_DIR )
 
 
 
