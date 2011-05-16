@@ -450,9 +450,19 @@ macro( vista_use_package _PACKAGE_NAME )
 						
 		#if found - set required variables
 		if( ${_PACKAGE_NAME_UPPER}_FOUND )
-			include_directories( ${${_PACKAGE_NAME_UPPER}_INCLUDE_DIRS} )
-			link_directories( ${${_PACKAGE_NAME_UPPER}_LIBRARY_DIRS} )
-			add_definitions( ${${_PACKAGE_NAME_UPPER}_DEFINITIONS} )
+			# if a USE_FILE is specified, we assume that it handles all the settings
+			# if not, we set the necessary values ourselves
+			if( ${_PACKAGE_NAME_UPPER}_USE_FILE )
+				message( "includeing use file ${${_PACKAGE_NAME_UPPER}_USE_FILE}" )
+				include( ${${_PACKAGE_NAME_UPPER}_USE_FILE} )
+			else()
+				include_directories( ${${_PACKAGE_NAME_UPPER}_INCLUDE_DIRS} )
+				link_directories( ${${_PACKAGE_NAME_UPPER}_LIBRARY_DIRS} )
+				add_definitions( ${${_PACKAGE_NAME_UPPER}_DEFINITIONS} )
+			endif( ${_PACKAGE_NAME_UPPER}_USE_FILE )
+			
+			
+		
 			
 			# check if HWARCH matches
 			if( ${_PACKAGE_NAME_UPPER}_HWARCH AND NOT ${${_PACKAGE_NAME_UPPER}_HWARCH} STREQUAL ${VISTA_HWARCH} )

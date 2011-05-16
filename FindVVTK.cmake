@@ -42,7 +42,7 @@ if( NOT VVTK_FOUND )
 	find_package( VTK ${VTK_VERSION} QUIET PATHS ${VTK_CONFIG_DIRS} )
 	
 	if( VTK_FOUND )
-		# a VTKConfig.vmake has been found and loaded
+		# a VTKConfig.cmake has been found and loaded
 	
 		# check if debug libraries are available
 		set( _TMP_VTK_DEBUG_LIB "_TMP_VTK_DEBUG_LIB-NOTFOUND" CACHE INTERNAL "" FORCE )
@@ -154,6 +154,8 @@ if( NOT VVTK_FOUND )
 		set( VTK_LIBRARY_DIRS ${VTK_LIBRARY_DIRS} ${VTK_RUNTIME_LIBRARY_DIRS} )		
 		set( VTK_ROOT_DIR ${VTK_INSTALL_PREFIX} )
 		
+		# note that there is also a VTK_USE_FILE, which will automatically be called
+		# by vista_use_package		
 	endif( VTK_FOUND )
 endif( NOT VVTK_FOUND )
 
