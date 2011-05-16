@@ -10,7 +10,7 @@ if( NOT VVRPN_FOUND )
 		if( WIN32 )
 			set( VRPN_LIBRARIES optimized vrpndll debug vrpndllD )
 		else( WIN32 )
-			set( VRPN_LIBRARIES libvrpn  )
+			set( VRPN_LIBRARIES vrpn )
 		endif( WIN32 )
 	endif( VRPN_ROOT_DIR )	
 	
