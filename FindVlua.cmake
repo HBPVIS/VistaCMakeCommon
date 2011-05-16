@@ -14,8 +14,7 @@ if( NOT VLUA_FOUND )
 			)
 		else()
 			set( LUA_LIBRARIES lua )
-		endif( WIN32 )
-		
+		endif( WIN32 )		
 	endif( LUA_ROOT_DIR )
 
 endif( NOT VLUA_FOUND )

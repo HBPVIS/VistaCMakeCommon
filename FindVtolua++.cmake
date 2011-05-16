@@ -22,5 +22,5 @@ if( NOT VTOLUA++_FOUND )
 
 endif( NOT VTOLUA++_FOUND )
 
-find_package_handle_standard_args( Vtolua++ "tolua++ could not be found" TOLUA++_ROOT_DIR TOLUA++_LIBRARIES ) 
+find_package_handle_standard_args( Vtolua++ "tolua++ could not be found" TOLUA++_ROOT_DIR ) 
 

@@ -50,9 +50,6 @@ if( NOT VGLUT_FOUND )
 		endif( GLUT_ROOT_DIR AND GLUT_LIBRARIES )
 
 	endif( GLUT_ROOT_DIR AND GLUT_LIBRARIES )
-	
-	mark_as_advanced( GLUT_ROOT_DIR )
-	mark_as_advanced( GLUT_LIBRARIES )
 
 endif( NOT VGLUT_FOUND )
 

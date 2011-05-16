@@ -12,7 +12,7 @@ if( NOT VALUT_FOUND )
 	
 endif( NOT VALUT_FOUND )
 
-find_package_handle_standard_args( VALUT "ALUT could not be found" ALUT_ROOT_DIR ALUT_LIBRARIES )
+find_package_handle_standard_args( VALUT "ALUT could not be found" ALUT_ROOT_DIR )
 
 
 
