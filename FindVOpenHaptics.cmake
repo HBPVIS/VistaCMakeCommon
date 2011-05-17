@@ -42,6 +42,8 @@ if( NOT VOPENHAPTICS_FOUND )
 			else()
 				message( SEND_ERROR "hdu library was not found in \"${OPENHAPTICS_ROOT_DIR}\"" )
 			endif()
+			mark_as_advanced( OPENHAPTICS_hd_LIBRARY )
+			mark_as_advanced( OPENHAPTICS_hdu_LIBRARY )
 		else( WIN32 AND EXISTS "${OPENHAPTICS_ROOT_DIR}/utilities/include/HDU/hdu.h" )
 			#own deployment
 			set( OPENHAPTICS_ROOT_DIR ${OPENHAPTICS_ROOT_DIR} )
