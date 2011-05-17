@@ -366,10 +366,10 @@ macro( vista_find_package_root _PACKAGE_NAME _EXAMPLE_FILE )
 			endif( _ADVANCED )
 		endif( _NO_CACHE )
 		
-		if( ${_FOUND_VERSION} )
+		if( DEFINED "${_FOUND_VERSION}" )
 			set( ${_PACKAGE_NAME_UPPER}_VERSION_STRING ${_FOUND_VERSION} )
 			vista_string_to_version( ${_FOUND_VERSION} "${_PACKAGE_NAME_UPPER}" )
-		endif( ${_FOUND_VERSION} )
+		endif( DEFINED "${_FOUND_VERSION}" )
 		
 	endif( NOT ${_PACKAGE_NAME_UPPER}_ROOT_DIR )
 endmacro( vista_find_package_root _PACKAGE_NAME _EXAMPLE_FILE )
