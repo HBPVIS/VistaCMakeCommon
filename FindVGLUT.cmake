@@ -1,7 +1,10 @@
 # Search for precompiled GLUT path
 include( FindPackageHandleStandardArgs )
+include( VistaFindUtils )
 
 if( NOT VGLUT_FOUND )
+
+	vista_find_package_root( GLUT "include/GL/freeglut.h" NAMES freeglut glut )
 
 	find_path( GLUT_ROOT_DIR include/GL/freeglut.h 
 			PATHS 	${GLUT_ROOT_DIR}
@@ -53,5 +56,5 @@ if( NOT VGLUT_FOUND )
 
 endif( NOT VGLUT_FOUND )
 
-find_package_handle_standard_args( VGLUT "glut/Freeglut could not be found" GLUT_LIBRARIES GLUT_INCLUDE_DIRS ) 
+find_package_handle_standard_args( VGLUT "glut/Freeglut could not be found" GLUT_ROOT_DIR GLUT_LIBRARIES ) 
 

@@ -22,6 +22,7 @@
 # adds info variables
 #	FIRST_CONFIGURATION_RUN - true if this is the first configuration run (!!)
 #	VISTA_HWARCH			- current os/hardware/compiler architecture
+#	VISTA_COMPATIBLE_HWARCH - current os/hardware/compiler architectures that are compatible
 #	VISTA_64BIT				- TRUE if 64BIT-System, FALSE on 32bit
 # adds some general flags/configurations
 #	sets CMAKE_DEBUG_POSTFIX to "D"
@@ -31,6 +32,13 @@
 #	VISTA_USE_RPATH cache flag to enable/disable use of RPATH
 #	currently scans XYZConfig.cmake files in VISTA_CMAKE_COMMON/shared, and deletes outdated ones
 
+
+# avoid multiply includions (for performance reasons )
+if( NOT VISTA_COMMON_INCLUDED )
+set( VISTA_COMMON_INCLUDED TRUE )
+
+#this package sets the variables VISTA_HWARCH, VISTA_COMPATIBLE_HWARCH and VISTA_64BIT
+include( VistaHWArchSettings )
 
 ###########################
 ###   Utility macros    ###
@@ -453,7 +461,6 @@ macro( vista_use_package _PACKAGE_NAME )
 			# if a USE_FILE is specified, we assume that it handles all the settings
 			# if not, we set the necessary values ourselves
 			if( ${_PACKAGE_NAME_UPPER}_USE_FILE )
-				message( "includeing use file ${${_PACKAGE_NAME_UPPER}_USE_FILE}" )
 				include( ${${_PACKAGE_NAME_UPPER}_USE_FILE} )
 			else()
 				include_directories( ${${_PACKAGE_NAME_UPPER}_INCLUDE_DIRS} )
@@ -1196,7 +1203,7 @@ endmacro( vista_adopt_version _NAME _ADOPT_PARENT )
 ###########################
 ###   General Settings  ###
 ###########################
-if( NOT DEFINED VISTA_HWARCH ) # this shows we did not include it yet
+
 	if( EXISTS "${VISTA_CMAKE_COMMON}" )
 		list( APPEND CMAKE_MODULE_PATH "${VISTA_CMAKE_COMMON}/shared" )
 		list( APPEND CMAKE_PREFIX_PATH "${VISTA_CMAKE_COMMON}" "${VISTA_CMAKE_COMMON}/shared" )
@@ -1207,47 +1214,7 @@ if( NOT DEFINED VISTA_HWARCH ) # this shows we did not include it yet
 		set( FIRST_CONFIGURE_RUN TRUE )
 	else( NOT ALREADY_CONFIGURED_ONCE OR FIRST_CONFIGURE_RUN )
 		set( FIRST_CONFIGURE_RUN FALSE )
-	endif( NOT ALREADY_CONFIGURED_ONCE OR FIRST_CONFIGURE_RUN )
-
-	if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-		SET( VISTA_64BIT TRUE )
-	else( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-		SET( VISTA_64BIT FALSE )
-	endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-
-	if( WIN32 )
-		if( VISTA_64BIT )
-			set( VISTA_HWARCH "win32-x64" )
-		else( VISTA_64BIT )
-			set( VISTA_HWARCH "win32" )
-		endif( VISTA_64BIT )
-		
-		if( MSVC )
-			if( MSVC80 )
-				set( VISTA_HWARCH "${VISTA_HWARCH}.vc8" )
-			elseif( MSVC90 )
-				set( VISTA_HWARCH "${VISTA_HWARCH}.vc9" )
-			elseif( MSVC10 )
-				set( VISTA_HWARCH "${VISTA_HWARCH}.vc10" )
-			else( MSVC80 )
-				message( WARNING "VistaCommon - Unknown MSVC version" )
-				set( VISTA_HWARCH "${VISTA_HWARCH}.vc" )
-			endif( MSVC80 )
-		else( MSVC )
-			message( WARNING "VistaCommon - using WIN32 without Visual Studio - this will probably fail - use at your own risk!" )
-		endif( MSVC )
-	elseif( APPLE )
-		set( VISTA_HWARCH "DARWIN" )
-	elseif( UNIX )
-		if( VISTA_64BIT )
-			set( VISTA_HWARCH "LINUX.X86_64" )
-		else( VISTA_64BIT )
-			set( VISTA_HWARCH "LINUX.X86" )
-		endif( VISTA_64BIT )
-	else( WIN32 )
-		message( WARNING "VistaCommon - Unsupported hardware architecture - use at your own risk!" )
-		set( VISTA_HWARCH "UNKOWN_ARCHITECTURE" )
-	endif( WIN32 )
+	endif( NOT ALREADY_CONFIGURED_ONCE OR FIRST_CONFIGURE_RUN )	
 
 	set( CMAKE_DEBUG_POSTFIX "D" )
 	set_property( GLOBAL PROPERTY USE_FOLDERS ON )
@@ -1323,4 +1290,4 @@ if( NOT DEFINED VISTA_HWARCH ) # this shows we did not include it yet
 		list( APPEND CMAKE_PREFIX_PATH ${VISTA_CMAKE_COMMON} ${VISTA_CMAKE_COMMON}/shared )
 	endif( EXISTS "$ENV{VISTA_CMAKE_COMMON}" )	
 	
-endif( NOT DEFINED VISTA_HWARCH ) # this shows we did not include it yet
+endif( NOT VISTA_COMMON_INCLUDED ) # this shows we did not include it yet

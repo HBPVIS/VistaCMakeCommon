@@ -2,7 +2,7 @@ include( FindPackageHandleStandardArgs )
 include( VistaFindUtils )
 
 if( NOT VMESCHACH_FOUND )
-	vista_find_package_root( Meschach FILES include/zmatrix2.h include/matrix2.h include/meminfo.h )	
+	vista_find_package_root( Meschach include/zmatrix2.h )	
 
 	if( MESCHACH_ROOT_DIR )		
 		set( MESCHACH_INCLUDE_DIRS ${MESCHACH_ROOT_DIR}/include )
