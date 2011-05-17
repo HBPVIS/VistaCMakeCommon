@@ -1,4 +1,5 @@
 # $Id$
+
 import os, sys, re, string
 
 localSourceFileName = "_SourceFiles.cmake"
@@ -185,6 +186,7 @@ def GenSourceListForSubdir( dirName, parentDir, renew, relDir = "", relSourceGro
 		fileHandle = open( fileName, "w" )
 
 		# write source files info
+		fileHandle.write( "# $Id$\n\n" )
 		fileHandle.write( "set( RelativeDir \"" + relDir + "\" )\n" )
 		fileHandle.write( "set( RelativeSourceGroup \"" + relSourceGroup + "\" )" )
 		fileHandle.write( "\n" )
@@ -229,6 +231,7 @@ def GenSourceListForSubdir( dirName, parentDir, renew, relDir = "", relSourceGro
 		fileHandle = open( fileName, "w" )
 
 		# write source files info
+		fileHandle.write( "# $Id$\n\n" )
 		fileHandle.write( "set( RelativeDir \"" + relDir + "\" )\n" )
 		fileHandle.write( "set( RelativeSourceGroup \"" + relSourceGroup + "\" )" )
 		fileHandle.write( "\n" )
@@ -296,8 +299,9 @@ def GenCMakeForLib( startDir, projectName, renew, version, linkVistaCoreLibs, mu
 
 	fileHandle = open( listsFile, "w" )
 
+	fileHandle.write( "# $Id$\n\n" )
 	fileHandle.write( "cmake_minimum_required( VERSION 2.8 )\n" )
-	if( multiProjectParent == "" ):
+	if( multiProjectParent == "" ):		
 		fileHandle.write( "project( " + projectName + " )\n" )
 		fileHandle.write( "\n" )
 		fileHandle.write( "list( APPEND CMAKE_MODULE_PATH \"$ENV{VISTA_CMAKE_COMMON}\" )\n" )
@@ -362,6 +366,7 @@ def GenCMakeForApp( startDir, projectName, renew, version, linkVistaCoreLibs, mu
 
 	fileHandle = open( listsFile, "w" )
 
+	fileHandle.write( "# $Id$\n\n" )
 	fileHandle.write( "cmake_minimum_required( VERSION 2.8 )\n" )
 	if( multiProjectParent == "" ):
 		fileHandle.write( "project( " + projectName + " )\n" )
@@ -428,6 +433,7 @@ def GenMultiProject( mode, startDir, projectName, renew, version, linkVistaCoreL
 
 	fileHandle = open( listsFile, "w" )
 
+	fileHandle.write( "# $Id$\n\n" )
 	fileHandle.write( "cmake_minimum_required( VERSION 2.8 )\n" )
 	fileHandle.write( "project( " + projectName + " )\n" )
 	fileHandle.write( "\n" )

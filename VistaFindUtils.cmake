@@ -1,3 +1,5 @@
+# $Id$
+
 include( VistaHWArchSettings )
 
 macro( vista_check_version_entry INPUT_VERSION OWN_VERSION DIFFERENCE_OUTPUT_VAR )

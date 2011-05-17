@@ -1,4 +1,5 @@
-# Search for precompiled GLEW path
+# $Id$
+
 include( FindPackageHandleStandardArgs )
 include( VistaFindUtils )
 

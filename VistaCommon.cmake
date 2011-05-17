@@ -1,3 +1,5 @@
+# $Id$
+
 # This file contains common settings and macros for setting up Vista projects
 
 # PACKAGE MACROS
@@ -161,7 +163,7 @@ endmacro( vista_get_svn_revision )
 macro( replace_svn_revision_tag _STRING_VAR )
 	string( REGEX MATCH "^\\$Revision: ([0-9]+)\\$$" _MATCH_SUCCESS ${${_STRING_VAR}} )
 	if( NOT _MATCH_SUCCESS )
-		string( REGEX MATCH "^\\$Id: [^ ]+ ([0-9]+) .*" _MATCH_SUCCESS ${${_STRING_VAR}} )
+		string( REGEX MATCH "^\\$Id${${_STRING_VAR}} )
 	endif( NOT _MATCH_SUCCESS )
 	if( _MATCH_SUCCESS )
 		set( ${_STRING_VAR} ${CMAKE_MATCH_1} )

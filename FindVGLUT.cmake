@@ -1,4 +1,6 @@
-# Search for precompiled GLUT path
+# $Id$
+
+
 include( FindPackageHandleStandardArgs )
 include( VistaFindUtils )
 

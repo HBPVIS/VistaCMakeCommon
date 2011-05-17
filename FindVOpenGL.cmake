@@ -1,3 +1,5 @@
+# $Id$
+
 include( FindPackageHandleStandardArgs )
 
 if( NOT VOPENGL_FOUND )
