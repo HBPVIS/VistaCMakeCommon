@@ -157,19 +157,6 @@ macro( vista_get_svn_revision _TARGET_VAR )
 	endif( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.svn/entries" )
 endmacro( vista_get_svn_revision )
 
-
-# replace_svn_revision_tag( STRING )
-# if the string equals an svn $Id$ or $rev$ entry, the svn revision is extracted and replaces the string
-macro( replace_svn_revision_tag _STRING_VAR )
-	string( REGEX MATCH "^\\$Revision: ([0-9]+)\\$$" _MATCH_SUCCESS ${${_STRING_VAR}} )
-	if( NOT _MATCH_SUCCESS )
-		string( REGEX MATCH "^\\$Id${${_STRING_VAR}} )
-	endif( NOT _MATCH_SUCCESS )
-	if( _MATCH_SUCCESS )
-		set( ${_STRING_VAR} ${CMAKE_MATCH_1} )
-	endif( _MATCH_SUCCESS )	
-endmacro( replace_svn_revision_tag VARIABLE_STRING_VAR )
-
 # local macro, for use in this file only
 function( local_clean_old_config_references _PACKAGE_NAME _PACKAGE_TARGET_FILE _EXCLUDE_DIR )
 	string( TOUPPER _PACKAGE_NAME_UPPER ${_PACKAGE_NAME} )	
