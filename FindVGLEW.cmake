@@ -15,6 +15,7 @@ if( NOT VGLEW_FOUND )
 		
 		set( GLEW_INCLUDE_DIRS ${GLEW_ROOT_DIR}/include )
 		set( GLEW_LIBRARY_DIRS ${GLEW_ROOT_DIR}/lib )
+		get_filename_component( GLEW_LIBRARY_DIRS ${GLEW_LIBRARIES} PATH )
 
 	endif( GLEW_ROOT_DIR AND GLEW_LIBRARIES )	
 

@@ -26,6 +26,7 @@ if( NOT VGLUT_FOUND )
 		
 		set( GLUT_INCLUDE_DIRS ${GLUT_ROOT_DIR}/include )
 		set( GLUT_DEFINITIONS "" )
+		get_filename_component( GLUT_LIBRARY_DIRS ${GLUT_LIBRARIES} PATH )
 		
 	else( GLUT_ROOT_DIR AND GLUT_LIBRARIES )
 			
@@ -49,6 +50,7 @@ if( NOT VGLUT_FOUND )
 				set( GLUT_INCLUDE_DIRS ${GLUT_INCLUDE_DIR} )
 				set( GLUT_LIBRARIES ${GLUT_glut_LIBRARY} )
 				set( GLUT_DEFINITIONS "-DUSE_NATIVE_GLUT" )
+				get_filename_component( GLUT_LIBRARY_DIRS ${GLUT_LIBRARIES} PATH )
 				
 			endif( GLUT_FOUND )
 			

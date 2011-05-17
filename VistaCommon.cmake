@@ -1256,8 +1256,7 @@ endmacro( vista_adopt_version _NAME _ADOPT_PARENT )
 		endif( MSVC )
 	endif( UNIX )
 
-
-	# TODO: think where to put this
+	# we once parse the referenced configs in VISTA_CMAKE_COMMON to remove outdated ones
 	if( EXISTS "$ENV{VISTA_CMAKE_COMMON}" AND NOT VISTA_CHECKED_COPIED_CONFIG_FILES )
 		set( VISTA_CHECKED_COPIED_CONFIG_FILES TRUE )
 		set( PACKAGE_REFERENCE_EXISTS_TEST TRUE )
