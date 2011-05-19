@@ -6,7 +6,7 @@ include( VistaFindUtils )
 
 if( NOT VGLUT_FOUND )
 
-	vista_find_package_root( GLUT "include/GL/freeglut.h" NAMES freeglut glut )
+	vista_find_package_root( GLUT "include/GL/freeglut.h" NAMES freeglut glut OpenSG )
 
 	find_path( GLUT_ROOT_DIR include/GL/freeglut.h 
 			PATHS 	${GLUT_ROOT_DIR}

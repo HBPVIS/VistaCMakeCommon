@@ -1,5 +1,13 @@
 # $Id$
 
+# Defines Vista_specific variables that describe the hardware architecture and compiler
+# throws a warning when the current architecture is not supported
+# set variables:
+#    VISTA_HWARCH    - variable describing Hardware architecture, e.g. win32.vc9 or LINUX.X86
+#    VISTA_COMPATIBLE_HWARCH - architectures that are compatible to the current HWARCH, 
+#                        e.g. for win32.vc9 this will be "win32.vc9 win32"
+#    VISTA_64BIT     - set to true if the code is compiled for 64bit execution
+
 if( NOT VISTA_HWARCH )
 	if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
 		SET( VISTA_64BIT TRUE )

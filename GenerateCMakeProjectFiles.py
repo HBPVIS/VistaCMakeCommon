@@ -339,15 +339,14 @@ def GenCMakeForLib( startDir, projectName, renew, version, linkVistaCoreLibs, mu
 		fileHandle.write( "vista_install( " + projectName + " )\n" )
 		fileHandle.write( "vista_create_cmake_configs( " + projectName + " )\n" )
 	else:
-		fileHandle.write( "if( " + str.upper(multiProjectParent) + "_COMMON_BUILD )\n" )
-		fileHandle.write( "\tvista_configure_lib( " + projectName + " )\n" )
-		fileHandle.write( "\tvista_install( " + projectName + " " + projectName + " )\n" )
-		fileHandle.write( "\tvista_create_cmake_configs( " + projectName + " )\n" )
+		fileHandle.write( "vista_configure_lib( " + projectName + " )\n" )
+		fileHandle.write( "if( " + str.upper(multiProjectParent) + "_COMMON_BUILD )\n" )		
+		fileHandle.write( "\tvista_install( " + projectName + " " + projectName + " )\n" )		
 		fileHandle.write( "else( " + str.upper(multiProjectParent) + "_COMMON_BUILD )\n" )
-		fileHandle.write( "\tvista_configure_lib( " + projectName + " )\n" )
 		fileHandle.write( "\tvista_install( " + projectName + " )\n" )
-		fileHandle.write( "\tvista_create_cmake_configs( " + projectName + " )\n" )
 		fileHandle.write( "endif( " + str.upper(multiProjectParent) + "_COMMON_BUILD )\n" )
+		fileHandle.write( "vista_create_cmake_configs( " + projectName + " )\n" )
+		fileHandle.write( "vista_create_default_info_file( " + projectName + " )\n" )
 		fileHandle.write( "\n" )
 
 	return True
@@ -399,6 +398,7 @@ def GenCMakeForApp( startDir, projectName, renew, version, linkVistaCoreLibs, mu
 	fileHandle.write( ")\n" )
 	fileHandle.write( "\n" )
 	fileHandle.write( "vista_configure_app( " + projectName + " )\n" )
+	fileHandle.write( "vista_create_default_info_file( " + projectName + " )\n" )
 	fileHandle.write( "\n" )
 
 	return True
