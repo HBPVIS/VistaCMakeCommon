@@ -63,7 +63,7 @@ macro( vista_set_defaultvalue )
 	endif( FIRST_CONFIGURE_RUN )
 endmacro( vista_set_defaultvalue )
 
-# vista_add_files_to_source_list( TARGET_LIST ROOT_DIR [source_group SOURCE_GROUP] EXTENSION1 [EXTENSION2 ...] )
+# vista_add_files_to_sources( TARGET_LIST ROOT_DIR [source_group SOURCE_GROUP] EXTENSION1 [EXTENSION2 ...] )
 # searches files with any of the passed extensions in the specified root_dir. These files are added to the
 # passed list. If the source_group option is given, the files are also added to the specified source group.
 # IMPORTANT NOTE: due to cmake's string replacement hicka-di-hoo, if you want to use subfolders in your sourcegroups,
@@ -138,8 +138,11 @@ macro( vista_conditional_add_subdirectory )
 endmacro( vista_conditional_add_subdirectory )
 
 
-# vista_get_svn_revision( REVISION_VARIABLE REPOS_VARIABLE DATE_VARIABLE )
-# extracts the svn revision from the file system and stores it in the specified target variable
+# vista_get_svn_info( REVISION_VARIABLE REPOS_VARIABLE DATE_VARIABLE )
+# extracts the svn info (revision, repository, and last change date) of the current source dir
+#  and stores it in the target variables. If the current directory is not under svn versioning, the
+# variables will be empty. If available, svn is used directly to query the info, otherwise,
+# a hand-taylored file parsing is used -- however, this may not work correctly with all versions
 macro( vista_get_svn_info _REVISION_VAR _REPOS_VAR _DATE_VAR )
 	set( ${_REVISION_VAR} )
 	set( ${_REPOS_VAR} )
@@ -185,6 +188,7 @@ endmacro( vista_get_svn_info )
 
 # vista_get_svn_revision( TARGET_VARIABLE )
 # extracts the svn revision from the file system and stores it in the specified target variable
+# for details, see vista_get_svn_info
 macro( vista_get_svn_revision _TARGET_VAR )
 	vista_get_svn_info( ${_TARGET_VAR} _TMP_SVN_REPOS _TMP_SVN_DATE )
 endmacro( vista_get_svn_revision )
@@ -402,10 +406,11 @@ endmacro( vista_find_package )
 
 
 # vista_use_package( PACKAGE [VERSION] [EXACT] [[COMPONENTS | REQUIRED] comp1 comp2 ... ] [QUIET] [FIND_DEPENDENCIES] )
-# finds the desired Package and automatically sets the include dirs, library dirs, definitions for the project
-# libraries have to be included using the VARIABLE PACKAGENAME_LIBRARIES. Alternatively, VISTA_USE_PACKAGE_LIBRARIES contains
-# all libraries that have linked by vista_use_package calls
-# buildsystem-specific variables. Works like find_package - taking the name, and optionally
+# finds the desired Package and automatically sets the include dirs, library dirs, definitions for the project.
+# Libraries have to be included using the VARIABLE PACKAGENAME_LIBRARIES. Alternatively, VISTA_USE_PACKAGE_LIBRARIES contains
+# all libraries that have been linked by vista_use_package calls. Additionally, buildsystem-specific variables are set that
+# keep track of dependencies
+# Parameters
 # VERSION - string describing the version - either the normal cmake-format XX.YY.ZZ.WW or the vista-specific extended version string
 # EXACT specifies that the version has to be matched exactly
 # REQUIRED specifies that the package must be found to continue. can optionally be followed by a list of required components
@@ -811,6 +816,27 @@ endmacro( vista_install_files_by_extension )
 
 
 # vista_create_cmake_config( PACKAGE_NAME CONFIG_PROTO_FILE TARGET_DIR )
+# configures the specified <package>Config.cmake prototype file, and copies it to the
+# target directory.
+# Has to be called after vista_configure_lib to work properly
+# If the cache variable VISTA_COPY_BUILD_CONFIGS_REFS_TO_CMAKECOMMON is ON -- and 
+# VISTA_CMAKE_COMMON env var is set -- a reference to this config is installed
+# to VISTA_CMAKE_COMMON/share/. Additionally, previously installed older versions are removed.
+# Furthermore, if a ConfigCMake of the same package and version already exists, it is parsed and
+# the defined library dirs are adopted - this helps if multiple cmake builds are created for the same
+# package
+# The following variables are set internally to help configuring the configfile
+#     _PACKAGE_NAME          - name of the package
+#     _PACKAGE_NAME_UPPER    - uppercase name
+#     _PACKAGE_LIBRARY_NAME  - output name of the package (not including Debug Postifix)
+#     _PACKAGE_ROOT_DIR      - toplevel file of the package (i.e. directory from which vista_create_cmake_config_build is called)
+#     _PACKAGE_LIBRARY_DIRS  - folder where the libraries are output to (not including optional postfixes)
+#                              can be overwritten by defining ${_PACKAGE_NAME_UPPER}_LIBRARY_OUTDIR before calling the macro
+#     _PACKAGE_INCLUDE_DIRS  - folder where the header files of the package are
+#                              defaults to the current folder and the projects root folder
+#                              can be overwritten by defining ${_PACKAGE_NAME_UPPER}_INCLUDE_OUTDIR before calling the macro
+#     _PACKAGE_RELATIVE_LIBRARY_DIRS - _PACKAGE_LIBRARY_DIRS relative to current dir
+#     _PACKAGE_RELATIVE_INCLUDE_DIRS - _PACKAGE_INCLUDE_DIRS relative to current dir
 macro( vista_create_cmake_config_build _PACKAGE_NAME _CONFIG_PROTO_FILE _TARGET_DIR )
 	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
 
@@ -912,7 +938,22 @@ macro( vista_create_cmake_config_build _PACKAGE_NAME _CONFIG_PROTO_FILE _TARGET_
 	endif( VISTA_COPY_BUILD_CONFIGS_REFS_TO_CMAKECOMMON )
 endmacro( vista_create_cmake_config_build )
 
-# vista_create_cmake_config_install( PACKAGE_NAME CONFIG_PROTO_FILE  )
+# vista_create_cmake_install( PACKAGE_NAME CONFIG_PROTO_FILE TARGET_DIR )
+# configures the specified <package>Config.cmake prototype file, stores it in a temporary
+# directory, and adds it to the files to install
+# Has to be called after vista_configure_lib and vista_install to work properly
+# If the cache variable VISTA_COPY_BUILD_CONFIGS_REFS_TO_CMAKECOMMON is ON -- and 
+# VISTA_CMAKE_COMMON env var is set -- a reference to this config is installed
+# to VISTA_CMAKE_COMMON/share/.
+# The following variables are set internally to help configuring the configfile
+#     _PACKAGE_NAME          - name of the package
+#     _PACKAGE_NAME_UPPER    - uppercase name
+#     _PACKAGE_LIBRARY_NAME  - output name of the package (not including Debug Postifix)
+#     _PACKAGE_ROOT_DIR      - toplevel file of the package (i.e. directory from which vista_create_cmake_config_build is called)
+#     _PACKAGE_LIBRARY_DIRS  - folder where the libraries are installed to
+#     _PACKAGE_INCLUDE_DIRS  - folder where the header files are installed to
+#     _PACKAGE_RELATIVE_LIBRARY_DIRS - _PACKAGE_LIBRARY_DIRS relative to current dir
+#     _PACKAGE_RELATIVE_INCLUDE_DIRS - _PACKAGE_INCLUDE_DIRS relative to current dir
 macro( vista_create_cmake_config_install _PACKAGE_NAME _CONFIG_PROTO_FILE _TARGET_DIR )
 	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
 
@@ -1007,7 +1048,14 @@ macro( vista_create_cmake_config_install _PACKAGE_NAME _CONFIG_PROTO_FILE _TARGE
 	endif( VISTA_COPY_INSTALL_CONFIGS_REFS_TO_CMAKECOMMON )
 endmacro( vista_create_cmake_config_install )
 
-# vista_create_version_config ( PACKAGE_NAME VERSION_PROTO_FILE
+# vista_create_version_config( PACKAGE_NAME VERSION_PROTO_FILE )
+# configures the specified <package>ConfigVersion.cmake prototype file.
+# for this to work, the version variables have to be set (e.g. using vistaa_set_version),
+# at least one of vista_create_cmake_config_build or vista_create_cmake_config_install
+# has to be performed
+# the version files are placed at the same location as the created config files
+# If the cache variable VISTA_COPY_BUILD_CONFIGS_REFS_TO_CMAKECOMMON is ON -- and 
+# VISTA_CMAKE_COMMON env var is set -- references are created too
 macro( vista_create_version_config _PACKAGE_NAME _VERSION_PROTO_FILE )
 	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
 
