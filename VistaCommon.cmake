@@ -22,7 +22,7 @@
 
 # GENERAL SETTINGS
 # adds info variables
-#	FIRST_CONFIGURATION_RUN - true if this is the first configuration run (!!)
+#	FIRST_CONFIGURATION_RUN - true if this is the first configuration run
 #   VISTA_HWARCH    - variable describing Hardware architecture, e.g. win32.vc9 or LINUX.X86
 #   VISTA_COMPATIBLE_HWARCH - architectures that are compatible to the current HWARCH, 
 #                        e.g. for win32.vc9 this will be "win32.vc9 win32"
@@ -48,7 +48,7 @@ include( VistaHWArchSettings )
 ###   Utility macros    ###
 ###########################
 
-# vista_set_defaultvalue( ... )
+# vista_set_defaultvalue( <cmake set() syntax> )
 # macro for overriding default values of pre-initialized variables
 # sets the variable using the same sysntax as set, but only on the first configuration run
 macro( vista_set_defaultvalue )
@@ -64,7 +64,7 @@ macro( vista_set_defaultvalue )
 	endif( FIRST_CONFIGURE_RUN )
 endmacro( vista_set_defaultvalue )
 
-# vista_add_files_to_sources( TARGET_LIST ROOT_DIR [source_group SOURCE_GROUP] EXTENSION1 [EXTENSION2 ...] )
+# vista_add_files_to_sources( TARGET_LIST ROOT_DIR [SOURCE_GROUP group_name] EXTENSION1 [EXTENSION2 ...] )
 # searches files with any of the passed extensions in the specified root_dir. These files are added to the
 # passed list. If the source_group option is given, the files are also added to the specified source group.
 # IMPORTANT NOTE: due to cmake's string replacement hicka-di-hoo, if you want to use subfolders in your sourcegroups,
@@ -72,13 +72,13 @@ endmacro( vista_set_defaultvalue )
 macro( vista_add_files_to_sources _TARGET_LIST _SEARCH_ROOT )
 	set( _EXTENSIONS ${ARGV} )
 
-	if( ${ARGV2} STREQUAL "source_group" )
+	if( ${ARGV2} STREQUAL "SOURCE_GROUP" )
 		set( _SOURCE_GROUP ${ARGV3} )
 		list( REMOVE_AT _EXTENSIONS 0 1 2 3 )
 	else()
 		set( _SOURCE_GROUP )
 		list( REMOVE_AT _EXTENSIONS 0 1 )
-	endif( ${ARGV2} STREQUAL "source_group" )
+	endif( ${ARGV2} STREQUAL "SOURCE_GROUP" )
 
 	set( _FOUND_FILES )
 	foreach( _EXT ${_EXTENSIONS} )
@@ -139,20 +139,28 @@ macro( vista_conditional_add_subdirectory )
 endmacro( vista_conditional_add_subdirectory )
 
 
-# vista_get_svn_info( REVISION_VARIABLE REPOS_VARIABLE DATE_VARIABLE )
+# vista_get_svn_info( REVISION_VARIABLE REPOS_VARIABLE DATE_VARIABLE [DIRECTORY] )
 # extracts the svn info (revision, repository, and last change date) of the current source dir
 #  and stores it in the target variables. If the current directory is not under svn versioning, the
 # variables will be empty. If available, svn is used directly to query the info, otherwise,
 # a hand-taylored file parsing is used -- however, this may not work correctly with all versions
+# by default, the svn of the current source directory is parsed. However, the optional DIRECTORY
+# parameter can be used to specify another directory
 macro( vista_get_svn_info _REVISION_VAR _REPOS_VAR _DATE_VAR )
 	set( ${_REVISION_VAR} )
 	set( ${_REPOS_VAR} )
 	set( ${_DATE_VAR} )
+	
+	if( ${ARGC} GREATER 3 )
+		set( _DIRECTORY ${ARGV3} )
+	else( ${ARGC} GREATER 3 )
+		set( _DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} )
+	endif( ${ARGC} GREATER 3 )
 
 	find_package( Subversion QUIET )
 	if( SUBVERSION_FOUND )
 		set( _TMP_SVN_WC_URL )
-		Subversion_WC_INFO( ${CMAKE_CURRENT_SOURCE_DIR} _TMP_SVN )
+		Subversion_WC_INFO( ${_DIRECTORY} _TMP_SVN )
 		if( _TMP_SVN_WC_URL )
 			set( ${_REVISION_VAR} ${_TMP_SVN_WC_REVISION} )
 			set( ${_REPOS_VAR} ${_TMP_SVN_WC_URL} )
@@ -160,8 +168,8 @@ macro( vista_get_svn_info _REVISION_VAR _REPOS_VAR _DATE_VAR )
 		endif( _TMP_SVN_WC_URL )
 	else( SUBVERSION_FOUND )
 		# check manually - and hope the syntax doesnt change ;)
-		if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.svn/entries" )
-			file( STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/.svn/entries" _FILE_ENTRIES LIMIT_COUNT 15 )
+		if( EXISTS "${_DIRECTORY}/.svn/entries" )
+			file( STRINGS "${_DIRECTORY}/.svn/entries" _FILE_ENTRIES LIMIT_COUNT 15 )
 			list( REMOVE_AT _FILE_ENTRIES 0 ) # remove first entry - the number
 
 			 foreach( _STRING ${_FILE_ENTRIES} )
@@ -182,7 +190,7 @@ macro( vista_get_svn_info _REVISION_VAR _REPOS_VAR _DATE_VAR )
 					endif( _MATCHED )
 				endif( NOT DEFINED ${_REVISION_VAR} )
 			 endforeach( _STRING ${_FILE_ENTRIES} )
-		endif( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.svn/entries" )
+		endif( EXISTS "${_DIRECTORY}/.svn/entries" )
 	endif( SUBVERSION_FOUND )
 
 endmacro( vista_get_svn_info )
@@ -1192,7 +1200,7 @@ endmacro( vista_create_cmake_configs )
 # vista_set_outdir( TARGET DIRECTORY [USE_CONFIG_SUBDIRS])
 # sets the outdir of the target to the directory
 # should be used after calling vista_configuer_[app|lib]
-# if USE_CONFIG_SUBDIRS is added, a postfix will be set for 
+#  if USE_CONFIG_SUBDIRS is added, a postfix will be set for each BuildType (Debug, Release, RelWithDebInfo, ...)
 macro( vista_set_outdir _PACKAGE_NAME _TARGET_DIR )
 	string( TOUPPER  ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
 	if( ${ARGC} GREATER 2 AND "${ARGV2}" STREQUAL "USE_CONFIG_SUBDIRS" )
@@ -1326,7 +1334,8 @@ endmacro( vista_adopt_version _NAME _ADOPT_PARENT )
 # is created in TARGET_DIR and installed to INSTALL_DIR
 macro( vista_create_info_file _PACKAGE_NAME _TARGET_DIR _INSTALL_DIR )
 	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
-	set( INFO_STRING )
+	set( INFO_STRING "This file is auto-generated by the VistaCMakeCommon\n"
+						"It contains build and configuration info for the project\n" )
 
 	if( MSVC )
 		set( INFO_FILENAME "${_TARGET_DIR}/${${_PACKAGE_NAME_UPPER}_OUTPUT_NAME}BuildInfo.txt" )
@@ -1336,7 +1345,7 @@ macro( vista_create_info_file _PACKAGE_NAME _TARGET_DIR _INSTALL_DIR )
 		set( _CONFIGS ${CMAKE_BUILD_TYPE} )
 	endif( MSVC )
 
-	set( INFO_STRING "${INFO_STRING}ProjectName:             ${CMAKE_PROJECT_NAME}" )
+	set( INFO_STRING "${INFO_STRING}\nProjectName:             ${CMAKE_PROJECT_NAME}" )
 	set( INFO_STRING "${INFO_STRING}\nPackageName:             ${_PACKAGE_NAME}" )
 	set( INFO_STRING "${INFO_STRING}\nOutputeName:             ${${_PACKAGE_NAME_UPPER}_OUTPUT_NAME}" )
 	set( INFO_STRING "${INFO_STRING}\nHardware architecture:   ${VISTA_HWARCH}" )
@@ -1355,7 +1364,13 @@ macro( vista_create_info_file _PACKAGE_NAME _TARGET_DIR _INSTALL_DIR )
 		set( INFO_STRING "${INFO_STRING}\nSVN repositiory:         ${_SVN_REPOS}" )
 		set( INFO_STRING "${INFO_STRING}\nSVN last commit:         ${_SVN_DATE}" )
 	endif( _SVN_REV)
-	set( INFO_STRING "${INFO_STRING}\nUsing RPath:              ${VISTA_USE_RPATH}" )
+	if( UNIX )
+		if( VISTA_USE_RPATH )
+			set( INFO_STRING "${INFO_STRING}\nUsing RPath:             ON" )
+		else()
+			set( INFO_STRING "${INFO_STRING}\nUsing RPath:             OFF" )
+		endif( VISTA_USE_RPATH )
+	endif( UNIX )
 
 	set( INFO_STRING "${INFO_STRING}\n\nDEPENDENCIES" )
 	set( INFO_STRING "${INFO_STRING}\nvista_use_package calls:  ${${_PACKAGE_NAME_UPPER}_DEPENDENCIES}" )
@@ -1386,6 +1401,20 @@ macro( vista_create_info_file _PACKAGE_NAME _TARGET_DIR _INSTALL_DIR )
 			set( INFO_STRING "${INFO_STRING}\n    Use File:            ${${_DEP_UPPER}_HWARCH}" )
 		endif( DEFINED ${_DEP_UPPER}_HWARCH )
 	endforeach( _DEP ${VISTA_TARGET_FULL_DEPENDENCIES} )
+	
+	set( INFO_STRING "${INFO_STRING}\n\nConfigured with VistaCMakeCommon" )
+	if( NOT VISTACOMMON_FILE_LOCATION )
+		set( INFO_STRING "${INFO_STRING}\n\t<unknown VistaCMakeCommon location/version>" )
+	else( NOT VISTACOMMON_FILE_LOCATION )
+		set( INFO_STRING "${INFO_STRING}\n\tLocation:             ${VISTACOMMON_FILE_LOCATION}" )
+		get_filename_component( _CMAKECOMMON_DIR "${VISTACOMMON_FILE_LOCATION}" PATH ) 
+		vista_get_svn_Info( _SVN_REV _SVN_REPOS _SVN_DATE "${_CMAKECOMMON_DIR}" )
+		if( _SVN_REV )
+			set( INFO_STRING "${INFO_STRING}\n\tSVN revision:            ${_SVN_REV}" )
+			set( INFO_STRING "${INFO_STRING}\n\tSVN repositiory:         ${_SVN_REPOS}" )
+			set( INFO_STRING "${INFO_STRING}\n\tSVN last commit:         ${_SVN_DATE}" )
+		endif( _SVN_REV)
+	endif( NOT VISTACOMMON_FILE_LOCATION )
 
 	set( INFO_STRING "${INFO_STRING}\n\nCMAKE FOLDER PROPETIES" )
 	set( INFO_STRING "${INFO_STRING}\nGeneral" )
@@ -1497,7 +1526,7 @@ endmacro( vista_create_default_info_file )
 # vista_create_doxygen_target( DOXYFILE )
 # adds a target for creating doxygen info
 # only works if Doxygen can be found on the system. If successfull, doxygen can be
-# creating by running the "Doxygen" project in MSVC or by calling make doc
+# creating by running the "Doxygen" project in MSVC or by calling make Doxygen
 macro( vista_create_doxygen_target _DOXYFILE )
 	find_package( Doxygen )
 	if( NOT DOXYGEN_FOUND )
@@ -1511,6 +1540,37 @@ macro( vista_create_doxygen_target _DOXYFILE )
 		set_target_properties( Doxygen PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD TRUE )
 	endif( NOT DOXYGEN_FOUND )
 endmacro( vista_create_doxygen_target )
+
+# vista_create_uninstall_target( [ON|OFF] )
+# sets a cache variable VISTA_ALLOW_UNINSTALL, with default value of argument (or OFF if no argument is given)
+# if VISTA_ALLOW_UNINSTALL is ON, an uninstall target will be created, which removes all previously installed files.
+# WARNING: this may accidently remove files that might still be needed - use with care
+# Also, the uninstall may leave behind empty directories
+macro( vista_create_uninstall_target )
+	if( ${ARGC} GREATER 1 )
+		set( _DEFAULT ${ARGV0} )
+	else()
+		set( _DEFAULT "OFF" )
+	endif( ${ARGC} GREATER 1 )
+	set( VISTA_ALLOW_UNINSTALL ${_DEFAULT} CACHE BOOL "In enabled, an uninstall project will be created. Use at your own risk - may remove wrong files!" )
+	if( VISTA_ALLOW_UNINSTALL )
+		find_file( VISTA_CMAKE_UNINSTALL_PROTO_FILE "cmake_uninstall.cmake_proto" PATHS ${CMAKE_MODULE_PATH} )
+		if( NOT VISTA_CMAKE_UNINSTALL_PROTO_FILE )
+			message( AUTHOR_WARNING "cant find cmake_uninstall proto file - uninstall target will not be created." )
+		else()
+			configure_file( "${VISTA_CMAKE_UNINSTALL_PROTO_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake" IMMEDIATE @ONLY )
+			if( WIN32 )
+				add_custom_target( UNINSTALL "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake" )
+				set_target_properties( UNINSTALL PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD TRUE )
+				set_target_properties( UNINSTALL PROPERTIES FOLDER "CMakePredefinedTargets" )
+			else()
+				add_custom_target( uninstall "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake" )
+				set_target_properties( uninstall PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD TRUE )
+			endif( WIN32 )
+					
+		endif( NOT VISTA_CMAKE_UNINSTALL_PROTO_FILE )	
+	endif( VISTA_ALLOW_UNINSTALL )
+endmacro( vista_create_uninstall_target )
 
 
 
@@ -1602,5 +1662,9 @@ if( EXISTS "$ENV{VISTA_CMAKE_COMMON}" AND NOT VISTA_CHECKED_COPIED_CONFIG_FILES 
 	endforeach( _FILE ${_ALL_VERSION_FILES} )
 	set( PACKAGE_REFERENCE_EXISTS_TEST FALSE )
 endif( EXISTS "$ENV{VISTA_CMAKE_COMMON}" AND NOT VISTA_CHECKED_COPIED_CONFIG_FILES )
+
+set( VISTACOMMON_FILE_LOCATION "VISTACOMMON_FILE_LOCATION-NOTFOUND" CACHE INTERNAL "" FORCE )
+find_file( VISTACOMMON_FILE_LOCATION "VistaCommon.cmake" PATHS ${CMAKE_MODULE_PATH} $ENV{CMAKE_MODULE_PATH} NO_DEFAULT_PATH )
+set( VISTACOMMON_FILE_LOCATION ${VISTACOMMON_FILE_LOCATION} CACHE INTERNAL "" FORCE )
 
 endif( NOT VISTA_COMMON_INCLUDED ) # this shows we did not include it yet
