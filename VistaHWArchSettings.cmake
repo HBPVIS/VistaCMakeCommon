@@ -7,6 +7,7 @@
 #    VISTA_COMPATIBLE_HWARCH - architectures that are compatible to the current HWARCH, 
 #                        e.g. for win32.vc9 this will be "win32.vc9 win32"
 #    VISTA_64BIT     - set to true if the code is compiled for 64bit execution
+#    VISTA_PLATFORM_DEFINE - compiler definition for the platform ( -DWIN32 or -DLINUX or -DDARWIN )
 
 if( NOT VISTA_HWARCH )
 	if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
@@ -16,6 +17,8 @@ if( NOT VISTA_HWARCH )
 	endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
 
 	if( WIN32 )
+		set( VISTA_PLATFORM_DEFINE -DWIN32 )
+	
 		if( VISTA_64BIT )
 			set( VISTA_HWARCH "win32-x64" )
 		else( VISTA_64BIT )
@@ -42,9 +45,11 @@ if( NOT VISTA_HWARCH )
 		set( VISTA_COMPATIBLE_HWARCH ${VISTA_HWARCH} ${VISTA_COMPATIBLE_HWARCH} )
 		
 	elseif( APPLE )
+		set( VISTA_PLATFORM_DEFINE -DDARWIN )
 		set( VISTA_HWARCH "DARWIN" )
-		set( VISTA_COMPATIBLE_HWARCH "DARWIN" )
+		set( VISTA_COMPATIBLE_HWARCH "DARWIN" )		
 	elseif( UNIX )
+		set( VISTA_PLATFORM_DEFINE -DLINUX )
 		if( VISTA_64BIT )
 			set( VISTA_HWARCH "LINUX.X86_64" )
 		else( VISTA_64BIT )

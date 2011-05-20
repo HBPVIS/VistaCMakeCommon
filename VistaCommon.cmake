@@ -27,6 +27,7 @@
 #   VISTA_COMPATIBLE_HWARCH - architectures that are compatible to the current HWARCH, 
 #                        e.g. for win32.vc9 this will be "win32.vc9 win32"
 #   VISTA_64BIT     - set to true if the code is compiled for 64bit execution
+#   VISTA_PLATFORM_DEFINE - compiler definition for the platform ( -DWIN32 or -DLINUX or -DDARWIN )
 # adds some general flags/configurations
 #	sets CMAKE_DEBUG_POSTFIX to "D"
 #	enables global cmake property USE_FOLDERS - allows grouping of projects in msvc
@@ -366,39 +367,42 @@ macro( vista_find_package _PACKAGE_NAME )
 		elseif( _FIND_MODULE_EXISTS )
 			find_package( ${_PACKAGE_NAME} ${_PACKAGE_VERSION} ${_FIND_PACKAGE_ARGS} )
 		else( _FIND_VMODULE_EXISTS )
-			# we look for additional directories to search for the config files
-			# we also search for CoreLibs directories manually
-			set( _SEARCH_PREFIXES )
-			if( EXISTS "$ENV{${_PACKAGE_NAME_UPPER}_ROOT}" )
-				list( APPEND _SEARCH_PREFIXES
-						"$ENV{${_PACKAGE_NAME_UPPER}_ROOT}/${VISTA_HWARCH}"
-						"$ENV{${_PACKAGE_NAME_UPPER}_ROOT}"
+			if( NOT ${PACKAGE_NAME_UPPER}_ADDITIONAL_CONFIG_DIRS )
+				# we look for additional directories to search for the config files
+				# we also search for CoreLibs directories manually
+				set( _SEARCH_DIRS	$ENV{${_PACKAGE_NAME_UPPER}_ROOT}
+							$ENV{VRDEV}
+							$ENV{VISTA_EXTERNAL_LIBS}
+							${CMAKE_PREFIX_PATH}
+							$ENV{CMAKE_PREFIX_PATH}
+							${CMAKE_SYSTEM_PREFIX_PATH}
+							$ENV{CMAKE_SYSTEM_PREFIX_PATH}
 				)
-			endif( EXISTS "$ENV{${_PACKAGE_NAME_UPPER}_ROOT}" )
-			if( EXISTS "$ENV{VRDEV}" )
-				list( APPEND _SEARCH_PREFIXES
-						"$ENV{VRDEV}/${_PACKAGE_NAME}*/${VISTA_HWARCH}"
-						"$ENV{VRDEV}/${_PACKAGE_NAME}*"
-						"$ENV{VRDEV}/${_PACKAGE_NAME}/*/${VISTA_HWARCH}"
-						"$ENV{VRDEV}/${_PACKAGE_NAME}/*/"
-				)
-			endif( EXISTS "$ENV{VRDEV}" )
+				list( REMOVE_ITEM _SEARCH_DIRS "/" )
+				foreach( _PATH ${_SEARCH_DIRS} )
+					if( EXISTS "${_PATH}" )
+						file( TO_CMAKE_PATH ${_PATH} _PATH )
+						list( APPEND _SEARCH_PREFIXES
+								"${_PATH}/${_PACKAGE_NAME}*/${VISTA_HWARCH}"
+								"${_PATH}/${_PACKAGE_NAME}*"
+								"${_PATH}/${_PACKAGE_NAME}/*/${VISTA_HWARCH}"
+								"${_PATH}/${_PACKAGE_NAME}/*/"
+						)
+					endif( EXISTS "${_PATH}" )
+				endforeach( _PATH ${_SEARCH_DIRS} )
 
-			foreach( _PATH ${_SEARCH_PREFIXES} )
-				file( GLOB _TMP_FILES "${_PATH}/cmake/${_PACKAGE_NAME}Config.cmake" )
-				foreach( _FILE ${_TMP_FILES} )
-					file( TO_CMAKE_PATH ${_FILE} _FOUND_FILE )
-					string( REPLACE "/cmake/${_PACKAGE_NAME}Config.cmake" "" _FOUND_PATH ${_FOUND_FILE} )
-					file( TO_CMAKE_PATH ${_FOUND_PATH} _FOUND_PATH )
-					list( APPEND ${PACKAGE_NAME_UPPER}_ADDITIONAL_CONFIG_DIRS ${_FOUND_PATH} )
-				endforeach( _FILE ${_TMP_FILES} )
-			endforeach( _PATH ${_PREFIX_PATHES} )
-			if( ${PACKAGE_NAME_UPPER}_ADDITIONAL_CONFIG_DIRS )
-				list( REMOVE_DUPLICATES ${PACKAGE_NAME_UPPER}_ADDITIONAL_CONFIG_DIRS )
-			endif( ${PACKAGE_NAME_UPPER}_ADDITIONAL_CONFIG_DIRS )
+				foreach( _PATH ${_SEARCH_PREFIXES} )
+					file( GLOB _TMP_PATHES "${_PATH}" )
+					list( APPEND ${PACKAGE_NAME_UPPER}_ADDITIONAL_CONFIG_DIRS ${_TMP_PATHES} )				
+				endforeach( _PATH ${_PREFIX_PATHES} )
+				if( ${PACKAGE_NAME_UPPER}_ADDITIONAL_CONFIG_DIRS )
+					list( REMOVE_DUPLICATES ${PACKAGE_NAME_UPPER}_ADDITIONAL_CONFIG_DIRS )
+				endif( ${PACKAGE_NAME_UPPER}_ADDITIONAL_CONFIG_DIRS )
+			endif( NOT ${PACKAGE_NAME_UPPER}_ADDITIONAL_CONFIG_DIRS )
 
 			find_package( ${_PACKAGE_NAME} ${_PACKAGE_VERSION} ${_FIND_PACKAGE_ARGS}
-							PATHS ${${PACKAGE_NAME_UPPER}_ADDITIONAL_CONFIG_DIRS} )
+							PATHS ${${PACKAGE_NAME_UPPER}_ADDITIONAL_CONFIG_DIRS} $ENV{${_PACKAGE_NAME_UPPER}_ROOT}
+									$ENV{VRDEV}	$ENV{VISTA_EXTERNAL_LIBS} )
 		endif( _FIND_VMODULE_EXISTS )
 
 	endif( _DO_FIND )
@@ -837,6 +841,8 @@ endmacro( vista_install_files_by_extension )
 #                              can be overwritten by defining ${_PACKAGE_NAME_UPPER}_INCLUDE_OUTDIR before calling the macro
 #     _PACKAGE_RELATIVE_LIBRARY_DIRS - _PACKAGE_LIBRARY_DIRS relative to current dir
 #     _PACKAGE_RELATIVE_INCLUDE_DIRS - _PACKAGE_INCLUDE_DIRS relative to current dir
+#     _PACKAGE_DEFINITIONS   - definitions for the package, defaults to nothing
+#                              can be overwritten by defining ${_PACKAGE_NAME_UPPER}_CONFIG_DEFINITIONS before calling the macro
 macro( vista_create_cmake_config_build _PACKAGE_NAME _CONFIG_PROTO_FILE _TARGET_DIR )
 	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
 
@@ -868,6 +874,10 @@ macro( vista_create_cmake_config_build _PACKAGE_NAME _CONFIG_PROTO_FILE _TARGET_
 		set( _PACKAGE_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}"  )
 		list( REMOVE_DUPLICATES _PACKAGE_INCLUDE_DIRS )
 	endif( ${_PACKAGE_NAME_UPPER}_INCLUDE_OUTDIR )
+	set(_PACKAGE_DEFINITIONS )
+	if( ${_PACKAGE_NAME_UPPER}_CONFIG_DEFINITIONS )
+		set( _PACKAGE_DEFINITIONS ${${_PACKAGE_NAME_UPPER}_CONFIG_DEFINITIONS} )
+	endif( ${_PACKAGE_NAME_UPPER}_CONFIG_DEFINITIONS )
 
 	# if we should create a referenced config file, we create it's target dir
 	if( VISTA_COPY_BUILD_CONFIGS_REFS_TO_CMAKECOMMON )
@@ -954,6 +964,8 @@ endmacro( vista_create_cmake_config_build )
 #     _PACKAGE_INCLUDE_DIRS  - folder where the header files are installed to
 #     _PACKAGE_RELATIVE_LIBRARY_DIRS - _PACKAGE_LIBRARY_DIRS relative to current dir
 #     _PACKAGE_RELATIVE_INCLUDE_DIRS - _PACKAGE_INCLUDE_DIRS relative to current dir
+#     _PACKAGE_DEFINITIONS   - definitions for the package, defaults to nothing
+#                              can be overwritten by defining ${_PACKAGE_NAME_UPPER}_CONFIG_DEFINITIONS before calling the macro
 macro( vista_create_cmake_config_install _PACKAGE_NAME _CONFIG_PROTO_FILE _TARGET_DIR )
 	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
 
@@ -986,6 +998,10 @@ macro( vista_create_cmake_config_install _PACKAGE_NAME _CONFIG_PROTO_FILE _TARGE
 	else( ${${_PACKAGE_NAME_UPPER}_LIB_INSTALLDIR} )
 		set( _PACKAGE_LIBRARY_DIRS "${_PACKAGE_ROOT_DIR}/lib" )
 	endif( ${${_PACKAGE_NAME_UPPER}_LIB_INSTALLDIR} )
+	set(_PACKAGE_DEFINITIONS )
+	if( ${_PACKAGE_NAME_UPPER}_CONFIG_DEFINITIONS )
+		set( _PACKAGE_DEFINITIONS ${${_PACKAGE_NAME_UPPER}_CONFIG_DEFINITIONS} )
+	endif( ${_PACKAGE_NAME_UPPER}_CONFIG_DEFINITIONS )
 
 	#retrieve relative pathes for library/include dirs
 	set( _PACKAGE_RELATIVE_INCLUDE_DIRS )
@@ -1176,6 +1192,7 @@ endmacro( vista_create_cmake_configs )
 # vista_set_outdir( TARGET DIRECTORY [USE_CONFIG_SUBDIRS])
 # sets the outdir of the target to the directory
 # should be used after calling vista_configuer_[app|lib]
+# if USE_CONFIG_SUBDIRS is added, a postfix will be set for 
 macro( vista_set_outdir _PACKAGE_NAME _TARGET_DIR )
 	string( TOUPPER  ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
 	if( ${ARGC} GREATER 2 AND "${ARGV2}" STREQUAL "USE_CONFIG_SUBDIRS" )
@@ -1229,6 +1246,14 @@ endmacro( vista_set_outdir _PACKAGE_NAME TARGET_DIR )
 # TYPE has to be RELEASE, HEAD, BRANCH, or TAG
 # NAME can be an arbitrary name (excluding character -)
 # MAJOR, MINOR, PATCH, TWEAK are optional version numbers. If svn_rev is specified, an svn revision is extracted if possible
+# the macro defines the following
+# <PACKAGE>_VERSION_EXT
+# <PACKAGE>_VERSION_TYPE
+# <PACKAGE>_VERSION_NAME
+# <PACKAGE>_VERSION_MAJOR
+# <PACKAGE>_VERSION_MINOR
+# <PACKAGE>_VERSION_PATCH
+# <PACKAGE>_VERSION_TWEAK
 macro( vista_set_version _PACKAGE _TYPE _NAME )
 	string( TOUPPER  ${_PACKAGE} _PACKAGE_UPPER )
 	set( ${_PACKAGE_UPPER}_VERSION_TYPE		${_TYPE} )
@@ -1294,6 +1319,11 @@ macro( vista_adopt_version _NAME _ADOPT_PARENT )
 	endif( ${_ADOPT_UPPER}_VERSION_EXT )
 endmacro( vista_adopt_version _NAME _ADOPT_PARENT )
 
+# vista_create_info_file( PACKAGE_NAME TARGET_DIR INSTALL_DIR )
+# creates an info file that contains general information and settings about the build
+# this can be usefull to later find out how and whith what settigns a package was build
+# the file is called <PACKAGE_NAME>BuildInfo[BuildType].txt and
+# is created in TARGET_DIR and installed to INSTALL_DIR
 macro( vista_create_info_file _PACKAGE_NAME _TARGET_DIR _INSTALL_DIR )
 	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
 	set( INFO_STRING )
@@ -1306,8 +1336,9 @@ macro( vista_create_info_file _PACKAGE_NAME _TARGET_DIR _INSTALL_DIR )
 		set( _CONFIGS ${CMAKE_BUILD_TYPE} )
 	endif( MSVC )
 
+	set( INFO_STRING "${INFO_STRING}ProjectName:             ${CMAKE_PROJECT_NAME}" )
 	set( INFO_STRING "${INFO_STRING}\nPackageName:             ${_PACKAGE_NAME}" )
-	set( INFO_STRING "${INFO_STRING}\nPackageName:             ${${_PACKAGE_NAME_UPPER}_OUTPUT_NAME}" )
+	set( INFO_STRING "${INFO_STRING}\nOutputeName:             ${${_PACKAGE_NAME_UPPER}_OUTPUT_NAME}" )
 	set( INFO_STRING "${INFO_STRING}\nHardware architecture:   ${VISTA_HWARCH}" )
 	set( INFO_STRING "${INFO_STRING}\nOutDir:                  ${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR}" )
 	set( INFO_STRING "${INFO_STRING}\nType:                    ${${_PACKAGE_NAME_UPPER}_TARGET_TYPE}" )
@@ -1326,20 +1357,12 @@ macro( vista_create_info_file _PACKAGE_NAME _TARGET_DIR _INSTALL_DIR )
 	endif( _SVN_REV)
 	set( INFO_STRING "${INFO_STRING}\nUsing RPath:              ${VISTA_USE_RPATH}" )
 
-	file( WRITE ${INFO_FILENAME} "${INFO_STRING}" )
-	set( INFO_STRING  )
-
 	set( INFO_STRING "${INFO_STRING}\n\nDEPENDENCIES" )
 	set( INFO_STRING "${INFO_STRING}\nvista_use_package calls:  ${${_PACKAGE_NAME_UPPER}_DEPENDENCIES}" )
 	set( INFO_STRING "${INFO_STRING}\nFull dependency info:" )
 	foreach( _DEP ${${_PACKAGE_NAME_UPPER}_FULL_DEPENDENCIES} )
 		string( TOUPPER ${_DEP} _DEP_UPPER )
 		set( INFO_STRING "${INFO_STRING}\n${_DEP}" )
-		#message( "${_DEP}_VERSION = ${${_DEP}_VERSION}" )
-		#message( "${_DEP_UPPER}_VERSION_EXT = ${${_DEP_UPPER}_VERSION_EXT}" )
-		#message( "${_DEP_UPPER}_VERSION = ${${_DEP_UPPER}_VERSION}" )
-		#message( "${_DEP_UPPER}_VERSION_STRING = ${${_DEP_UPPER}_VERSION_STRING}" )
-		#message( "${_DEP}_VERSION = ${${_DEP}_VERSION}" )
 		if( DEFINED ${_DEP_UPPER}_VERSION_STRING )
 			set( INFO_STRING "${INFO_STRING}\n    Version:             ${${_DEP_UPPER}_VERSION_STRING}" )
 		elseif( DEFINED ${_DEP_UPPER}_VERSION_EXT )
@@ -1443,6 +1466,8 @@ macro( vista_create_info_file _PACKAGE_NAME _TARGET_DIR _INSTALL_DIR )
 	endif( NOT "${_INSTALL_DIR}" STREQUAL "" )
 endmacro( vista_create_info_file )
 
+# vista_delete_info_file( PACKAGE_NAME TARGET_DIR )
+# deletes the build info file for the package at the specified location
 macro( vista_delete_info_file _PACKAGE_NAME _TARGET_DIR )
 	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
 	if( MSVC )
@@ -1455,16 +1480,24 @@ macro( vista_delete_info_file _PACKAGE_NAME _TARGET_DIR )
 	endif( EXISTS "${INFO_FILENAME}" )
 endmacro( vista_delete_info_file )
 
+# vista_create_default_info_file( PACKAGE_NAME )
+# uses the cache variable VISTA_CREATE_BUILD_INFO_FILES to determine
+# if a build info file should be created, and if so, creates it next to the lib/app,
+# and installs it to .../share/VistaBuildInfo
 macro( vista_create_default_info_file _PACKAGE_NAME )
 	set( VISTA_CREATE_BUILD_INFO_FILES TRUE CACHE BOOL "If enabled, an auto-generated build info file will be generated and installed for each target" )
-	if( VISTA_CREATE_BUILD_INFO_FILES AND NOT FIRST_CONFIGURE_RUN )
+	if( VISTA_CREATE_BUILD_INFO_FILES )
 		string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
 		vista_create_info_file( ${_PACKAGE_NAME} "${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR}" "${CMAKE_INSTALL_PREFIX}/share/VistaBuildInfo" )
 	else()
 		vista_delete_info_file( ${_PACKAGE_NAME} "${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR}" )
-	endif( VISTA_CREATE_BUILD_INFO_FILES AND NOT FIRST_CONFIGURE_RUN )
+	endif( VISTA_CREATE_BUILD_INFO_FILES )
 endmacro( vista_create_default_info_file )
 
+# vista_create_doxygen_target( DOXYFILE )
+# adds a target for creating doxygen info
+# only works if Doxygen can be found on the system. If successfull, doxygen can be
+# creating by running the "Doxygen" project in MSVC or by calling make doc
 macro( vista_create_doxygen_target _DOXYFILE )
 	find_package( Doxygen )
 	if( NOT DOXYGEN_FOUND )
@@ -1486,10 +1519,15 @@ endmacro( vista_create_doxygen_target )
 ###   General Settings  ###
 ###########################
 
-if( EXISTS "${VISTA_CMAKE_COMMON}" )
-	list( APPEND CMAKE_MODULE_PATH "${VISTA_CMAKE_COMMON}/share" )
+# if VISTA_CMAKE_COMMON envvar is set, we buffer it and add it to CMAKE_MODULE_PATH and CMAKE_PREFIX_PATH
+if( EXISTS "$ENV{VISTA_CMAKE_COMMON}" )
+	file( TO_CMAKE_PATH $ENV{VISTA_CMAKE_COMMON} VISTA_CMAKE_COMMON )
+	
+	list( APPEND CMAKE_MODULE_PATH "${VISTA_CMAKE_COMMON}" "${VISTA_CMAKE_COMMON}/share" )
 	list( APPEND CMAKE_PREFIX_PATH "${VISTA_CMAKE_COMMON}" "${VISTA_CMAKE_COMMON}/share" )
-endif( EXISTS "${VISTA_CMAKE_COMMON}" )
+	list( REMOVE_DUPLICATES CMAKE_MODULE_PATH )
+	list( REMOVE_DUPLICATES CMAKE_PREFIX_PATH )
+endif( EXISTS "$ENV{VISTA_CMAKE_COMMON}" )
 
 if( NOT ALREADY_CONFIGURED_ONCE OR FIRST_CONFIGURE_RUN )
 	set( ALREADY_CONFIGURED_ONCE TRUE CACHE INTERNAL "defines if this is the first config run or not" )
@@ -1498,6 +1536,7 @@ else( NOT ALREADY_CONFIGURED_ONCE OR FIRST_CONFIGURE_RUN )
 	set( FIRST_CONFIGURE_RUN FALSE )
 endif( NOT ALREADY_CONFIGURED_ONCE OR FIRST_CONFIGURE_RUN )
 
+# general settings/flags
 set( CMAKE_DEBUG_POSTFIX "D" )
 set_property( GLOBAL PROPERTY USE_FOLDERS ON )
 set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG" )
@@ -1515,10 +1554,9 @@ if( UNIX )
 endif( UNIX )
 
 # Platform dependent definitions
-if( UNIX )
-	add_definitions( -DLINUX )
-elseif( WIN32 )
-	add_definitions( -DWIN32 )
+add_definitions( ${VISTA_PLATFORM_DEFINE} ) # adds -DWIN32 / -DLINUX or similar
+
+if( WIN32 )
 	if( MSVC )
 		vista_set_defaultvalue( CMAKE_CONFIGURATION_TYPES "Release;Debug" CACHE STRING "CMake configuration types" )
 		# msvc disable some warnings
@@ -1546,7 +1584,7 @@ elseif( WIN32 )
 			endif( VISTA_USE_MSVC_SSE_OPTIMIZATION )
 		endif( NOT VISTA_64BIT )
 	endif( MSVC )
-endif( UNIX )
+endif( WIN32 )
 
 # we once parse the referenced configs in VISTA_CMAKE_COMMON to remove outdated ones
 if( EXISTS "$ENV{VISTA_CMAKE_COMMON}" AND NOT VISTA_CHECKED_COPIED_CONFIG_FILES )
@@ -1564,10 +1602,5 @@ if( EXISTS "$ENV{VISTA_CMAKE_COMMON}" AND NOT VISTA_CHECKED_COPIED_CONFIG_FILES 
 	endforeach( _FILE ${_ALL_VERSION_FILES} )
 	set( PACKAGE_REFERENCE_EXISTS_TEST FALSE )
 endif( EXISTS "$ENV{VISTA_CMAKE_COMMON}" AND NOT VISTA_CHECKED_COPIED_CONFIG_FILES )
-
-if( EXISTS "$ENV{VISTA_CMAKE_COMMON}" )
-	file( TO_CMAKE_PATH $ENV{VISTA_CMAKE_COMMON} VISTA_CMAKE_COMMON )
-	list( APPEND CMAKE_PREFIX_PATH ${VISTA_CMAKE_COMMON} ${VISTA_CMAKE_COMMON}/share )
-endif( EXISTS "$ENV{VISTA_CMAKE_COMMON}" )
 
 endif( NOT VISTA_COMMON_INCLUDED ) # this shows we did not include it yet
