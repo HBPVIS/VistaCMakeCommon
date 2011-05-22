@@ -468,7 +468,7 @@ macro( vista_use_package _PACKAGE_NAME )
 				set( _COMPONENTS_FOUND TRUE )
 			endif( ${_ARG} STREQUAL "FIND_DEPENDENCIES" )
 		endforeach( _ARG ${ARGV} )
-
+		
 		# todo: check against components
 		if( NOT _COMPONENTS_FOUND )
 			set( _REQUIRES_RERUN FALSE )
@@ -477,7 +477,7 @@ macro( vista_use_package _PACKAGE_NAME )
 
 	endif( VISTA_USE_${_PACKAGE_NAME_UPPER} )
 
-	if( _REQUIRES_RERUN )
+	if( _REQUIRES_RERUN )		
 		# package has not yet been used
 
 		# we firstextract some parameters, then try to find the package
@@ -545,7 +545,7 @@ macro( vista_use_package _PACKAGE_NAME )
 						list( GET _DEPENDENCY_ARGS 0 _DEPENDENCY_NAME )
 						string( TOUPPER "${_DEPENDENCY_NAME}" _DEPENDENCY_NAME_UPPER )
 						if( _FIND_DEPENDENCIES )
-							if( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND )
+							#if( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND )
 								# find and use the dependency. If it fails, utter a warning
 								if( NOT _QUIET )
 									message( STATUS "Automatically adding ${_PACKAGE_NAME}-dependency \"${_DEPENDENCY_ARGS}\"" )
@@ -554,7 +554,7 @@ macro( vista_use_package _PACKAGE_NAME )
 								if( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND AND NOT _QUIET )
 									message( WARNING "vista_use_package( ${_PACKAGE_NAME} ) - Package depends on \"${_DEPENDENCY_ARGS}\", but including it failed" )
 								endif( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND AND NOT _QUIET )
-							endif( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND )
+							#endif( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND )
 						else( _FIND_DEPENDENCIES )
 							# check if dependencies are already included. If not, utter a warning
 							if( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND AND NOT _QUIET )
