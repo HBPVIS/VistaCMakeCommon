@@ -1,7 +1,20 @@
 # $Id$
+if( NOT VISTA_FIND_UTILS_INCLUDED )
+set( VISTA_FIND_UTILS_INCLUDED TRUE )
 
 include( VistaHWArchSettings )
 
+set( VISTA_PACKAGE_SEARCH_PATHS )
+foreach( _PATH $ENV{VRDEV} $ENV{VISTA_EXTERNAL_LIBS} $ENV{VRSOFTWARE}
+						${CMAKE_PREFIX_PATH} $ENV{CMAKE_PREFIX_PATH}
+						${CMAKE_SYSTEM_PREFIX_PATH}	$ENV{CMAKE_SYSTEM_PREFIX_PATH} )
+	if( NOT _PATH STREQUAL "/" )
+		file( TO_CMAKE_PATH ${_PATH} _PATH)
+		list( APPEND VISTA_PACKAGE_SEARCH_PATHS ${_PATH} )
+	endif( NOT _PATH STREQUAL "/" )
+endforeach( _PATH )
+list( REMOVE_DUPLICATES VISTA_PACKAGE_SEARCH_PATHS )
+						
 # vista_check_version_entry( INPUT_VERSION OWN_VERSION DIFFERENCE_VAR )
 # compares the input version against the own version entry, and computes the difference 
 # INPUT_VERSION has to be a number, OWN_VERSION is an extended version number, i.e.
@@ -77,11 +90,21 @@ macro( vista_string_to_version VERSION_STRING VERSION_VARIABLES_PREFIX )
 	set( _REMAINING_VERSION ${VERSION_STRING} )
 
 	vista_extract_version_part( ${VERSION_VARIABLES_PREFIX}_VERSION_TYPE  "[a-zA-Z]+"         "_" )
+	if( NOT ${VERSION_VARIABLES_PREFIX}_VERSION_TYPE STREQUAL "HEAD"
+		AND NOT ${VERSION_VARIABLES_PREFIX}_VERSION_TYPE STREQUAL "RELEASE"
+		AND NOT ${VERSION_VARIABLES_PREFIX}_VERSION_TYPE STREQUAL "BRANCH"
+		AND NOT ${VERSION_VARIABLES_PREFIX}_VERSION_TYPE STREQUAL "TRUNK" )
+		set( ${VERSION_VARIABLES_PREFIX}_VERSION_TYPE )
+		set( _REMAINING_VERSION ${VERSION_STRING} )
+	endif( NOT ${VERSION_VARIABLES_PREFIX}_VERSION_TYPE STREQUAL "HEAD"
+		AND NOT ${VERSION_VARIABLES_PREFIX}_VERSION_TYPE STREQUAL "RELEASE"
+		AND NOT ${VERSION_VARIABLES_PREFIX}_VERSION_TYPE STREQUAL "BRANCH"
+		AND NOT ${VERSION_VARIABLES_PREFIX}_VERSION_TYPE STREQUAL "TRUNK" )
 	vista_extract_version_part( ${VERSION_VARIABLES_PREFIX}_VERSION_NAME  "[a-zA-Z][^\\\\-]+" "\\\\-" )
 	vista_extract_version_part( ${VERSION_VARIABLES_PREFIX}_VERSION_MAJOR "[0-9\\\\+\\\\-]+"  "\\\\." )
 	vista_extract_version_part( ${VERSION_VARIABLES_PREFIX}_VERSION_MINOR "[0-9\\\\+\\\\-]+"  "\\\\." )
 	vista_extract_version_part( ${VERSION_VARIABLES_PREFIX}_VERSION_PATCH "[0-9\\\\+\\\\-]+"  "\\\\." )
-	vista_extract_version_part( ${VERSION_VARIABLES_PREFIX}_VERSION_TWEAK "[0-9\\\\+\\\\-]+"  "[$]" )
+	vista_extract_version_part( ${VERSION_VARIABLES_PREFIX}_VERSION_TWEAK "[0-9\\\\+\\\\-]+"  "\\\\-" )
 
 	#if there is just one (textual) entry, it's the name
 	if( ${VERSION_VARIABLES_PREFIX}_VERSION_TYPE AND NOT ${VERSION_VARIABLES_PREFIX}_VERSION_NAME AND NOT ${VERSION_VARIABLES_PREFIX}_VERSION_MAJOR )
@@ -138,7 +161,7 @@ macro( vista_compare_versions INPUT_VERSION_PREFIX OWN_VERSION_PREFIX DIFFERENCE
 endmacro( vista_compare_versions )
 
 # vista_find_package_dirs( PACKAGE_NAME EXAMPLE_FILE [NAMES folder1 folder2 ...] )
-# parses the standard directories -- i.e. <PACKAGE>_ROOT_DIR, VRDEV, VISTA_EXTERNAL_LIBS,
+# parses the standard search directories 
 # CMAKE_PREFIX_PATH and CMAKE_SYSTEM_PREFIX_PATH -- to find any root dirs and their version
 # Parameters:
 #      PACKAGE_NAME     - Name of the Package
@@ -174,16 +197,6 @@ macro( vista_find_package_dirs _PACKAGE_NAME _EXAMPLE_FILE )
 		endif( ${_ARG} STREQUAL "NAMES" )
 	endforeach( _ARG ${_ARGS} )
 
-	set( _SEARCH_DIRS	$ENV{${_PACKAGE_NAME_UPPER}_ROOT}
-						$ENV{VRDEV}
-						$ENV{VISTA_EXTERNAL_LIBS}
-						${CMAKE_PREFIX_PATH}
-						$ENV{CMAKE_PREFIX_PATH}
-						${CMAKE_SYSTEM_PREFIX_PATH}
-						$ENV{CMAKE_SYSTEM_PREFIX_PATH}
-	)
-	list( REMOVE_ITEM _SEARCH_DIRS "/" )
-
 	set( ${_PACKAGE_NAME_UPPER}_CANDIDATE_DIRS )
 	set( ${_PACKAGE_NAME_UPPER}_CANDIDATE_VERSIONS )
 	set( ${_PACKAGE_NAME_UPPER}_CANDIDATE_UNVERSIONED )
@@ -201,7 +214,7 @@ macro( vista_find_package_dirs _PACKAGE_NAME _EXAMPLE_FILE )
 		endif( EXISTS "$ENV{${_PACKAGE_NAME_UPPER}_ROOT}/${_VISTA_HWARCH}/${_EXAMPLE_FILE}" )
 	endif( EXISTS "$ENV{${_PACKAGE_NAME_UPPER}_ROOT}" )
 
-	foreach( _PATH ${_SEARCH_DIRS} )
+	foreach( _PATH $ENV{${_PACKAGE_NAME_UPPER}_ROOT} ${VISTA_PACKAGE_SEARCH_PATHS} )
 		foreach( _FOLDER ${_PACKAGE_FOLDER_NAMES} )
 			# look for pathes with a version
 			file( GLOB _TMP_PATHES "${_PATH}/${_FOLDER}/${_FOLDER}-*/" )
@@ -365,11 +378,13 @@ macro( vista_find_package_root _PACKAGE_NAME _EXAMPLE_FILE )
 				list( GET ${_PACKAGE_NAME_UPPER}_CANDIDATE_VERSIONS ${_INDEX} _DIR_VERSION )
 				vista_string_to_version( ${_DIR_VERSION} "_TEST_VERSION_DIR" )
 				vista_compare_versions( "_TEST_VERSION_IN" "_TEST_VERSION_DIR" _VERSION_DIFFERENCE )
-				if( _VERSION_DIFFERENCE VERSION_LESS _BEST_DIFF )
-					set( _BEST_DIFF ${_VERSION_DIFFERENCE} )
-					list( GET ${_PACKAGE_NAME_UPPER}_CANDIDATE_DIRS ${_INDEX} _FOUND_DIR )
-					set( _FOUND_VERSION ${_DIR_VERSION} )
-				endif( _VERSION_DIFFERENCE VERSION_LESS _BEST_DIFF )
+				if( NOT _VERSION_DIFFERENCE EQUAL -1 )
+					if( _VERSION_DIFFERENCE VERSION_LESS _BEST_DIFF )
+						set( _BEST_DIFF ${_VERSION_DIFFERENCE} )
+						list( GET ${_PACKAGE_NAME_UPPER}_CANDIDATE_DIRS ${_INDEX} _FOUND_DIR )
+						set( _FOUND_VERSION ${_DIR_VERSION} )
+					endif( _VERSION_DIFFERENCE VERSION_LESS _BEST_DIFF )
+				endif( NOT _VERSION_DIFFERENCE EQUAL -1 )				
 			endforeach( _INDEX RANGE ${_COUNT} )
 
 			if( NOT _FOUND_DIR )
@@ -490,3 +505,4 @@ macro( vista_find_library_uncached )
 	set( VISTA_UNCACHED_LIB_SEARCH_VARIABLE "DIR-NOTFOUND" CACHE INTERNAL "" FORCE )
 endmacro()
 
+endif( NOT VISTA_FIND_UTILS_INCLUDED )

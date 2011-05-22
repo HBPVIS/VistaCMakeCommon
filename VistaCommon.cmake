@@ -43,6 +43,7 @@ set( VISTA_COMMON_INCLUDED TRUE )
 
 #this package sets the variables VISTA_HWARCH, VISTA_COMPATIBLE_HWARCH and VISTA_64BIT
 include( VistaHWArchSettings )
+include( VistaFindUtils )
 
 ###########################
 ###   Utility macros    ###
@@ -267,6 +268,7 @@ macro( vista_find_package _PACKAGE_NAME )
 	set( _REQUIRED FALSE )
 	set( _USING_COMPONENTS FALSE )
 	set( _NO_MODULE FALSE )
+	set( _EXACT FALSE )
 	foreach( _ARG ${ARGV} )
 		if( ${_ARG} STREQUAL "FIND_DEPENDENCIES" )
 			set( _PARSE_COMPONENTS FALSE )
@@ -283,6 +285,7 @@ macro( vista_find_package _PACKAGE_NAME )
 			set( _PARSE_COMPONENTS TRUE )
 			list( APPEND _FIND_PACKAGE_ARGS "COMPONENTS" )
 		elseif( ${_ARG} STREQUAL "EXACT" )
+			set( _EXACT TRUE )
 			set( _PARSE_COMPONENTS FALSE )
 			list( APPEND _FIND_PACKAGE_ARGS "EXACT" )
 		elseif( ${_ARG} STREQUAL "NO_POLICY_SCOPE" )
@@ -308,16 +311,38 @@ macro( vista_find_package _PACKAGE_NAME )
 	set( _DO_FIND TRUE )
 
 	if( ${_PACKAGE_NAME_UPPER}_FOUND )
-
-		if( "${${_PACKAGE_NAME_UPPER}_FOUND_VERSION}" AND "${_PACKAGE_VERSION}" )
+		set( _PREVIOUSLY_FOUND_VERSION )
+		if( ${_PACKAGE_NAME_UPPER}_VERSION )
+			set( _PREVIOUSLY_FOUND_VERSION ${${_PACKAGE_NAME_UPPER}_VERSION} )
+		elseif( ${_PACKAGE_NAME}_VERSION )
+			set( _PREVIOUSLY_FOUND_VERSION ${${_PACKAGE_NAME}_VERSION} )
+		elseif( ${_PACKAGE_NAME_UPPER}_VERSION_STRING )
+			set( _PREVIOUSLY_FOUND_VERSION ${${_PACKAGE_NAME_UPPER}_VERSION_STRING} )
+		elseif( ${_PACKAGE_NAME}_VERSION_STRING )
+			set( _PREVIOUSLY_FOUND_VERSION ${${_PACKAGE_NAME}_VERSION_STRING} )
+		elseif( ${_PACKAGE_NAME_UPPER}_VERSION_STRING )
+			set( _PREVIOUSLY_FOUND_VERSION ${${_PACKAGE_NAME_UPPER}_VERSION_STRING} )
+		endif( ${_PACKAGE_NAME_UPPER}_VERSION ) 
+		
+		if( _PREVIOUSLY_FOUND_VERSION AND _PACKAGE_VERSION )
 			# we have to check that we don't include different versions!
-			if( NOT ${${_PACKAGE_NAME_UPPER}_FOUND_VERSION} STREQUAL ${_PACKAGE_VERSION} )
-				message( WARNING "vista_find_package( ${_PACKAGE_NAME} - Requested version \"${_PACKAGE_VERSION}\",
-						but was already found with version \"${${_PACKAGE_NAME_UPPER}_FOUND_VERSION}\"
-						\n\tpreviously found version will be used again" )
-				set( _PACKAGE_VERSION ${${_PACKAGE_NAME_UPPER}_FOUND_VERSION} )
-			endif( NOT ${_PACKAGE_NAME_UPPER}_FOUND_VERSION STREQUAL ${_PACKAGE_VERSION} )
-		endif( "${${_PACKAGE_NAME_UPPER}_FOUND_VERSION}" AND "${_PACKAGE_VERSION}" )
+			vista_string_to_version( ${_PREVIOUSLY_FOUND_VERSION} "PREVIOUS" )
+			vista_string_to_version( ${_PACKAGE_VERSION} "REQUESTED" )
+			vista_compare_versions( "REQUESTED" "PREVIOUS" _DIFFERENCE )
+			if( _DIFFERENCE EQUAL -1 )
+				message( WARNING "vista_find_package( ${_PACKAGE_NAME} ) - Package was previously found with"
+				                  " version (${_PREVIOUSLY_FOUND_VERSION}), but is now requested with"
+								  " incompatible version (${_PACKAGE_VERSION}) - first found version is used,"
+								  " but this may lead to conflicts" )
+			elseif( _DIFFERENCE VERSION_GREATER 0.0.0.0 AND _EXACT )
+				message( "vista_find_package( ${_PACKAGE_NAME} ) - Package was previously found with"
+				                  " version (${_PREVIOUSLY_FOUND_VERSION}), but is now requested with"
+								  " different, but compatible version (${_PACKAGE_VERSION}) - first found version is used" )
+			#else: prefect match
+			endif( _DIFFERENCE EQUAL -1 )
+			# we always want to find the sam eversiona gain, so set it to the former one
+			set( _PACKAGE_VERSION ${_PREVIOUSLY_FOUND_VERSION} )
+		endif( _PREVIOUSLY_FOUND_VERSION AND _PACKAGE_VERSION )
 
 		if( _PARSE_COMPONENTS )
 			# we need to check if the components are already included or not
@@ -378,16 +403,7 @@ macro( vista_find_package _PACKAGE_NAME )
 			if( NOT ${PACKAGE_NAME_UPPER}_ADDITIONAL_CONFIG_DIRS )
 				# we look for additional directories to search for the config files
 				# we also search for CoreLibs directories manually
-				set( _SEARCH_DIRS	$ENV{${_PACKAGE_NAME_UPPER}_ROOT}
-							$ENV{VRDEV}
-							$ENV{VISTA_EXTERNAL_LIBS}
-							${CMAKE_PREFIX_PATH}
-							$ENV{CMAKE_PREFIX_PATH}
-							${CMAKE_SYSTEM_PREFIX_PATH}
-							$ENV{CMAKE_SYSTEM_PREFIX_PATH}
-				)
-				list( REMOVE_ITEM _SEARCH_DIRS "/" )
-				foreach( _PATH ${_SEARCH_DIRS} )
+				foreach( _PATH $ENV{${_PACKAGE_NAME_UPPER}_ROOT} ${VISTA_PACKAGE_SEARCH_PATHS} )
 					if( EXISTS "${_PATH}" )
 						file( TO_CMAKE_PATH ${_PATH} _PATH )
 						list( APPEND _SEARCH_PREFIXES
@@ -409,11 +425,11 @@ macro( vista_find_package _PACKAGE_NAME )
 			endif( NOT ${PACKAGE_NAME_UPPER}_ADDITIONAL_CONFIG_DIRS )
 
 			find_package( ${_PACKAGE_NAME} ${_PACKAGE_VERSION} ${_FIND_PACKAGE_ARGS}
-							PATHS ${${PACKAGE_NAME_UPPER}_ADDITIONAL_CONFIG_DIRS} $ENV{${_PACKAGE_NAME_UPPER}_ROOT}
-									$ENV{VRDEV}	$ENV{VISTA_EXTERNAL_LIBS} )
+							PATHS ${${PACKAGE_NAME_UPPER}_ADDITIONAL_CONFIG_DIRS} ${VISTA_PACKAGE_SEARCH_PATHS} )
 		endif( _FIND_VMODULE_EXISTS )
 
 	endif( _DO_FIND )
+	
 endmacro( vista_find_package )
 
 
