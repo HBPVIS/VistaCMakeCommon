@@ -20,6 +20,7 @@ if( NOT VGLUT_FOUND )
 	
 	find_library( GLUT_LIBRARIES NAMES freeglut freeglut-msvc90x86 glut glut32 
 					PATHS ${GLUT_ROOT_DIR}/lib ${GLUT_ROOT_DIR}/lib/opt
+					NO_DEFAULT_PATH
 					CACHE "Glut/freeglut library" )
 	
 	if( GLUT_ROOT_DIR AND GLUT_LIBRARIES )
