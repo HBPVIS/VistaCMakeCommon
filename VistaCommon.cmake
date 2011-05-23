@@ -1546,7 +1546,7 @@ endmacro( vista_create_default_info_file )
 macro( vista_create_doxygen_target _DOXYFILE )
 	find_package( Doxygen )
 	if( NOT DOXYGEN_FOUND )
-		message( AUTHOR_WARNING "vista_create_doxygen - Doxygen executable not found - cant create doxygen target" )
+		message( STATUS "vista_create_doxygen - Doxygen executable not found - cant create doxygen target" )
 	else()
 		add_custom_target( Doxygen
 			${DOXYGEN_EXECUTABLE} "${_DOXYFILE}"
