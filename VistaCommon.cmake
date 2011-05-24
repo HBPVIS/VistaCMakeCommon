@@ -157,19 +157,21 @@ macro( vista_get_svn_info _REVISION_VAR _REPOS_VAR _DATE_VAR )
 	else( ${ARGC} GREATER 3 )
 		set( _DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} )
 	endif( ${ARGC} GREATER 3 )
+	
+	if( EXISTS "${_DIRECTORY}/.svn/entries" )
 
-	find_package( Subversion QUIET )
-	if( SUBVERSION_FOUND )
-		set( _TMP_SVN_WC_URL )
-		Subversion_WC_INFO( ${_DIRECTORY} _TMP_SVN )
-		if( _TMP_SVN_WC_URL )
-			set( ${_REVISION_VAR} ${_TMP_SVN_WC_REVISION} )
-			set( ${_REPOS_VAR} ${_TMP_SVN_WC_URL} )
-			set( ${_DATE_VAR} ${_TMP_SVN_WC_LAST_CHANGED_DATE} )
-		endif( _TMP_SVN_WC_URL )
-	else( SUBVERSION_FOUND )
-		# check manually - and hope the syntax doesnt change ;)
-		if( EXISTS "${_DIRECTORY}/.svn/entries" )
+		find_package( Subversion QUIET )
+		if( SUBVERSION_FOUND )
+			set( _TMP_SVN_WC_URL )
+			Subversion_WC_INFO( ${_DIRECTORY} _TMP_SVN )
+			if( _TMP_SVN_WC_URL )
+				set( ${_REVISION_VAR} ${_TMP_SVN_WC_REVISION} )
+				set( ${_REPOS_VAR} ${_TMP_SVN_WC_URL} )
+				set( ${_DATE_VAR} ${_TMP_SVN_WC_LAST_CHANGED_DATE} )
+			endif( _TMP_SVN_WC_URL )
+		else( SUBVERSION_FOUND )
+			# check manually - and hope the syntax doesnt change ;)
+			
 			file( STRINGS "${_DIRECTORY}/.svn/entries" _FILE_ENTRIES LIMIT_COUNT 15 )
 			list( REMOVE_AT _FILE_ENTRIES 0 ) # remove first entry - the number
 
@@ -191,8 +193,10 @@ macro( vista_get_svn_info _REVISION_VAR _REPOS_VAR _DATE_VAR )
 					endif( _MATCHED )
 				endif( NOT DEFINED ${_REVISION_VAR} )
 			 endforeach( _STRING ${_FILE_ENTRIES} )
-		endif( EXISTS "${_DIRECTORY}/.svn/entries" )
-	endif( SUBVERSION_FOUND )
+			
+		endif( SUBVERSION_FOUND )
+	
+	endif( EXISTS "${_DIRECTORY}/.svn/entries" )
 
 endmacro( vista_get_svn_info )
 
