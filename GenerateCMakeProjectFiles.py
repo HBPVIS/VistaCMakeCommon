@@ -6,6 +6,7 @@ localSourceFileName = "_SourceFiles.cmake"
 backupExtension = ".BAK"
 excludeDirs = [ "cvs", ".svn", "build", "built", "cmake" ]
 sourceExtensions = [ ".c", ".cpp", ".h" ]
+addSourceFilesListToSources = True
 
 findCommented = re.compile( r'\s*#\s*.*' )
 findSetListRegEx = re.compile( r'set\(\s*(\S+)\s*\Z' )
@@ -78,6 +79,8 @@ def GenSourceListForSubdir( dirName, parentDir, renew, relDir = "", relSourceGro
 		relDir = "."
 
 	sourceFiles, subDirs = GetSourceFilesAndDirs( fullDirName )
+	if( addSourceFilesListToSources ):
+		sourceFiles.append( localSourceFileName )
 
 	# recursively generate sourcefiles for subdirs
 	for dir in subDirs:
@@ -118,9 +121,8 @@ def GenSourceListForSubdir( dirName, parentDir, renew, relDir = "", relSourceGro
 					if len( setEntries ) > 0:
 						SourceFileGroups[currentSet] = setEntries
 				else:
-					if CheckIsSourceFile( line ):
-						setEntries.append( line )
-						existingSourceFiles.append( line )
+					setEntries.append( line )
+					existingSourceFiles.append( line )
 			else:
 				result = re.match( findSetListRegEx, line )
 				if result:
@@ -141,14 +143,16 @@ def GenSourceListForSubdir( dirName, parentDir, renew, relDir = "", relSourceGro
 							result = re.match( findSourceGroupRegEx, line )
 							if result:
 								SourceFileGroupsNames[currentSet] = result.group(1)
-
+								
 		#now, we check which files are not in the file yet
 		missingFiles = []
 		for file in sourceFiles:
-			if( not file in existingSourceFiles ):
-				missingFiles.append( file )
-			else:
+			if( file in existingSourceFiles ):
 				existingSourceFiles.remove( file )
+			elif( "#" + file in existingSourceFiles ):
+				existingSourceFiles.remove( "#" + file )				
+			else:
+				missingFiles.append( file )
 
 		# check if anything changed at all
 		if( len( missingFiles ) == 0 and len( existingSourceFiles ) == 0 ):
@@ -156,7 +160,7 @@ def GenSourceListForSubdir( dirName, parentDir, renew, relDir = "", relSourceGro
 
 		#now, files in missingFiles need to be added to the default source group
 		if( len( missingFiles ) > 0 ):
-			if not "DirFiles" in SourceFileGroups:
+			if( not "DirFiles" in SourceFileGroups ):
 				SourceFileGroups["DirFiles"] = []
 			for file in missingFiles:
 				SourceFileGroups["DirFiles"].append( file )
@@ -413,7 +417,6 @@ def GenMultiProject( mode, startDir, projectName, renew, version, linkVistaCoreL
 		fullDir = os.path.join( startDir, dir )
 		if mode == MODE_SRC:
 			GenSourceLists( fullDir, renew )
-			return
 		elif mode == MODE_APP:
 			if( GenCMakeForApp( fullDir, dir, renew, version, linkVistaCoreLibs, projectName ) ):
 				projectSubDirs.append( dir )
