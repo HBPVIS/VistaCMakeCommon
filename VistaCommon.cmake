@@ -261,8 +261,6 @@ endfunction( local_use_existing_config_libs )
 # - checks if a vista-specific FindV<package>.cmake file exists, and prefers this
 # - if no module is found, the config files are searched in additional subdirectories
 macro( vista_find_package _PACKAGE_NAME )
-	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
-
 	# parse arguments
 	set( _FIND_PACKAGE_ARGS )
 	set( _FIND_DEPENDENCIES FALSE )
@@ -311,10 +309,12 @@ macro( vista_find_package _PACKAGE_NAME )
 			message( WARNING "vista_find_package( ${_PACKAGE_NAME} ) - Unknown argument [${_ARG}]" )
 		endif( ${_ARG} STREQUAL "FIND_DEPENDENCIES" )
 	endforeach( _ARG ${ARGV} )
-
+	
 	set( _DO_FIND TRUE )
 
 	if( ${_PACKAGE_NAME_UPPER}_FOUND )
+		set( _DO_FIND FALSE )
+		
 		set( _PREVIOUSLY_FOUND_VERSION )
 		if( ${_PACKAGE_NAME_UPPER}_VERSION )
 			set( _PREVIOUSLY_FOUND_VERSION ${${_PACKAGE_NAME_UPPER}_VERSION} )
@@ -328,7 +328,7 @@ macro( vista_find_package _PACKAGE_NAME )
 			set( _PREVIOUSLY_FOUND_VERSION ${${_PACKAGE_NAME_UPPER}_VERSION_STRING} )
 		endif( ${_PACKAGE_NAME_UPPER}_VERSION ) 
 		
-		if( _PREVIOUSLY_FOUND_VERSION AND _PACKAGE_VERSION )
+		if( _PREVIOUSLY_FOUND_VERSION AND _PACKAGE_VERSION )			
 			# we have to check that we don't include different versions!
 			vista_string_to_version( ${_PREVIOUSLY_FOUND_VERSION} "PREVIOUS" )
 			vista_string_to_version( ${_PACKAGE_VERSION} "REQUESTED" )
@@ -348,24 +348,35 @@ macro( vista_find_package _PACKAGE_NAME )
 			set( _PACKAGE_VERSION ${_PREVIOUSLY_FOUND_VERSION} )
 		endif( _PREVIOUSLY_FOUND_VERSION AND _PACKAGE_VERSION )
 
-		if( _PARSE_COMPONENTS )
+		if( _USING_COMPONENTS )	
 			# we need to check if the components are already included or not
 			# NOTE: this relies on the Find<Package> or <Package>Config file to
-			# correctly set the PACKAGE_FOUND_COMPONENTS variable - otherwise, a rerun
+			# correctly set the PACKAGENAME_FOUND_COMPONENTS variable - otherwise, a rerun
 			# will be performed even if previous finds were sufficient
-			foreach( _COMPONENT ${_PACKAGE_COMPONENTS} )
-				list( FIND PACKAGE_FOUND_COMPONENTS ${_COMPONENT} _COMPONENT_FOUND )
-				if( NOT _COMPONENT_FOUND )
-					set( _DO_FIND TRUE )
-					break()
-				endif( NOT _COMPONENT_FOUND )
-			endforeach( _COMPONENT ${_PACKAGE_COMPONENTS} )
-		endif( _PARSE_COMPONENTS )
+			if( ${_PACKAGE_NAME_UPPER}_FOUND_COMPONENTS )
+				foreach( _COMPONENT ${_PACKAGE_COMPONENTS} )
+					list( FIND ${_PACKAGE_NAME_UPPER}_FOUND_COMPONENTS ${_COMPONENT} _COMPONENT_FOUND )
+					if( _COMPONENT_FOUND LESS 0 )
+						set( _DO_FIND TRUE )
+						break()
+					endif( _COMPONENT_FOUND LESS 0 )
+				endforeach( _COMPONENT ${_PACKAGE_COMPONENTS} )
+			else()
+				set( _DO_FIND TRUE )
+			endif( ${_PACKAGE_NAME_UPPER}_FOUND_COMPONENTS )
+		endif( _USING_COMPONENTS )
 
 	endif( ${_PACKAGE_NAME_UPPER}_FOUND )
-
+		
 	if( _DO_FIND )
-
+		# this is somewhat of an intransparent hack: if _MESSAGE_IF_DO_FIND is set, we print a message
+		# with it and reset the value. This is to allow vista_use_package to print additional info
+		# - no one else should need to use thsi
+		if( _MESSAGE_IF_DO_FIND )
+			message( STATUS "${_MESSAGE_IF_DO_FIND}" )
+			set( _MESSAGE_IF_DO_FIND )
+		endif( _MESSAGE_IF_DO_FIND )
+	
 		if( _PACKAGE_VERSION )
 			# check if it is a "normal" or an extended version
 			string( REGEX MATCH "^[0-9\\.]*$" _MATCH ${_PACKAGE_VERSION} )
@@ -431,7 +442,7 @@ macro( vista_find_package _PACKAGE_NAME )
 			find_package( ${_PACKAGE_NAME} ${_PACKAGE_VERSION} ${_FIND_PACKAGE_ARGS}
 							PATHS ${${PACKAGE_NAME_UPPER}_ADDITIONAL_CONFIG_DIRS} ${VISTA_PACKAGE_SEARCH_PATHS} )
 		endif( _FIND_VMODULE_EXISTS )
-
+		
 	endif( _DO_FIND )
 	
 endmacro( vista_find_package )
@@ -507,8 +518,8 @@ macro( vista_use_package _PACKAGE_NAME )
 		# finding will handle differences to already run find's
 		vista_find_package( ${ARGV} )
 
-		#if found - set required variables
-		if( ${_PACKAGE_NAME_UPPER}_FOUND )
+		# set required variables if package was found AND it wasn't sufficiently included before (in which case _DO_FIND is FALSE )
+		if( _DO_FIND AND ${_PACKAGE_NAME_UPPER}_FOUND )
 			# if a USE_FILE is specified, we assume that it handles all the settings
 			# if not, we set the necessary values ourselves
 			if( ${_PACKAGE_NAME_UPPER}_USE_FILE )
@@ -552,7 +563,7 @@ macro( vista_use_package _PACKAGE_NAME )
 							#if( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND )
 								# find and use the dependency. If it fails, utter a warning
 								if( NOT _QUIET )
-									message( STATUS "Automatically adding ${_PACKAGE_NAME}-dependency \"${_DEPENDENCY_ARGS}\"" )
+									set( _MESSAGE_IF_DO_FIND "Automatically adding ${_PACKAGE_NAME}-dependency \"${_DEPENDENCY_ARGS}\"" )
 								endif( NOT _QUIET )
 								vista_use_package( ${_DEPENDENCY_ARGS} FIND_DEPENDENCIES )
 								if( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND AND NOT _QUIET )
@@ -598,7 +609,7 @@ macro( vista_use_package _PACKAGE_NAME )
 			#restore dependencies as they were before FIND_DEPENDENCY calls
 			set( VISTA_TARGET_DEPENDENCIES ${_TMP_VISTA_TARGET_DEPENDENCIES} )
 
-		endif( ${_PACKAGE_NAME_UPPER}_FOUND )
+		endif( _DO_FIND AND ${_PACKAGE_NAME_UPPER}_FOUND )
 	endif( _REQUIRES_RERUN )
 
 endmacro( vista_use_package _PACKAGE_NAME )
