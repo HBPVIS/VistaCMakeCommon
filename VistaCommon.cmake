@@ -1180,7 +1180,7 @@ macro( vista_create_cmake_configs _TARGET )
 		#use default config file
 		find_file( VISTA_DEFAULT_CONFIG_PROTO_FILE_BUILD "PackageConfig-build.cmake_proto" PATHS ${CMAKE_MODULE_PATH} $ENV{CMAKE_MODULE_PATH} )
 		set( VISTA_DEFAULT_CONFIG_PROTO_FILE_BUILD ${VISTA_DEFAULT_CONFIG_PROTO_FILE_BUILD} CACHE INTERNAL "Default Prototype file for <Package>Config.cmake in build config" FORCE )
-		find_file( VISTA_DEFAULT_CONFIG_PROTO_FILE_INSTALL "PackageConfig-build.cmake_proto" PATHS ${CMAKE_MODULE_PATH} $ENV{CMAKE_MODULE_PATH} )
+		find_file( VISTA_DEFAULT_CONFIG_PROTO_FILE_INSTALL "PackageConfig-install.cmake_proto" PATHS ${CMAKE_MODULE_PATH} $ENV{CMAKE_MODULE_PATH} )
 		set( VISTA_DEFAULT_CONFIG_PROTO_FILE_INSTALL ${VISTA_DEFAULT_CONFIG_PROTO_FILE_INSTALL} CACHE INTERNAL "Default Prototype file for <Package>Config.cmake in install config" FORCE )
 
 		if( NOT VISTA_DEFAULT_CONFIG_PROTO_FILE_BUILD OR NOT VISTA_DEFAULT_CONFIG_PROTO_FILE_INSTALL )
