@@ -62,6 +62,13 @@ def GenSourceListForSubdir( dirName, parentDir, renew, relDir = "", relSourceGro
 
 	sourceSubDirs = []
 	fullDirName = os.path.join( parentDir, dirName )
+	
+	# we dont want to parse the cmake directories
+	testCacheFile = os.path.join( fullDirName, "CMakeCache.txt" )
+	print( testCacheFile )
+	if( os.path.exists( testCacheFile ) ):
+		message( "Cache!" )
+		return
 
 	if( relDir == "" ):
 		relDir = dirName
