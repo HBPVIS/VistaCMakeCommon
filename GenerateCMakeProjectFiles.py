@@ -67,7 +67,6 @@ def GenSourceListForSubdir( dirName, parentDir, renew, relDir = "", relSourceGro
 	testCacheFile = os.path.join( fullDirName, "CMakeCache.txt" )
 	print( testCacheFile )
 	if( os.path.exists( testCacheFile ) ):
-		message( "Cache!" )
 		return
 
 	if( relDir == "" ):
