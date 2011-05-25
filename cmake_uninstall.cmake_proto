@@ -15,4 +15,3 @@ foreach( _FILE ${_FILES} )
 		message( STATUS "File \"${_FILE}\" does not exist." )
 	endif( EXISTS "${_FILE}" )
 endforeach( _FILE )
- 

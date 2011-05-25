@@ -15,11 +15,11 @@ if( NOT VOPENHAPTICS_FOUND )
 	if( OPENHAPTICS_ROOT_DIR )
 		# two options: either, all includes/libs are in the same folders, or
 		# the default deployment is used (with toplevel subfolders )
-		
+
 		if( WIN32 AND EXISTS "${OPENHAPTICS_ROOT_DIR}/utilities/include/HDU/hdu.h" )
 			#install deployment
 			set( OPENHAPTICS_ROOT_DIR ${OPENHAPTICS_ROOT_DIR} )
-			set( OPENHAPTICS_INCLUDE_DIRS "${OPENHAPTICS_ROOT_DIR}/include" 
+			set( OPENHAPTICS_INCLUDE_DIRS "${OPENHAPTICS_ROOT_DIR}/include"
 										"${OPENHAPTICS_ROOT_DIR}/utilities/include" )
 
 			set( OPENHAPTICS_hd_LIBRARY "OPENHAPTICS_hd_LIBRARY-NOTFOUND" CACHE PATH "OpenHaptics hd library" FORCE )
@@ -54,10 +54,7 @@ if( NOT VOPENHAPTICS_FOUND )
 
 
 	endif( OPENHAPTICS_ROOT_DIR )
-	
+
 endif( NOT VOPENHAPTICS_FOUND )
 
 find_package_handle_standard_args( VOpenHaptics "OPENHAPTICS could not be found" OPENHAPTICS_ROOT_DIR OPENHAPTICS_LIBRARIES )
-
-
-

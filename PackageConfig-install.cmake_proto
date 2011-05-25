@@ -11,7 +11,7 @@ set( @_PACKAGE_NAME_UPPER@_DEPENDENCIES @VISTA_TARGET_DEPENDENCIES@ )
 # and look for the lib dir, which can be one, two, or three steps up
 # we check if the folder is correct by testing if the first library dir exists there
 set( _TEST_DIR "${@_PACKAGE_NAME@_DIR}" )
-list( GET @_PACKAGE_NAME_UPPER@_RELATIVE_LIBRARY_DIRS 0 _TEST_SUBDIR )	
+list( GET @_PACKAGE_NAME_UPPER@_RELATIVE_LIBRARY_DIRS 0 _TEST_SUBDIR )
 foreach( _STEP RANGE 3 )
 	get_filename_component( _TEST_DIR "${_TEST_DIR}" PATH ) # one dir up
 	if( EXISTS "${_TEST_DIR}/${_TEST_SUBDIR}" )

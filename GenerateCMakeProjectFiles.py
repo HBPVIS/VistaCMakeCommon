@@ -62,7 +62,7 @@ def GenSourceListForSubdir( dirName, parentDir, renew, relDir = "", relSourceGro
 
 	sourceSubDirs = []
 	fullDirName = os.path.join( parentDir, dirName )
-	
+
 	# we dont want to parse the cmake directories
 	testCacheFile = os.path.join( fullDirName, "CMakeCache.txt" )
 	print( testCacheFile )
@@ -149,14 +149,14 @@ def GenSourceListForSubdir( dirName, parentDir, renew, relDir = "", relSourceGro
 							result = re.match( findSourceGroupRegEx, line )
 							if result:
 								SourceFileGroupsNames[currentSet] = result.group(1)
-								
+
 		#now, we check which files are not in the file yet
 		missingFiles = []
 		for file in sourceFiles:
 			if( file in existingSourceFiles ):
 				existingSourceFiles.remove( file )
 			elif( "#" + file in existingSourceFiles ):
-				existingSourceFiles.remove( "#" + file )				
+				existingSourceFiles.remove( "#" + file )
 			else:
 				missingFiles.append( file )
 
@@ -311,7 +311,7 @@ def GenCMakeForLib( startDir, projectName, renew, version, linkVistaCoreLibs, mu
 
 	fileHandle.write( "# $I" + "d:$\n\n" )
 	fileHandle.write( "cmake_minimum_required( VERSION 2.8 )\n" )
-	if( multiProjectParent == "" ):		
+	if( multiProjectParent == "" ):
 		fileHandle.write( "project( " + projectName + " )\n" )
 		fileHandle.write( "\n" )
 		fileHandle.write( "list( APPEND CMAKE_MODULE_PATH \"$ENV{VISTA_CMAKE_COMMON}\" )\n" )
@@ -350,8 +350,8 @@ def GenCMakeForLib( startDir, projectName, renew, version, linkVistaCoreLibs, mu
 		fileHandle.write( "vista_create_cmake_configs( " + projectName + " )\n" )
 	else:
 		fileHandle.write( "vista_configure_lib( " + projectName + " )\n" )
-		fileHandle.write( "if( " + str.upper(multiProjectParent) + "_COMMON_BUILD )\n" )		
-		fileHandle.write( "\tvista_install( " + projectName + " " + projectName + " )\n" )		
+		fileHandle.write( "if( " + str.upper(multiProjectParent) + "_COMMON_BUILD )\n" )
+		fileHandle.write( "\tvista_install( " + projectName + " " + projectName + " )\n" )
 		fileHandle.write( "else( " + str.upper(multiProjectParent) + "_COMMON_BUILD )\n" )
 		fileHandle.write( "\tvista_install( " + projectName + " )\n" )
 		fileHandle.write( "endif( " + str.upper(multiProjectParent) + "_COMMON_BUILD )\n" )

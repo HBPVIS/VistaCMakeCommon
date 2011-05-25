@@ -1,4 +1,14 @@
 # $Id$
+# defines list VISTA_PACKAGE_SEARCH_PATHS that contains pathes where packages can be found
+# defines utilitiy macros for finding packages/directories and checking versions
+# vista_check_version_entry( INPUT_VERSION OWN_VERSION DIFFERENCE_VAR )
+# vista_string_to_version( VERSION_STRING VERSION_VARIABLES_PREFIX )
+# vista_compare_versions( INPUT_VERSION_PREFIX OWN_VERSION_PREFIX DIFFERENCE_VAR )
+# vista_find_package_dirs( PACKAGE_NAME EXAMPLE_FILE [NAMES folder1 folder2 ...] )
+# vista_get_version_from_path( PATH NAME_LIST VERSION_VAR )
+# SEE FULL DOCUMENTATION! vista_find_package_root( PACKAGE EXAMPLE_FILE [DONT_ALLOW_UNVERSIONED] [QUIET] [NAMES name1 name2 ...] [ADVANCED] [NO_CACHE] )
+# SEE FULL DOCUMENTATION! vista_find_uncached_library( ...find_library_parameters... )
+
 if( NOT VISTA_FIND_UTILS_INCLUDED )
 set( VISTA_FIND_UTILS_INCLUDED TRUE )
 
@@ -14,9 +24,9 @@ foreach( _PATH $ENV{VRDEV} $ENV{VISTA_EXTERNAL_LIBS} $ENV{VRSOFTWARE}
 	endif( NOT _PATH STREQUAL "/" )
 endforeach( _PATH )
 list( REMOVE_DUPLICATES VISTA_PACKAGE_SEARCH_PATHS )
-						
+
 # vista_check_version_entry( INPUT_VERSION OWN_VERSION DIFFERENCE_VAR )
-# compares the input version against the own version entry, and computes the difference 
+# compares the input version against the own version entry, and computes the difference
 # INPUT_VERSION has to be a number, OWN_VERSION is an extended version number, i.e.
 # x or x+ or x-y (where x and y are numbers). The Output difference is stored in the
 # difference variable, and is
@@ -161,13 +171,13 @@ macro( vista_compare_versions INPUT_VERSION_PREFIX OWN_VERSION_PREFIX DIFFERENCE
 endmacro( vista_compare_versions )
 
 # vista_find_package_dirs( PACKAGE_NAME EXAMPLE_FILE [NAMES folder1 folder2 ...] )
-# parses the standard search directories 
+# parses the standard search directories
 # CMAKE_PREFIX_PATH and CMAKE_SYSTEM_PREFIX_PATH -- to find any root dirs and their version
 # Parameters:
 #      PACKAGE_NAME     - Name of the Package
 #      EXAMPLE_FILE     - File (optionally with prefixing dirs, e.g./include/GL/glut.h)
 #                         that is located in the searched-for root dir
-#      NAMES folder1 folder2 ... - list of alternate names for the folders that should be 
+#      NAMES folder1 folder2 ... - list of alternate names for the folders that should be
 #                         accepted, e.g. glut and freeglut as alternatives
 # Output: The following variables will be set
 #      <PACKAGE_NAME>_CANDIDATE_DIRS        - List of versioned dirs that were found
@@ -280,12 +290,12 @@ macro( vista_find_package_dirs _PACKAGE_NAME _EXAMPLE_FILE )
 
 endmacro( vista_find_package_dirs )
 
-# get_version_from_path( PATH NAME_LIST VERSION_VAR )
+# vista_get_version_from_path( PATH NAME_LIST VERSION_VAR )
 # parses the path string and tries to find a version.
 # For each name in NAME_LIST, a version is accepted as
 # ...<NAME>-VERSION[/..]
 # the found version is stored in VERSION_VAR
-macro( get_version_from_path _PATH _NAME_LIST _VERSION_VAR )
+macro( vista_get_version_from_path _PATH _NAME_LIST _VERSION_VAR )
 	file( TO_CMAKE_PATH ${_PATH} _PATH )
 	set( ${_VERSION_VAR} )
 	# determine version
@@ -296,7 +306,7 @@ macro( get_version_from_path _PATH _NAME_LIST _VERSION_VAR )
 			break()
 		endif( _MATCHED )
 	endforeach( _NAME ${${_NAME_LIST}} )
-endmacro( get_version_from_path )
+endmacro( vista_get_version_from_path )
 
 # vista_find_package_root( PACKAGE EXAMPLE_FILE [DONT_ALLOW_UNVERSIONED] [QUIET] [NAMES name1 name2 ...] [ADVANCED] [NO_CACHE] )
 # finds the package root fr PACKAGE, and stores it in the variable <PACKAGE>_ROOT_DIR
@@ -384,7 +394,7 @@ macro( vista_find_package_root _PACKAGE_NAME _EXAMPLE_FILE )
 						list( GET ${_PACKAGE_NAME_UPPER}_CANDIDATE_DIRS ${_INDEX} _FOUND_DIR )
 						set( _FOUND_VERSION ${_DIR_VERSION} )
 					endif( _VERSION_DIFFERENCE VERSION_LESS _BEST_DIFF )
-				endif( NOT _VERSION_DIFFERENCE EQUAL -1 )				
+				endif( NOT _VERSION_DIFFERENCE EQUAL -1 )
 			endforeach( _INDEX RANGE ${_COUNT} )
 
 			if( NOT _FOUND_DIR )
@@ -480,17 +490,17 @@ macro( vista_find_package_root _PACKAGE_NAME _EXAMPLE_FILE )
 		endforeach( _ARG ${_ARGS} )
 
 		set( ${_PACKAGE_NAME_UPPER}_LAST_CACHED_PATCH ${${_PACKAGE_NAME_UPPER}_ROOT_DIR} CACHE INTERNAL "" FORCE )
-		get_version_from_path( ${${_PACKAGE_NAME_UPPER}_ROOT_DIR} _PACKAGE_FOLDER_NAMES _VERSION )		
+		vista_get_version_from_path( ${${_PACKAGE_NAME_UPPER}_ROOT_DIR} _PACKAGE_FOLDER_NAMES _VERSION )
 		if( _VERSION )
 			if( NOT QUIET )
 				message( STATUS "${_PACKAGE_NAME_UPPER}_ROOT_DIR was overwritten to \"${${_PACKAGE_NAME_UPPER}_ROOT_DIR}\""
 							" - extracted version (${_VERSION}) from directory name" )
 			endif( NOT QUIET )
-			set( ${_PACKAGE_NAME_UPPER}_VERSION_STRING ${_VERSION} CACHE INTERNAL "" )	
+			set( ${_PACKAGE_NAME_UPPER}_VERSION_STRING ${_VERSION} CACHE INTERNAL "" )
 			set( ${_PACKAGE_NAME}_VERSION ${${_PACKAGE_NAME_UPPER}_VERSION_STRING} )
 			vista_string_to_version( "${${_PACKAGE_NAME_UPPER}_VERSION_STRING}" "${_PACKAGE_NAME_UPPER}" )
 		endif( _VERSION )
-	endif( NOT ${_PACKAGE_NAME_UPPER}_ROOT_DIR )	
+	endif( NOT ${_PACKAGE_NAME_UPPER}_ROOT_DIR )
 
 endmacro( vista_find_package_root _PACKAGE_NAME _EXAMPLE_FILE )
 

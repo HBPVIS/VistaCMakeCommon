@@ -13,7 +13,7 @@ if( NOT VVTK_FOUND )
 				"$ENV{${_PACKAGE_NAME_UPPER}_ROOT}/lib/*"
 		)
 	endif( EXISTS "$ENV{${_PACKAGE_NAME_UPPER}_ROOT}" )
-	
+
 	foreach( _PATH $ENV{VRDEV} $ENV{VISTA_EXTERNAL_LIBS}  ${CMAKE_PREFIX_PATH} $ENV{CMAKE_PREFIX_PATH} )
 		file( TO_CMAKE_PATH ${_PATH} _PATH )
 		list( APPEND _SEARCH_PREFIXES
@@ -27,7 +27,7 @@ if( NOT VVTK_FOUND )
 				"${_PATH}/vtk/*/lib/*"
 		)
 	endforeach( _PATH $ENV{VRDEV} $ENV{VISTA_EXTERNAL_LIBS} ${CMAKE_PREFIX_PATH} $ENV{CMAKE_PREFIX_PATH} )
-		
+
 	foreach( _PATH ${_SEARCH_PREFIXES} )
 		file( GLOB _TMP_FILES "${_PATH}/VTKConfig.cmake" )
 		foreach( _FILE ${_TMP_FILES} )
@@ -35,27 +35,27 @@ if( NOT VVTK_FOUND )
 			string( REPLACE "/VTKConfig.cmake" "" _FOUND_PATH ${_FOUND_FILE} )
 			file( TO_CMAKE_PATH ${_FOUND_PATH} _FOUND_PATH )
 			list( APPEND VTK_CONFIG_DIRS ${_FOUND_PATH} )
-		endforeach( _FILE ${_TMP_FILES} )		
+		endforeach( _FILE ${_TMP_FILES} )
 	endforeach( _PATH ${_PREFIX_PATHES} )
 	if( VTK_CONFIG_DIRS )
 		list( REMOVE_DUPLICATES VTK_CONFIG_DIRS )
 	endif( VTK_CONFIG_DIRS )
-	
+
 	find_package( VTK ${VTK_VERSION} QUIET PATHS ${VTK_CONFIG_DIRS} )
-	
+
 	if( VTK_FOUND )
 		# a VTKConfig.cmake has been found and loaded
-	
+
 		# check if debug libraries are available
 		set( _TMP_VTK_DEBUG_LIB "_TMP_VTK_DEBUG_LIB-NOTFOUND" CACHE INTERNAL "" FORCE )
-		find_library( _TMP_VTK_DEBUG_LIB "vtkCommonD" PATH ${VTK_LIBRARY_DIRS} )		
+		find_library( _TMP_VTK_DEBUG_LIB "vtkCommonD" PATH ${VTK_LIBRARY_DIRS} )
 		if( _TMP_VTK_DEBUG_LIB )
 			set( _DEBUG_AVAILABLE TRUE )
 		else( _TMP_VTK_DEBUG_LIB )
 			set( _DEBUG_AVAILABLE TRUE )
 		endif( _TMP_VTK_DEBUG_LIB )
 		set( _TMP_VTK_DEBUG_LIB "_TMP_VTK_DEBUG_LIB-NOTFOUND" CACHE INTERNAL "" FORCE )
-		
+
 		if( _DEBUG_AVAILABLE )
 			set( VTK_LIBRARIES	optimized vtkCommon
 								optimized vtkDICOMParser
@@ -85,7 +85,7 @@ if( NOT VVTK_FOUND )
 								optimized vtkverdict
 								optimized vtkproj4
 								optimized vtkWidgets
-								optimized vtkzlib									
+								optimized vtkzlib
 								debug vtkCommonD
 								debug vtkDICOMParserD
 								debug vtkexoIIcD
@@ -116,7 +116,7 @@ if( NOT VVTK_FOUND )
 								debug vtkWidgetsD
 								debug vtkzlibD
 			)
-			
+
 		elseif( _DEBUG_AVAILABLE ) # no debug libraries available
 			set( VTK_LIBRARIES	vtkCommon
 								vtkDICOMParser
@@ -148,16 +148,16 @@ if( NOT VVTK_FOUND )
 								vtkWidgets
 								vtkzlib
 			)
-			
+
 		endif( _DEBUG_AVAILABLE )
-		
+
 		# VTK's dlls are in the VTK_RUNTIME_LIBRARY_DIRS, so we have to add this to the library dirs
 		# to find them
-		set( VTK_LIBRARY_DIRS ${VTK_LIBRARY_DIRS} ${VTK_RUNTIME_LIBRARY_DIRS} )		
+		set( VTK_LIBRARY_DIRS ${VTK_LIBRARY_DIRS} ${VTK_RUNTIME_LIBRARY_DIRS} )
 		set( VTK_ROOT_DIR ${VTK_INSTALL_PREFIX} )
-		
+
 		# note that there is also a VTK_USE_FILE, which will automatically be called
-		# by vista_use_package		
+		# by vista_use_package
 	endif( VTK_FOUND )
 endif( NOT VVTK_FOUND )
 

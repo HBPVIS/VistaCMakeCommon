@@ -4,7 +4,7 @@ if( "${PACKAGE_FIND_VERSION}" STREQUAL "" AND "${PACKAGE_FIND_VERSION_EXT}" STRE
 	set( PACKAGE_VERSION_EXACT FALSE )
 	set( PACKAGE_VERSION_COMPATIBLE TRUE )
 	set( PACKAGE_VERSION_UNSUITABLE FALSE )
-	
+
 else( NOT EXISTS ${PACKAGE_REFERENCE_DIR} )
 	set( PACKAGE_REFERENCE_OUTDATED FALSE )
 
@@ -33,14 +33,14 @@ else( NOT EXISTS ${PACKAGE_REFERENCE_DIR} )
 			# compatible match
 			set( PACKAGE_VERSION_EXACT FALSE )
 		else()
-		
+
 			#check if it is NUMBER+ - anything equal or bigger to number
 			string( REGEX MATCH "([0-9]+)\\+$" _STRING_IS_MIN ${INPUT_SUBVERSION} )
 			if( _STRING_IS_MIN )
 				if( NOT ( ${OWN_SUBVERSION} EQUAL CMAKE_MATCH_0 ) OR ( ${OWN_SUBVERSION} GREATER CMAKE_MATCH_0 ) )
 					set( PACKAGE_VERSION_EXACT FALSE )
 					set( PACKAGE_VERSION_COMPATIBLE FALSE )
-				endif( NOT ( ${OWN_SUBVERSION} EQUAL CMAKE_MATCH_0 ) OR ( ${OWN_SUBVERSION} GREATER CMAKE_MATCH_0 ) )			
+				endif( NOT ( ${OWN_SUBVERSION} EQUAL CMAKE_MATCH_0 ) OR ( ${OWN_SUBVERSION} GREATER CMAKE_MATCH_0 ) )
 			else( _STRING_IS_MIN )
 
 				#check if it is NUMBER-NUMBER - an explicit range
@@ -89,7 +89,7 @@ else( NOT EXISTS ${PACKAGE_REFERENCE_DIR} )
 	endmacro( _local_extract_part _TARGET _ENTRY _SEPARATOR )
 
 	if( NOT PACKAGE_FIND_VERSION_EXT )
-		set( PACKAGE_VERSION "${@_PACKAGE_NAME_UPPER@_VERSION}" )	
+		set( PACKAGE_VERSION "${@_PACKAGE_NAME_UPPER@_VERSION}" )
 
 		# the cmake native versioning system: just allows an exact match with MAJOR.MINOR.PATCH - just works for releases!
 		if( @_PACKAGE_NAME_UPPER@_VERSION_TYPE STREQUAL "RELEASE" )
@@ -147,9 +147,9 @@ else( NOT EXISTS ${PACKAGE_REFERENCE_DIR} )
 
 			# first, we decompose the input
 			set( _REMAINING_VERSION ${PACKAGE_FIND_VERSION_EXT} )
-			
+
 			_local_extract_part( _IN_TYPE  "[a-zA-Z]+" "_" )
-			
+
 			if( NOT _IN_TYPE STREQUAL "HEAD"
 				AND NOT _IN_TYPE STREQUAL "RELEASE"
 				AND NOT _IN_TYPE STREQUAL "BRANCH"
@@ -160,18 +160,18 @@ else( NOT EXISTS ${PACKAGE_REFERENCE_DIR} )
 				AND NOT _IN_TYPE STREQUAL "RELEASE"
 				AND NOT _IN_TYPE STREQUAL "BRANCH"
 				AND NOT _IN_TYPE STREQUAL "TRUNK" )
-			
+
 			_local_extract_part( _IN_NAME  "[a-zA-Z][^\\\\-]+" "\\\\-" )
 			_local_extract_part( _IN_MAJOR "[0-9\\\\+\\\\-]+" "\\\\." )
 			_local_extract_part( _IN_MINOR "[0-9\\\\+\\\\-]+" "\\\\." )
 			_local_extract_part( _IN_PATCH "[0-9\\\\+\\\\-]+" "\\\\." )
 			_local_extract_part( _IN_TWEAK "[0-9\\\\+\\\\-]+" "$" )
-			
+
 			#we assume match, and only change this if we find non-matches
 			set( PACKAGE_VERSION_EXACT TRUE )
 			set( PACKAGE_VERSION_COMPATIBLE TRUE )
 			set( PACKAGE_VERSION_UNSUITABLE FALSE )
-			
+
 			#if there is just one entry, it's the name
 			if( _IN_TYPE AND NOT _IN_NAME AND NOT _IN_MAJOR )
 				set( _IN_NAME ${_IN_TYPE} )

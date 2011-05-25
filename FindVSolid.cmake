@@ -4,10 +4,10 @@ include( FindPackageHandleStandardArgs )
 include( VistaFindUtils )
 
 if( NOT VSOLID_FOUND )
-	vista_find_package_root( Solid include/SOLID.h )	
+	vista_find_package_root( Solid include/SOLID.h )
 
 	if( SOLID_ROOT_DIR )
-		
+
 		set( SOLID_INCLUDE_DIRS ${SOLID_ROOT_DIR}/include )
 		set( SOLID_LIBRARY_DIRS ${SOLID_ROOT_DIR}/lib )
 
@@ -26,10 +26,10 @@ if( NOT VSOLID_FOUND )
 			)
 		else()
 			set( SOLID_LIBRARIES solid )
-		endif( WIN32 )	
-		
-	endif( SOLID_ROOT_DIR )	
+		endif( WIN32 )
+
+	endif( SOLID_ROOT_DIR )
 
 endif( NOT VSOLID_FOUND )
 
-find_package_handle_standard_args( VSolid "Solid could not be found" SOLID_ROOT_DIR )  
+find_package_handle_standard_args( VSolid "Solid could not be found" SOLID_ROOT_DIR )

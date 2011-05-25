@@ -20,7 +20,7 @@ if( NOT VOPENAL_FOUND )
 			set( OPENAL_ROOT_DIR ${OPENAL_ROOT_DIR} )
 		endif( OPENAL_LIBRARIES )
 	endif( OPENAL_ROOT_DIR )
-		
+
 	if( NOT OPENAL_ROOT_DIR )
 		# try using a general FindOpenAL.cmake
 		find_package( OpenAL )
@@ -31,10 +31,7 @@ if( NOT VOPENAL_FOUND )
 			get_filename_component( _DIR ${OPENAL_INCLUDE_DIRS} PATH  )
 			set( OPENAL_ROOT_DIR ${_DIR} CACHE PATH "OpenAL package rot dir" )
 		endif( OPENAL_FOUND )
-	endif( NOT OPENAL_ROOT_DIR )	
+	endif( NOT OPENAL_ROOT_DIR )
 endif( NOT VOPENAL_FOUND )
 
 find_package_handle_standard_args( VOpenAL "OPENAL could not be found" OPENAL_ROOT_DIR OPENAL_LIBRARIES )
-
-
-

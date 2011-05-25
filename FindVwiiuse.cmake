@@ -10,8 +10,8 @@ if( NOT VWIIUSE_FOUND )
 		set( WIIUSE_INCLUDE_DIRS ${WIIUSE_ROOT_DIR}/include )
 		set( WIIUSE_LIBRARY_DIRS ${WIIUSE_ROOT_DIR}/lib )
 		set( WIIUSE_LIBRARIES wiiuse )
-	endif( WIIUSE_ROOT_DIR )	
-	
+	endif( WIIUSE_ROOT_DIR )
+
 endif( NOT VWIIUSE_FOUND )
 
 find_package_handle_standard_args( Vwiiuse "wiiuse could not be found" WIIUSE_ROOT_DIR )

@@ -4,7 +4,7 @@
 # throws a warning when the current architecture is not supported
 # set variables:
 #    VISTA_HWARCH    - variable describing Hardware architecture, e.g. win32.vc9 or LINUX.X86
-#    VISTA_COMPATIBLE_HWARCH - architectures that are compatible to the current HWARCH, 
+#    VISTA_COMPATIBLE_HWARCH - architectures that are compatible to the current HWARCH,
 #                        e.g. for win32.vc9 this will be "win32.vc9 win32"
 #    VISTA_64BIT     - set to true if the code is compiled for 64bit execution
 #    VISTA_PLATFORM_DEFINE - compiler definition for the platform ( -DWIN32 or -DLINUX or -DDARWIN )
@@ -18,15 +18,15 @@ if( NOT VISTA_HWARCH )
 
 	if( WIN32 )
 		set( VISTA_PLATFORM_DEFINE -DWIN32 )
-	
+
 		if( VISTA_64BIT )
 			set( VISTA_HWARCH "win32-x64" )
 		else( VISTA_64BIT )
 			set( VISTA_HWARCH "win32" )
 		endif( VISTA_64BIT )
-		
+
 		set( VISTA_COMPATIBLE_HWARCH ${VISTA_HWARCH} )
-		
+
 		if( MSVC )
 			if( MSVC80 )
 				set( VISTA_HWARCH "${VISTA_HWARCH}.vc8" )
@@ -41,13 +41,13 @@ if( NOT VISTA_HWARCH )
 		else( MSVC )
 			message( WARNING "VistaCommon - using WIN32 without Visual Studio - this will probably fail - use at your own risk!" )
 		endif( MSVC )
-		
+
 		set( VISTA_COMPATIBLE_HWARCH ${VISTA_HWARCH} ${VISTA_COMPATIBLE_HWARCH} )
-		
+
 	elseif( APPLE )
 		set( VISTA_PLATFORM_DEFINE -DDARWIN )
 		set( VISTA_HWARCH "DARWIN" )
-		set( VISTA_COMPATIBLE_HWARCH "DARWIN" )		
+		set( VISTA_COMPATIBLE_HWARCH "DARWIN" )
 	elseif( UNIX )
 		set( VISTA_PLATFORM_DEFINE -DLINUX )
 		if( VISTA_64BIT )

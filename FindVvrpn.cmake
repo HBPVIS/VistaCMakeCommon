@@ -14,11 +14,8 @@ if( NOT VVRPN_FOUND )
 		else( WIN32 )
 			set( VRPN_LIBRARIES vrpn  )
 		endif( WIN32 )
-	endif( VRPN_ROOT_DIR )	
-	
+	endif( VRPN_ROOT_DIR )
+
 endif( NOT VVRPN_FOUND )
 
 find_package_handle_standard_args( Vvrpn "vrpn could not be found" VRPN_ROOT_DIR )
-
-
-

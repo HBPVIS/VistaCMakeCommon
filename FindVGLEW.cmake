@@ -10,16 +10,16 @@ if( NOT VGLEW_FOUND )
 	if( GLEW_ROOT_DIR AND GLEW_LIBRARIES )
 		find_library( GLEW_LIBRARIES NAMES glew glew32 glew64 GLEW
 					PATHS ${GLEW_ROOT_DIR}/lib
-					CACHE "GLEW library" )	
+					CACHE "GLEW library" )
 		mark_as_advanced( GLEW_LIBRARIES )
-		
+
 		set( GLEW_INCLUDE_DIRS ${GLEW_ROOT_DIR}/include )
 		set( GLEW_LIBRARY_DIRS ${GLEW_ROOT_DIR}/lib )
 		get_filename_component( GLEW_LIBRARY_DIRS ${GLEW_LIBRARIES} PATH )
 
-	endif( GLEW_ROOT_DIR AND GLEW_LIBRARIES )	
+	endif( GLEW_ROOT_DIR AND GLEW_LIBRARIES )
 
 endif( NOT VGLEW_FOUND )
 
-find_package_handle_standard_args( VGLEW "GLEW could not be found" GLEW_ROOT_DIR ) 
+find_package_handle_standard_args( VGLEW "GLEW could not be found" GLEW_ROOT_DIR )
 

@@ -1,5 +1,5 @@
 # Values in the form @VAR@ are prototype variables
-# They will be replaced by CMake 
+# They will be replaced by CMake
 
 # Add library name variables
 set( @_PACKAGE_NAME_UPPER@_ROOT_DIR "@_PACKAGE_ROOT_DIR@" )
@@ -11,5 +11,5 @@ set( @_PACKAGE_NAME_UPPER@_LIBRARIES
 		optimized @_LIBRARY_NAME@
 		debug @_LIBRARY_NAME@@CMAKE_DEBUG_POSTFIX@ )
 set( @_PACKAGE_NAME_UPPER@_DEPENDENCIES @VISTA_TARGET_DEPENDENCIES@ )
-	
+
 set( @_PACKAGE_NAME_UPPER@_FOUND TRUE )

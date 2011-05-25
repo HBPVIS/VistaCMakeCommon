@@ -3,20 +3,30 @@
 # This file contains common settings and macros for setting up Vista projects
 
 # PACKAGE MACROS:
-# vista_use_package( PACKAGE [VERSION] [EXACT] [[COMPONENTS | REQUIRED] comp1 comp2 ... ] [QUIET] [FIND_DEPENDENCIES] )
-# vista_configure_app( PACKAGE_NAME )
-# vista_configure_lib( PACKAGE_NAME )
-# vista_install( TARGET [INCLUDE_SUBDIRECTORY [LIBRARY_SUBDIRECTORY] ] )
+# vista_find_package( <package> [version] [EXACT] [QUIET] [[REQUIRED|COMPONENTS] [components...]] [NO_POLICY_SCOPE] [NO_MODULE] )
+# vista_use_package( <package> [version] [EXACT] [QUIET] [[REQUIRED|COMPONENTS] [components...]] [NO_POLICY_SCOPE] [NO_MODULE] [FIND_DEPENDENCIES] )
+# vista_configure_app( PACKAGE_NAME [OUT_NAME] )
+# vista_configure_lib( PACKAGE_NAME [OUT_NAME] )
+# vista_install( TARGET [INCLUDE/BIN_SUBDIRECTORY [LIBRARY_SUBDIRECTORY] ] [NO_POSTFIX] )
 # vista_install_files_by_extension( SEARCH_ROOT INSTALL_SUBDIR EXTENSION1 [EXTENSION2 ...] )
-# vista_create_cmake_configs( TARGET [CUSTOM_CONFIG_FILE] )
-# vista_set_outdir( TARGET DIRECTORY )
+# vista_create_cmake_config_build( PACKAGE_NAME CONFIG_PROTO_FILE TARGET_DIR )
+# vista_create_cmake_config_install( PACKAGE_NAME CONFIG_PROTO_FILE TARGET_DIR )
+# vista_create_version_config( PACKAGE_NAME VERSION_PROTO_FILE )
+# vista_create_cmake_configs( TARGET [CUSTOM_CONFIG_FILE_BUILD [CUSTOM_CONFIG_FILE_INSTALL] ] )
+# vista_set_outdir( TARGET DIRECTORY [USE_CONFIG_SUBDIRS])
 # vista_set_version( PACKAGE TYPE NAME [ MAJOR [ MINOR [ PATCH [ TWEAK ]]]] )
 # vista_adopt_version( PACKAGE ADOPT_PARENT )
+# vista_create_info_file( PACKAGE_NAME TARGET_DIR INSTALL_DIR )
+# vista_delete_info_file( PACKAGE_NAME TARGET_DIR )
+# vista_create_default_info_file( PACKAGE_NAME )
+# vista_create_doxygen_target( DOXYFILE )
+# vista_create_uninstall_target( [ON|OFF] )
 
 # UTILITY MACROS:
 # vista_set_defaultvalue( <cmake set syntax> )
+# vista_add_files_to_sources( TARGET_LIST ROOT_DIR [SOURCE_GROUP group_name] EXTENSION1 [EXTENSION2 ...] )
 # vista_conditional_add_subdirectory( VARIABLE_NAME DIRECTORY [ON|OFF] [ADVANCED [MSG string] )
-# vista_get_svn_revision( REVISION_VARIABLE REPOS_VARIABLE DATE_VARIABLE )
+# vista_get_svn_info( REVISION_VARIABLE REPOS_VARIABLE DATE_VARIABLE [DIRECTORY] )
 # vista_get_svn_revision( TARGET_VARIABLE )
 # replace_svn_revision_tag( STRING )
 
@@ -24,7 +34,7 @@
 # adds info variables
 #	FIRST_CONFIGURATION_RUN - true if this is the first configuration run
 #   VISTA_HWARCH    - variable describing Hardware architecture, e.g. win32.vc9 or LINUX.X86
-#   VISTA_COMPATIBLE_HWARCH - architectures that are compatible to the current HWARCH, 
+#   VISTA_COMPATIBLE_HWARCH - architectures that are compatible to the current HWARCH,
 #                        e.g. for win32.vc9 this will be "win32.vc9 win32"
 #   VISTA_64BIT     - set to true if the code is compiled for 64bit execution
 #   VISTA_PLATFORM_DEFINE - compiler definition for the platform ( -DWIN32 or -DLINUX or -DDARWIN )
@@ -151,13 +161,13 @@ macro( vista_get_svn_info _REVISION_VAR _REPOS_VAR _DATE_VAR )
 	set( ${_REVISION_VAR} )
 	set( ${_REPOS_VAR} )
 	set( ${_DATE_VAR} )
-	
+
 	if( ${ARGC} GREATER 3 )
 		set( _DIRECTORY ${ARGV3} )
 	else( ${ARGC} GREATER 3 )
 		set( _DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} )
 	endif( ${ARGC} GREATER 3 )
-	
+
 	if( EXISTS "${_DIRECTORY}/.svn/entries" )
 
 		find_package( Subversion QUIET )
@@ -171,7 +181,7 @@ macro( vista_get_svn_info _REVISION_VAR _REPOS_VAR _DATE_VAR )
 			endif( _TMP_SVN_WC_URL )
 		else( SUBVERSION_FOUND )
 			# check manually - and hope the syntax doesnt change ;)
-			
+
 			file( STRINGS "${_DIRECTORY}/.svn/entries" _FILE_ENTRIES LIMIT_COUNT 15 )
 			list( REMOVE_AT _FILE_ENTRIES 0 ) # remove first entry - the number
 
@@ -193,9 +203,9 @@ macro( vista_get_svn_info _REVISION_VAR _REPOS_VAR _DATE_VAR )
 					endif( _MATCHED )
 				endif( NOT DEFINED ${_REVISION_VAR} )
 			 endforeach( _STRING ${_FILE_ENTRIES} )
-			
+
 		endif( SUBVERSION_FOUND )
-	
+
 	endif( EXISTS "${_DIRECTORY}/.svn/entries" )
 
 endmacro( vista_get_svn_info )
@@ -255,7 +265,7 @@ endfunction( local_use_existing_config_libs )
 ###   Package macros    ###
 ###########################
 
-# vista_find_package( <package> [version] [EXACT] [QUIET] [[REQUIRED|COMPONENTS] [components...]] [NO_POLICY_SCOPE] [NO_MODULE] ) 
+# vista_find_package( <package> [version] [EXACT] [QUIET] [[REQUIRED|COMPONENTS] [components...]] [NO_POLICY_SCOPE] [NO_MODULE] )
 # wrapper for the cmake-native find_package with the same (basic) syntax and the following extensions:
 # - allows extended versions (e.g. NAME, 1.2.4-8, etc.)
 # - checks if a vista-specific FindV<package>.cmake file exists, and prefers this
@@ -309,12 +319,12 @@ macro( vista_find_package _PACKAGE_NAME )
 			message( WARNING "vista_find_package( ${_PACKAGE_NAME} ) - Unknown argument [${_ARG}]" )
 		endif( ${_ARG} STREQUAL "FIND_DEPENDENCIES" )
 	endforeach( _ARG ${ARGV} )
-	
+
 	set( _DO_FIND TRUE )
 
 	if( ${_PACKAGE_NAME_UPPER}_FOUND )
 		set( _DO_FIND FALSE )
-		
+
 		set( _PREVIOUSLY_FOUND_VERSION )
 		if( ${_PACKAGE_NAME_UPPER}_VERSION )
 			set( _PREVIOUSLY_FOUND_VERSION ${${_PACKAGE_NAME_UPPER}_VERSION} )
@@ -326,9 +336,9 @@ macro( vista_find_package _PACKAGE_NAME )
 			set( _PREVIOUSLY_FOUND_VERSION ${${_PACKAGE_NAME}_VERSION_STRING} )
 		elseif( ${_PACKAGE_NAME_UPPER}_VERSION_STRING )
 			set( _PREVIOUSLY_FOUND_VERSION ${${_PACKAGE_NAME_UPPER}_VERSION_STRING} )
-		endif( ${_PACKAGE_NAME_UPPER}_VERSION ) 
-		
-		if( _PREVIOUSLY_FOUND_VERSION AND _PACKAGE_VERSION )			
+		endif( ${_PACKAGE_NAME_UPPER}_VERSION )
+
+		if( _PREVIOUSLY_FOUND_VERSION AND _PACKAGE_VERSION )
 			# we have to check that we don't include different versions!
 			vista_string_to_version( ${_PREVIOUSLY_FOUND_VERSION} "PREVIOUS" )
 			vista_string_to_version( ${_PACKAGE_VERSION} "REQUESTED" )
@@ -348,7 +358,7 @@ macro( vista_find_package _PACKAGE_NAME )
 			set( _PACKAGE_VERSION ${_PREVIOUSLY_FOUND_VERSION} )
 		endif( _PREVIOUSLY_FOUND_VERSION AND _PACKAGE_VERSION )
 
-		if( _USING_COMPONENTS )	
+		if( _USING_COMPONENTS )
 			# we need to check if the components are already included or not
 			# NOTE: this relies on the Find<Package> or <Package>Config file to
 			# correctly set the PACKAGENAME_FOUND_COMPONENTS variable - otherwise, a rerun
@@ -367,7 +377,7 @@ macro( vista_find_package _PACKAGE_NAME )
 		endif( _USING_COMPONENTS )
 
 	endif( ${_PACKAGE_NAME_UPPER}_FOUND )
-		
+
 	if( _DO_FIND )
 		# this is somewhat of an intransparent hack: if _MESSAGE_IF_DO_FIND is set, we print a message
 		# with it and reset the value. This is to allow vista_use_package to print additional info
@@ -376,7 +386,7 @@ macro( vista_find_package _PACKAGE_NAME )
 			message( STATUS "${_MESSAGE_IF_DO_FIND}" )
 			set( _MESSAGE_IF_DO_FIND )
 		endif( _MESSAGE_IF_DO_FIND )
-	
+
 		if( _PACKAGE_VERSION )
 			# check if it is a "normal" or an extended version
 			string( REGEX MATCH "^[0-9\\.]*$" _MATCH ${_PACKAGE_VERSION} )
@@ -432,7 +442,7 @@ macro( vista_find_package _PACKAGE_NAME )
 
 				foreach( _PATH ${_SEARCH_PREFIXES} )
 					file( GLOB _TMP_PATHES "${_PATH}" )
-					list( APPEND ${PACKAGE_NAME_UPPER}_ADDITIONAL_CONFIG_DIRS ${_TMP_PATHES} )				
+					list( APPEND ${PACKAGE_NAME_UPPER}_ADDITIONAL_CONFIG_DIRS ${_TMP_PATHES} )
 				endforeach( _PATH ${_PREFIX_PATHES} )
 				if( ${PACKAGE_NAME_UPPER}_ADDITIONAL_CONFIG_DIRS )
 					list( REMOVE_DUPLICATES ${PACKAGE_NAME_UPPER}_ADDITIONAL_CONFIG_DIRS )
@@ -442,9 +452,9 @@ macro( vista_find_package _PACKAGE_NAME )
 			find_package( ${_PACKAGE_NAME} ${_PACKAGE_VERSION} ${_FIND_PACKAGE_ARGS}
 							PATHS ${${PACKAGE_NAME_UPPER}_ADDITIONAL_CONFIG_DIRS} ${VISTA_PACKAGE_SEARCH_PATHS} )
 		endif( _FIND_VMODULE_EXISTS )
-		
+
 	endif( _DO_FIND )
-	
+
 endmacro( vista_find_package )
 
 
@@ -483,7 +493,7 @@ macro( vista_use_package _PACKAGE_NAME )
 				set( _COMPONENTS_FOUND TRUE )
 			endif( ${_ARG} STREQUAL "FIND_DEPENDENCIES" )
 		endforeach( _ARG ${ARGV} )
-		
+
 		# todo: check against components
 		if( NOT _COMPONENTS_FOUND )
 			set( _REQUIRES_RERUN FALSE )
@@ -492,7 +502,7 @@ macro( vista_use_package _PACKAGE_NAME )
 
 	endif( VISTA_USE_${_PACKAGE_NAME_UPPER} )
 
-	if( _REQUIRES_RERUN )		
+	if( _REQUIRES_RERUN )
 		# package has not yet been used
 
 		# we firstextract some parameters, then try to find the package
@@ -862,7 +872,7 @@ endmacro( vista_install_files_by_extension )
 # configures the specified <package>Config.cmake prototype file, and copies it to the
 # target directory.
 # Has to be called after vista_configure_lib to work properly
-# If the cache variable VISTA_COPY_BUILD_CONFIGS_REFS_TO_CMAKECOMMON is ON -- and 
+# If the cache variable VISTA_COPY_BUILD_CONFIGS_REFS_TO_CMAKECOMMON is ON -- and
 # VISTA_CMAKE_COMMON env var is set -- a reference to this config is installed
 # to VISTA_CMAKE_COMMON/share/. Additionally, previously installed older versions are removed.
 # Furthermore, if a ConfigCMake of the same package and version already exists, it is parsed and
@@ -991,7 +1001,7 @@ endmacro( vista_create_cmake_config_build )
 # configures the specified <package>Config.cmake prototype file, stores it in a temporary
 # directory, and adds it to the files to install
 # Has to be called after vista_configure_lib and vista_install to work properly
-# If the cache variable VISTA_COPY_BUILD_CONFIGS_REFS_TO_CMAKECOMMON is ON -- and 
+# If the cache variable VISTA_COPY_BUILD_CONFIGS_REFS_TO_CMAKECOMMON is ON -- and
 # VISTA_CMAKE_COMMON env var is set -- a reference to this config is installed
 # to VISTA_CMAKE_COMMON/share/.
 # The following variables are set internally to help configuring the configfile
@@ -1109,7 +1119,7 @@ endmacro( vista_create_cmake_config_install )
 # at least one of vista_create_cmake_config_build or vista_create_cmake_config_install
 # has to be performed
 # the version files are placed at the same location as the created config files
-# If the cache variable VISTA_COPY_BUILD_CONFIGS_REFS_TO_CMAKECOMMON is ON -- and 
+# If the cache variable VISTA_COPY_BUILD_CONFIGS_REFS_TO_CMAKECOMMON is ON -- and
 # VISTA_CMAKE_COMMON env var is set -- references are created too
 macro( vista_create_version_config _PACKAGE_NAME _VERSION_PROTO_FILE )
 	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
@@ -1432,13 +1442,13 @@ macro( vista_create_info_file _PACKAGE_NAME _TARGET_DIR _INSTALL_DIR )
 			set( INFO_STRING "${INFO_STRING}\n    Use File:            ${${_DEP_UPPER}_HWARCH}" )
 		endif( DEFINED ${_DEP_UPPER}_HWARCH )
 	endforeach( _DEP ${VISTA_TARGET_FULL_DEPENDENCIES} )
-	
+
 	set( INFO_STRING "${INFO_STRING}\n\nConfigured with VistaCMakeCommon" )
 	if( NOT VISTACOMMON_FILE_LOCATION )
 		set( INFO_STRING "${INFO_STRING}\n\t<unknown VistaCMakeCommon location/version>" )
 	else( NOT VISTACOMMON_FILE_LOCATION )
 		set( INFO_STRING "${INFO_STRING}\n\tLocation:             ${VISTACOMMON_FILE_LOCATION}" )
-		get_filename_component( _CMAKECOMMON_DIR "${VISTACOMMON_FILE_LOCATION}" PATH ) 
+		get_filename_component( _CMAKECOMMON_DIR "${VISTACOMMON_FILE_LOCATION}" PATH )
 		vista_get_svn_Info( _SVN_REV _SVN_REPOS _SVN_DATE "${_CMAKECOMMON_DIR}" )
 		if( _SVN_REV )
 			set( INFO_STRING "${INFO_STRING}\n\tSVN revision:            ${_SVN_REV}" )
@@ -1598,8 +1608,8 @@ macro( vista_create_uninstall_target )
 				add_custom_target( uninstall "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake" )
 				set_target_properties( uninstall PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD TRUE )
 			endif( WIN32 )
-					
-		endif( NOT VISTA_CMAKE_UNINSTALL_PROTO_FILE )	
+
+		endif( NOT VISTA_CMAKE_UNINSTALL_PROTO_FILE )
 	endif( VISTA_ALLOW_UNINSTALL )
 endmacro( vista_create_uninstall_target )
 
@@ -1613,7 +1623,7 @@ endmacro( vista_create_uninstall_target )
 # if VISTA_CMAKE_COMMON envvar is set, we buffer it and add it to CMAKE_MODULE_PATH and CMAKE_PREFIX_PATH
 if( EXISTS "$ENV{VISTA_CMAKE_COMMON}" )
 	file( TO_CMAKE_PATH $ENV{VISTA_CMAKE_COMMON} VISTA_CMAKE_COMMON )
-	
+
 	list( APPEND CMAKE_MODULE_PATH "${VISTA_CMAKE_COMMON}" "${VISTA_CMAKE_COMMON}/share" )
 	list( APPEND CMAKE_PREFIX_PATH "${VISTA_CMAKE_COMMON}" "${VISTA_CMAKE_COMMON}/share" )
 	list( REMOVE_DUPLICATES CMAKE_MODULE_PATH )
