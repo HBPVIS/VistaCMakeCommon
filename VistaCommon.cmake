@@ -104,7 +104,7 @@ endmacro( vista_add_files_to_sources )
 
 # vista_conditional_add_subdirectory( VARIABLE_NAME DIRECTORY [ON|OFF] [ADVANCED [MSG string] )
 # creates a cache bool variable with the specified name and cache message, initialized to the desired
-# valeu (defaults to ON ). ADVANCED marks the cache variable as advenced. Nothing is done if the specified
+# value (defaults to ON ). ADVANCED marks the cache variable as advanced. Nothing is done if the specified
 # directory does not exist
 macro( vista_conditional_add_subdirectory )
 	if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ARGV1}" )
@@ -180,7 +180,7 @@ macro( vista_get_svn_info _REVISION_VAR _REPOS_VAR _DATE_VAR )
 				set( ${_DATE_VAR} ${_TMP_SVN_WC_LAST_CHANGED_DATE} )
 			endif( _TMP_SVN_WC_URL )
 		else( SUBVERSION_FOUND )
-			# check manually - and hope the syntax doesnt change ;)
+			# check manually - and hope the syntax does not change ;)
 
 			file( STRINGS "${_DIRECTORY}/.svn/entries" _FILE_ENTRIES LIMIT_COUNT 15 )
 			list( REMOVE_AT _FILE_ENTRIES 0 ) # remove first entry - the number
