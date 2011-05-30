@@ -7,6 +7,7 @@ backupExtension = ".BAK"
 excludeDirs = [ "cvs", ".svn", "build", "built", "cmake" ]
 sourceExtensions = [ ".c", ".cpp", ".h" ]
 addSourceFilesListToSources = True
+defaultCoreLibsVersion = "TOWEL"
 
 findCommented = re.compile( r'\s*#\s*.*' )
 findSetListRegEx = re.compile( r'set\(\s*(\S+)\s*\Z' )
@@ -65,7 +66,6 @@ def GenSourceListForSubdir( dirName, parentDir, renew, relDir = "", relSourceGro
 
 	# we dont want to parse the cmake directories
 	testCacheFile = os.path.join( fullDirName, "CMakeCache.txt" )
-	print( testCacheFile )
 	if( os.path.exists( testCacheFile ) ):
 		return
 
@@ -85,8 +85,6 @@ def GenSourceListForSubdir( dirName, parentDir, renew, relDir = "", relSourceGro
 		relDir = "."
 
 	sourceFiles, subDirs = GetSourceFilesAndDirs( fullDirName )
-	if( addSourceFilesListToSources ):
-		sourceFiles.append( localSourceFileName )
 
 	# recursively generate sourcefiles for subdirs
 	for dir in subDirs:
@@ -95,6 +93,9 @@ def GenSourceListForSubdir( dirName, parentDir, renew, relDir = "", relSourceGro
 
 	if( len( sourceSubDirs ) == 0 and len( sourceFiles ) == 0 ):
 		return False # no source directory
+		
+	if( addSourceFilesListToSources ):
+		sourceFiles.append( localSourceFileName )
 
 
 	fileName = os.path.join( fullDirName, "_SourceFiles.cmake" )
@@ -490,7 +491,7 @@ if len( sys.argv ) >= 2 and sys.argv[1] != "-h" and sys.argv[1] != "--help" :
 				argcount = argcount + 1
 				linkVistaCoreLibs = sys.argv[argcount]
 			else:
-				linkVistaCoreLibs = "SETI"
+				linkVistaCoreLibs = defaultCoreLibsVersion
 		elif( arg == "-name" ):
 			argcount = argcount + 1
 			projectName = sys.argv[argcount]
@@ -527,7 +528,7 @@ if len( sys.argv ) >= 2 and sys.argv[1] != "-h" and sys.argv[1] != "--help" :
 		GenCMakeForLib( startDir, projectName, renew, version, linkVistaCoreLibs )
 else:
 	print( "Usage:" )
-	print( "GenCakeList MainDir [Options]" )
+	print( "GenerateCMakeProjectFiles.py MainDir [Options]" )
 	print( "Options" )
 	print( "  -app                     : the project will be configured as an application" )
 	print( "  -lib                     : the project will be configured as a library " )
@@ -535,7 +536,9 @@ else:
 	print( "  -name                    : specify name of the project. if omitted, the directory name will be used instead" )
 	print( "  -multiproj               : if set, the specified directory will be seen as a base for several sub-projects in individual" )
 	print( "                           : subfolders, which will be configured as individual projects of the specified type" )
-	print( "                           : if a name is specified, it is used for the compound project - sub-projects get their di's name" )
+	print( "                           : if a name is specified, it is used for the compound project - sub-projects get their dir's name" )
 	print( "  -renew                   : if set, no file will be updated, but instead all files are created completely new" )
-	print( "  -linkcorelibs [version]  : the project will be configured to link the VistaCoreLibs (takes optional version, defaults to latest release)" )
+	print( "  -linkcorelibs [version]  : the project will be configured to link the VistaCoreLibs (takes optional version, defaults to latest release \" , defaultCoreLibsVersion, \")" )
+	print( "  -version [...]           : Sets the version of the projects to the specified version, which has to be")
+	print( "                             TYPE NAME [MAJOR [MINOR [REVISION [PATCH]]]]")
 

@@ -7,7 +7,7 @@ if( NOT VGLEW_FOUND )
 
 	vista_find_package_root( GLEW include/GL/glew.h )
 
-	if( GLEW_ROOT_DIR AND GLEW_LIBRARIES )
+	if( GLEW_ROOT_DIR )
 		find_library( GLEW_LIBRARIES NAMES glew glew32 glew64 GLEW
 					PATHS ${GLEW_ROOT_DIR}/lib
 					CACHE "GLEW library" )
@@ -17,7 +17,7 @@ if( NOT VGLEW_FOUND )
 		set( GLEW_LIBRARY_DIRS ${GLEW_ROOT_DIR}/lib )
 		get_filename_component( GLEW_LIBRARY_DIRS ${GLEW_LIBRARIES} PATH )
 
-	endif( GLEW_ROOT_DIR AND GLEW_LIBRARIES )
+	endif( GLEW_ROOT_DIR )
 
 endif( NOT VGLEW_FOUND )
 
