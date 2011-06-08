@@ -41,7 +41,7 @@ if( NOT VVTK_FOUND )
 		list( REMOVE_DUPLICATES VTK_CONFIG_DIRS )
 	endif( VTK_CONFIG_DIRS )
 
-	find_package( VTK ${VTK_VERSION} QUIET PATHS ${VTK_CONFIG_DIRS} )
+	find_package( VTK ${VVTK_FIND_VERSION} QUIET PATHS ${VTK_DIR} ${VTK_CONFIG_DIRS} )
 
 	if( VTK_FOUND )
 		# a VTKConfig.cmake has been found and loaded
@@ -161,5 +161,5 @@ if( NOT VVTK_FOUND )
 	endif( VTK_FOUND )
 endif( NOT VVTK_FOUND )
 
-find_package_handle_standard_args( VVtk "Vtk could not be found" VTK_ROOT_DIR )
+find_package_handle_standard_args( VVTK "VTK could not be found" VTK_ROOT_DIR )
 set( VTK_FOUND ${VVTK_FOUND} )
