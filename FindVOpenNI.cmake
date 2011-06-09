@@ -7,7 +7,7 @@ if( NOT VOPENNI_FOUND )
 	vista_find_package_root( openni include/XnOpenNI.h )
 
 	if( OPENNI_ROOT_DIR )
-		set( OPENNI_INCLUDE_DIRS ${OPENNI_ROOT_DIR}/include/ni )
+		set( OPENNI_INCLUDE_DIRS ${OPENNI_ROOT_DIR}/include )
 		set( OPENNI_LIBRARY_DIRS ${OPENNI_ROOT_DIR}/lib )
 		set( OPENNI_LIBRARIES OpenNI )
 	endif( OPENNI_ROOT_DIR )

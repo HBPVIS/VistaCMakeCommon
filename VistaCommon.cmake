@@ -173,12 +173,40 @@ macro( vista_get_svn_info _REVISION_VAR _REPOS_VAR _DATE_VAR )
 		find_package( Subversion QUIET )
 		if( SUBVERSION_FOUND )
 			set( _TMP_SVN_WC_URL )
-			Subversion_WC_INFO( ${_DIRECTORY} _TMP_SVN )
-			if( _TMP_SVN_WC_URL )
-				set( ${_REVISION_VAR} ${_TMP_SVN_WC_REVISION} )
-				set( ${_REPOS_VAR} ${_TMP_SVN_WC_URL} )
-				set( ${_DATE_VAR} ${_TMP_SVN_WC_LAST_CHANGED_DATE} )
-			endif( _TMP_SVN_WC_URL )
+			
+			# this is an adoption of the official svn macro, to avoid the SEND_ERROR stuff
+			
+			# the subversion commands should be executed with the C locale, otherwise
+			# the message (which are parsed) may be translated, Alex
+			set( _Subversion_SAVED_LC_ALL "$ENV{LC_ALL}" )
+			SET( ENV{LC_ALL} C )
+
+			execute_process( COMMAND ${Subversion_SVN_EXECUTABLE} info ${_DIRECTORY}
+								OUTPUT_VARIABLE _SVN_WC_INFO
+								ERROR_VARIABLE Subversion_svn_info_error
+								RESULT_VARIABLE Subversion_svn_info_result
+								OUTPUT_STRIP_TRAILING_WHITESPACE )
+
+			if( NOT ${Subversion_svn_info_result} EQUAL 0 )
+				message( "vista_get_svn_info(): svn info call failed woth error \"${Subversion_svn_info_error}\"" )
+			else( NOT ${Subversion_svn_info_result} EQUAL 0 )
+				string( REGEX REPLACE "^(.*\n)?URL: ([^\n]+).*"
+						"\\2" ${_REPOS_VAR} "${_SVN_WC_INFO")
+				string( REGEX REPLACE "^(.*\n)?Repository Root: ([^\n]+).*"
+						"\\2" _VOID_OUTPUT "${_SVN_WC_INFO")
+				string( REGEX REPLACE "^(.*\n)?Revision: ([^\n]+).*"
+						"\\2" ${_REVISION_VAR} "${_SVN_WC_INFO")
+				string( REGEX REPLACE "^(.*\n)?Last Changed Author: ([^\n]+).*"
+						"\\2" _VOID_OUTPUT "${_SVN_WC_INFO")
+				string( REGEX REPLACE "^(.*\n)?Last Changed Rev: ([^\n]+).*"
+						"\\2" _VOID_OUTPUT "${_SVN_WC_INFO")
+				string( REGEX REPLACE "^(.*\n)?Last Changed Date: ([^\n]+).*"
+						"\\2" ${_DATE_VAR} "${_SVN_WC_INFO")
+			endif( NOT ${Subversion_svn_info_result} EQUAL 0 )
+
+			# restore the previous LC_ALL
+			set( ENV{LC_ALL} ${_Subversion_SAVED_LC_ALL} )
+			
 		else( SUBVERSION_FOUND )
 			# check manually - and hope the syntax does not change ;)
 
@@ -822,6 +850,13 @@ macro( vista_install _PACKAGE_NAME )
 		install( TARGETS ${_PACKAGE_NAME}
 			RUNTIME DESTINATION ${${_PACKAGE_NAME_UPPER}_BIN_INSTALLDIR}
 		)
+		if( WIN32 )
+			install( FILES "${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR}/set_path_for_${_PACKAGE_NAME}.bat"
+						DESTINATION ${${_PACKAGE_NAME_UPPER}_BIN_INSTALLDIR} )
+		else( WIN32 )
+			install( FILES "${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR}/set_path_for_${_PACKAGE_NAME}.sh"
+						DESTINATION ${${_PACKAGE_NAME_UPPER}_BIN_INSTALLDIR} )
+		endif( WIN32 )
 	else( ${_PACKAGE_NAME_UPPER}_TARGET_TYPE STREQUAL "APP" )
 		install( TARGETS ${_PACKAGE_NAME}
 			LIBRARY DESTINATION ${${_PACKAGE_NAME_UPPER}_LIB_INSTALLDIR}
@@ -854,23 +889,29 @@ macro( vista_install _PACKAGE_NAME )
 	endif( ${_PACKAGE_NAME_UPPER}_TARGET_TYPE STREQUAL "APP" )
 endmacro()
 
-# vista_install_files_by_extension( SEARCH_ROOT INSTALL_SUBDIR EXTENSION1 [EXTENSION2 ...] )
+# vista_install_files_by_extension( SEARCH_ROOT INSTALL_SUBDIR [NON_RECURSIVE] EXTENSION1 [EXTENSION2 ...] )
 # searches in SEARCH_ROOT dor all files matching any of the provided extensions, and
 # installs them to the specified Subdir
+# if NON_RECURSIVE is specified as first parameter after INSTALL_SUBDIR,only the top-level
+# SEARCH_ROOT is searched, otherwise, all subdirs are parsed recursively, too
 # NOTE: files are searched at configure time, not at install time! Thus, if you add a file
 # matching the pattern, you have to configure cmake again to add it to the list of files to
 # install
 macro( vista_install_files_by_extension _SEARCH_ROOT _INSTALL_SUBDIR )
-	set( _EXTENSIONS )
-	foreach( _ARG ${ARGV} )
-		if( NOT "${_ARG}" STREQUAL "${ARGV0}" AND NOT "${_ARG}" STREQUAL "${ARGV2}" )
-			list( APPEND _EXTENSIONS ${_ARG} )
-		endif( NOT "${_ARG}" STREQUAL "${ARGV0}" AND NOT "${_ARG}" STREQUAL "${ARGV2}" )
-	endforeach( _ARG ${ARGV} )
-	foreach( _EXT ${_EXTENSIONS} )
-		file( GLOB_RECURSE _FOUND_FILES "${_SEARCH_ROOT}/*.${_EXT}" "${_SEARCH_ROOT}/**/*.${_EXT}" )
-		install( FILES ${_FOUND_FILES} DESTINATION ${CMAKE_INSTALL_PREFIX}/${_INSTALL_SUBDIR} )
-	endforeach( _EXT ${_EXTENSIONS} )
+	set( _EXTENSIONS ${ARGV} )
+	if( "${ARGV2}" STREQUAL "NON_RECURSIVE" )
+		list( REMOVE_AT _EXTENSIONS 0 1 2 )
+		foreach( _EXT ${_EXTENSIONS} )
+			file( GLOB _FOUND_FILES "${_SEARCH_ROOT}/*.${_EXT}" )
+			install( FILES ${_FOUND_FILES} DESTINATION ${CMAKE_INSTALL_PREFIX}/${_INSTALL_SUBDIR} )
+		endforeach( _EXT ${_EXTENSIONS} )
+	else( "${ARGV2}" STREQUAL "NON_RECURSIVE" )
+		list( REMOVE_AT _EXTENSIONS 0 1 )
+		foreach( _EXT ${_EXTENSIONS} )
+			file( GLOB_RECURSE _FOUND_FILES "${_SEARCH_ROOT}/*.${_EXT}" "${_SEARCH_ROOT}/**/*.${_EXT}" )			
+			install( FILES ${_FOUND_FILES} DESTINATION ${CMAKE_INSTALL_PREFIX}/${_INSTALL_SUBDIR} )
+		endforeach( _EXT ${_EXTENSIONS} )
+	endif( "${ARGV2}" STREQUAL "NON_RECURSIVE" )
 endmacro( vista_install_files_by_extension )
 
 
