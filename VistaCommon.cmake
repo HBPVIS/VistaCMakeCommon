@@ -191,17 +191,17 @@ macro( vista_get_svn_info _REVISION_VAR _REPOS_VAR _DATE_VAR )
 				message( "vista_get_svn_info(): svn info call failed woth error \"${Subversion_svn_info_error}\"" )
 			else( NOT ${Subversion_svn_info_result} EQUAL 0 )
 				string( REGEX REPLACE "^(.*\n)?URL: ([^\n]+).*"
-						"\\2" ${_REPOS_VAR} "${_SVN_WC_INFO")
+						"\\2" ${_REPOS_VAR} "${_SVN_WC_INFO}")
 				string( REGEX REPLACE "^(.*\n)?Repository Root: ([^\n]+).*"
-						"\\2" _VOID_OUTPUT "${_SVN_WC_INFO")
+						"\\2" _VOID_OUTPUT "${_SVN_WC_INFO}")
 				string( REGEX REPLACE "^(.*\n)?Revision: ([^\n]+).*"
-						"\\2" ${_REVISION_VAR} "${_SVN_WC_INFO")
+						"\\2" ${_REVISION_VAR} "${_SVN_WC_INFO}")
 				string( REGEX REPLACE "^(.*\n)?Last Changed Author: ([^\n]+).*"
-						"\\2" _VOID_OUTPUT "${_SVN_WC_INFO")
+						"\\2" _VOID_OUTPUT "${_SVN_WC_INFO}")
 				string( REGEX REPLACE "^(.*\n)?Last Changed Rev: ([^\n]+).*"
-						"\\2" _VOID_OUTPUT "${_SVN_WC_INFO")
+						"\\2" _VOID_OUTPUT "${_SVN_WC_INFO}")
 				string( REGEX REPLACE "^(.*\n)?Last Changed Date: ([^\n]+).*"
-						"\\2" ${_DATE_VAR} "${_SVN_WC_INFO")
+						"\\2" ${_DATE_VAR} "${_SVN_WC_INFO}")
 			endif( NOT ${Subversion_svn_info_result} EQUAL 0 )
 
 			# restore the previous LC_ALL
@@ -713,10 +713,14 @@ macro( vista_configure_app _PACKAGE_NAME )
 			mark_as_advanced( VISTA_ENVIRONMENT_SCRIPT_FILE )
 			if( VISTA_ENVIRONMENT_SCRIPT_FILE )
 				configure_file(
-						${VISTA_ENVIRONMENT_SCRIPT_FILE}
-						${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR}/set_path_for_${_PACKAGE_NAME}.sh
+						"${VISTA_ENVIRONMENT_SCRIPT_FILE}"
+						"${CMAKE_CURRENT_BINARY_DIR}/set_path_for_${_PACKAGE_NAME}.sh"
 						@ONLY
 				)
+				file( COPY "${CMAKE_CURRENT_BINARY_DIR}/set_path_for_${_PACKAGE_NAME}.sh"
+						DESTINATION "${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR}" 
+						FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE
+				) 
 			endif( VISTA_ENVIRONMENT_SCRIPT_FILE )
 		endif( WIN32 )
 	endif( VISTA_TARGET_LINK_DIRS )
