@@ -41,18 +41,18 @@ if( NOT VVTK_FOUND )
 		list( REMOVE_DUPLICATES VTK_CONFIG_DIRS )
 	endif( VTK_CONFIG_DIRS )
 
-	find_package( VTK ${VVTK_FIND_VERSION} QUIET PATHS ${VTK_DIR} ${VTK_CONFIG_DIRS} )
+	find_package( VTK ${VVTK_FIND_VERSION} PATHS ${VTK_DIR} ${VTK_CONFIG_DIRS} )
 
 	if( VTK_FOUND )
 		# a VTKConfig.cmake has been found and loaded
 
 		# check if debug libraries are available
 		set( _TMP_VTK_DEBUG_LIB "_TMP_VTK_DEBUG_LIB-NOTFOUND" CACHE INTERNAL "" FORCE )
-		find_library( _TMP_VTK_DEBUG_LIB "vtkCommonD" PATH ${VTK_LIBRARY_DIRS} )
+		find_library( _TMP_VTK_DEBUG_LIB "vtkCommonD" PATH ${VTK_LIBRARY_DIRS} NO_DEFAULT_PATH )
 		if( _TMP_VTK_DEBUG_LIB )
 			set( _DEBUG_AVAILABLE TRUE )
 		else( _TMP_VTK_DEBUG_LIB )
-			set( _DEBUG_AVAILABLE TRUE )
+			set( _DEBUG_AVAILABLE FALSE )
 		endif( _TMP_VTK_DEBUG_LIB )
 		set( _TMP_VTK_DEBUG_LIB "_TMP_VTK_DEBUG_LIB-NOTFOUND" CACHE INTERNAL "" FORCE )
 
