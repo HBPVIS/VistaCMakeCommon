@@ -1,0 +1,20 @@
+# $Id: FindVCLEYE.cmake 21495 2011-05-25 07:52:18Z dr165799 $
+
+include( FindPackageHandleStandardArgs )
+include( VistaFindUtils )
+
+if( NOT VCLEYE_FOUND )
+	vista_find_package_root( CLEye include/CLEyeMulticam.h NAMES "Code Laboratories" "CL-Eye Platform SDK" "Code Laboratories/CL-Eye Platform SDK" )
+
+	if( CLEYE_ROOT_DIR )
+		set( CLEYE_INCLUDE_DIRS ${CLEYE_ROOT_DIR}/include )
+		set( CLEYE_LIBRARY_DIRS ${CLEYE_ROOT_DIR}/lib )
+		set( CLEYE_LIBRARIES CLEyeMulticam )
+	endif( CLEYE_ROOT_DIR )
+
+endif( NOT VCLEYE_FOUND )
+
+find_package_handle_standard_args( VCLEye "CLEYE could not be found" CLEYE_ROOT_DIR )
+
+
+
