@@ -4,7 +4,7 @@ include( FindPackageHandleStandardArgs )
 include( VistaFindUtils )
 
 if( NOT VOPENAL_FOUND )
-	vista_find_package_root( OpenAL "include/al.h" NAMES "OpenAL 1.1 SDK" )
+	vista_find_package_root( OpenAL "include/AL/al.h" NAMES "OpenAL 1.1 SDK" )
 
 	if( OPENAL_ROOT_DIR )
 		find_library( OPENAL_LIBRARIES
