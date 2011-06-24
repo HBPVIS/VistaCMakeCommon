@@ -4,17 +4,25 @@ include( FindPackageHandleStandardArgs )
 include( VistaFindUtils )
 
 if( NOT VOPENNI_FOUND )
-	vista_find_package_root( openni ni/XnOpenNI.h )
+
+	#looking for two options: once with ni subdir, once without	
+	vista_find_package_root( OpenNI include/ni/XnOpenNI.h )
+	vista_find_package_root( openni include/XnOpenNI.h )
 
 	if( OPENNI_ROOT_DIR )
-		set( OPENNI_INCLUDE_DIRS ${OPENNI_ROOT_DIR}/include/ni )
-		set( OPENNI_LIBRARY_DIRS ${OPENNI_ROOT_DIR}/lib )
-		set( OPENNI_LIBRARIES OpenNI )
-	endif( OPENNI_ROOT_DIR )
+		if( EXISTS "${OPENNI_ROOT_DIR}/include/ni/XnOpenNI.h" )
+			set( OPENNI_INCLUDE_DIRS "${OPENNI_ROOT_DIR}/include/ni" )
+		else( EXISTS "${OPENNI_ROOT_DIR}/include/ni/XnOpenNI.h" )
+			set( OPENNI_INCLUDE_DIRS "${OPENNI_ROOT_DIR}/include" )
+		endif( EXISTS "${OPENNI_ROOT_DIR}/include/ni/XnOpenNI.h" )
+		
+		set( OPENNI_LIBRARY_DIRS"${OPENNI_ROOT_DIR}/lib" )
+		set( OPENNI_LIBRARIE OpenNI )
+	endif( OPENNI_ROOT_DIR )	
 
 endif( NOT VOPENNI_FOUND )
 
-find_package_handle_standard_args( Vopenni "openni could not be found" OPENNI_ROOT_DIR )
+find_package_handle_standard_args( VOpenNI "OpenNI could not be found" OPENNI_ROOT_DIR )
 
 
 

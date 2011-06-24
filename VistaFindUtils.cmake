@@ -7,7 +7,7 @@
 # vista_find_package_dirs( PACKAGE_NAME EXAMPLE_FILE [NAMES folder1 folder2 ...] )
 # vista_get_version_from_path( PATH NAME_LIST VERSION_VAR )
 # SEE FULL DOCUMENTATION! vista_find_package_root( PACKAGE EXAMPLE_FILE [DONT_ALLOW_UNVERSIONED] [QUIET] [NAMES name1 name2 ...] [ADVANCED] [NO_CACHE] )
-# SEE FULL DOCUMENTATION! vista_find_uncached_library( ...find_library_parameters... )
+# SEE FULL DOCUMENTATION! vista_find_library_uncached( ...find_library_parameters... )
 
 if( NOT VISTA_FIND_UTILS_INCLUDED )
 set( VISTA_FIND_UTILS_INCLUDED TRUE )
@@ -506,7 +506,7 @@ macro( vista_find_package_root _PACKAGE_NAME _EXAMPLE_FILE )
 
 endmacro( vista_find_package_root _PACKAGE_NAME _EXAMPLE_FILE )
 
-# vista_find_uncached_library( ...find_library_parameters... )
+# vista_find_library_uncached( ...find_library_parameters... )
 # usage is a little special: call exactly as find_library, but WITHOUT the target variable
 # the output will be stored in the (uncached) variable VISTA_UNCACHED_LIBRARY
 # Use this to quickly find libraries without cluttering the cache
