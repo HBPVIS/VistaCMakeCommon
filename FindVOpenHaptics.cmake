@@ -3,9 +3,9 @@
 include( FindPackageHandleStandardArgs )
 include( VistaFindUtils )
 
-if( NOT WIN32 )
-	message( AUTHOR_WARNING "FindVOpenHaptics.cmake has only been tested for WIN32 yet!" )
-endif( NOT WIN32 )
+#if( NOT WIN32 )
+#	message( AUTHOR_WARNING "FindVOpenHaptics.cmake has only been tested for WIN32 yet!" )
+#endif( NOT WIN32 )
 
 if( NOT VOPENHAPTICS_FOUND )
 
@@ -23,7 +23,7 @@ if( NOT VOPENHAPTICS_FOUND )
 										"${OPENHAPTICS_ROOT_DIR}/utilities/include" )
 
 			set( OPENHAPTICS_hd_LIBRARY "OPENHAPTICS_hd_LIBRARY-NOTFOUND" CACHE PATH "OpenHaptics hd library" FORCE )
-			find_library( OPENHAPTICS_hd_LIBRARY hd PATHS ${OPENHAPTICS_ROOT_DIR}
+			find_library( OPENHAPTICS_hd_LIBRARY HD PATHS ${OPENHAPTICS_ROOT_DIR}
 							PATH_SUFFIXES "lib/win32" "lib/x64"	NO_DEFAULT_PATH )
 			if( OPENHAPTICS_hd_LIBRARY )
 				list( APPEND OPENHAPTICS_LIBRARIES ${OPENHAPTICS_hd_LIBRARY} )
@@ -31,7 +31,7 @@ if( NOT VOPENHAPTICS_FOUND )
 				message( SEND_ERROR "hd library was not found in \"${OPENHAPTICS_ROOT_DIR}\"" )
 			endif()
 			set( OPENHAPTICS_hdu_LIBRARY "OPENHAPTICS_hdu_LIBRARY-NOTFOUND" CACHE PATH "OpenHaptics hdu library" FORCE )
-			find_library( OPENHAPTICS_hdu_LIBRARY hdu PATHS ${OPENHAPTICS_ROOT_DIR}
+			find_library( OPENHAPTICS_hdu_LIBRARY HDU PATHS ${OPENHAPTICS_ROOT_DIR}
 							PATH_SUFFIXES
 							"utilities/lib/win32/ReleaseAcademicEdition" "utilities/lib/win32/Release"
 							"utilities/lib/x64/ReleaseAcademicEdition" "utilities/lib/x64/Release"
@@ -49,7 +49,7 @@ if( NOT VOPENHAPTICS_FOUND )
 			set( OPENHAPTICS_ROOT_DIR ${OPENHAPTICS_ROOT_DIR} )
 			set( OPENHAPTICS_INCLUDE_DIRS "${OPENHAPTICS_ROOT_DIR}/include" )
 			set( OPENHAPTICS_LIBRARY_DIRS "${OPENHAPTICS_ROOT_DIR}/lib" )
-			set( OPENHAPTICS_LIBRARIES ${OPENHAPTICS_LIBRARIES} hd hdu )
+			set( OPENHAPTICS_LIBRARIES ${OPENHAPTICS_LIBRARIES} HD HDU )
 		endif( WIN32 AND EXISTS "${OPENHAPTICS_ROOT_DIR}/utilities/include/HDU/hdu.h" )
 
 
