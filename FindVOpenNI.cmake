@@ -7,7 +7,7 @@ if( NOT VOPENNI_FOUND )
 
 	#looking for two options: once with ni subdir, once without	
 	vista_find_package_root( OpenNI include/ni/XnOpenNI.h )
-	vista_find_package_root( openni include/XnOpenNI.h )
+	vista_find_package_root( OpenNI include/XnOpenNI.h )
 
 	if( OPENNI_ROOT_DIR )
 		if( EXISTS "${OPENNI_ROOT_DIR}/include/ni/XnOpenNI.h" )
@@ -17,7 +17,7 @@ if( NOT VOPENNI_FOUND )
 		endif( EXISTS "${OPENNI_ROOT_DIR}/include/ni/XnOpenNI.h" )
 		
 		set( OPENNI_LIBRARY_DIRS"${OPENNI_ROOT_DIR}/lib" )
-		set( OPENNI_LIBRARIE OpenNI )
+		set( OPENNI_LIBRARIES OpenNI )
 	endif( OPENNI_ROOT_DIR )	
 
 endif( NOT VOPENNI_FOUND )
