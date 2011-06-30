@@ -430,6 +430,9 @@ def GenMultiProject( mode, startDir, projectName, renew, version, linkVistaCoreL
 		else:
 			if( GenCMakeForLib( fullDir, dir, renew, version, linkVistaCoreLibs, projectName ) ):
 				projectSubDirs.append( dir )
+				
+	if mode == MODE_SRC:
+		return
 
 	if( len( projectSubDirs ) == 0 ):
 		print( "No sub-projects found in folder " + startDir )

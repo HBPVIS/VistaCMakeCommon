@@ -16,7 +16,7 @@ if( NOT VOPENNI_FOUND )
 			set( OPENNI_INCLUDE_DIRS "${OPENNI_ROOT_DIR}/include" )
 		endif( EXISTS "${OPENNI_ROOT_DIR}/include/ni/XnOpenNI.h" )
 		
-		set( OPENNI_LIBRARY_DIRS"${OPENNI_ROOT_DIR}/lib" )
+		set( OPENNI_LIBRARY_DIRS "${OPENNI_ROOT_DIR}/lib" )
 		set( OPENNI_LIBRARIES OpenNI )
 	endif( OPENNI_ROOT_DIR )	
 

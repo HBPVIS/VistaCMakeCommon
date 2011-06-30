@@ -299,6 +299,8 @@ endfunction( local_use_existing_config_libs )
 # - checks if a vista-specific FindV<package>.cmake file exists, and prefers this
 # - if no module is found, the config files are searched in additional subdirectories
 macro( vista_find_package _PACKAGE_NAME )
+	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
+	
 	# parse arguments
 	set( _FIND_PACKAGE_ARGS )
 	set( _FIND_DEPENDENCIES FALSE )
@@ -519,7 +521,7 @@ macro( vista_use_package _PACKAGE_NAME )
 			elseif( _PARSE_COMPONENTS )
 				list( APPEND _REQUESTED_COMPONENTS ${_ARG} )
 				set( _COMPONENTS_FOUND TRUE )
-			endif( ${_ARG} STREQUAL "FIND_DEPENDENCIES" )
+			endif( ${_ARG} STREQUAL "COMPONENTS" OR ${_ARG} STREQUAL "REQUIRED" )
 		endforeach( _ARG ${ARGV} )
 
 		# todo: check against components
@@ -531,9 +533,7 @@ macro( vista_use_package _PACKAGE_NAME )
 	endif( VISTA_USE_${_PACKAGE_NAME_UPPER} )
 
 	if( _REQUIRES_RERUN )
-		# package has not yet been used
-
-		# we firstextract some parameters, then try to find the package
+		# we first extract some parameters, then try to find the package
 
 		set( _ARGUMENTS ${ARGV} )
 
@@ -557,7 +557,7 @@ macro( vista_use_package _PACKAGE_NAME )
 		vista_find_package( ${ARGV} )
 
 		# set required variables if package was found AND it wasn't sufficiently included before (in which case _DO_FIND is FALSE )
-		if( _DO_FIND AND ${_PACKAGE_NAME_UPPER}_FOUND )
+		if( ${_PACKAGE_NAME_UPPER}_FOUND AND ( _DO_FIND OR NOT VISTA_USE_${_PACKAGE_NAME_UPPER} ) )
 			# if a USE_FILE is specified, we assume that it handles all the settings
 			# if not, we set the necessary values ourselves
 			if( ${_PACKAGE_NAME_UPPER}_USE_FILE )
@@ -647,10 +647,13 @@ macro( vista_use_package _PACKAGE_NAME )
 			#restore dependencies as they were before FIND_DEPENDENCY calls
 			set( VISTA_TARGET_DEPENDENCIES ${_TMP_VISTA_TARGET_DEPENDENCIES} )
 
-		endif( _DO_FIND AND ${_PACKAGE_NAME_UPPER}_FOUND )
+		endif( ${_PACKAGE_NAME_UPPER}_FOUND AND ( _DO_FIND OR NOT VISTA_USE_${_PACKAGE_NAME_UPPER} ) )
+		
+		set( VISTA_USE_${_PACKAGE_NAME_UPPER} TRUE )
 	endif( _REQUIRES_RERUN )
 
 endmacro( vista_use_package _PACKAGE_NAME )
+
 
 # vista_configure_app( _PACKAGE_NAME [OUT_NAME] )
 # sets some general properties for the target to configure it as application
@@ -1675,6 +1678,14 @@ endmacro( vista_create_uninstall_target )
 # if VISTA_CMAKE_COMMON envvar is set, we buffer it and add it to CMAKE_MODULE_PATH and CMAKE_PREFIX_PATH
 if( EXISTS "$ENV{VISTA_CMAKE_COMMON}" )
 	file( TO_CMAKE_PATH $ENV{VISTA_CMAKE_COMMON} VISTA_CMAKE_COMMON )
+	
+	# we clean the CMAKE_MODULE_PATH - just in case there are some \ pathes in there
+	set( _TMP_MODULE_PATH ${CMAKE_MODULE_PATH} )
+	set( CMAKE_MODULE_PATH )
+	foreach( _PATH ${_TMP_MODULE_PATH} )
+		file( TO_CMAKE_PATH ${_PATH} _CHANGED_PATH )
+		list( APPEND CMAKE_MODULE_PATH ${_CHANGED_PATH} )
+	endforeach( _PATH )
 
 	list( APPEND CMAKE_MODULE_PATH "${VISTA_CMAKE_COMMON}" "${VISTA_CMAKE_COMMON}/share" )
 	list( APPEND CMAKE_PREFIX_PATH "${VISTA_CMAKE_COMMON}" "${VISTA_CMAKE_COMMON}/share" )
