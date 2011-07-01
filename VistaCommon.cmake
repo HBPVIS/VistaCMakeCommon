@@ -141,7 +141,7 @@ macro( vista_conditional_add_subdirectory )
 		endif( _VISTA_CONDITIONAL_SET_ADVANCED )
 
 		if( ${ARGV0} )
-			add_subdirectory( ${ARGV1} )
+			add_subdirectory( "${ARGV1}" )
 			if( _APPEND_TO_LIST )
 				list( APPEND ${_APPEND_TO_LIST} ${ARGV1} )
 			endif( _APPEND_TO_LIST )
@@ -254,16 +254,16 @@ function( local_clean_old_config_references _PACKAGE_NAME _PACKAGE_TARGET_FILE _
 	set( _OWN_FILE "${_EXCLUDE_DIR}/${_PACKAGE_NAME}Config.cmake" )
 	file( GLOB_RECURSE _ALL_VERSION_FILES "${VISTA_CMAKE_COMMON}/share/${_PACKAGE_NAME}*/${_PACKAGE_NAME}Config.cmake" )
 	foreach( _FILE ${_ALL_VERSION_FILES} )
-		file( TO_CMAKE_PATH ${_FILE} _FILE )
+		file( TO_CMAKE_PATH "${_FILE}" _FILE )
 		if( NOT _FILE STREQUAL _OWN_FILE )
 			set( PACKAGE_REFERENCE_OUTDATED FALSE )
-			include( ${_FILE} )
+			include( "${_FILE}" )
 			if( PACKAGE_REFERENCE_OUTDATED OR "${_PACKAGE_TARGET_FILE}" STREQUAL "${${_PACKAGE_NAME_UPPER}_REFERENCED_FILE}" )
 				string( REGEX MATCH "(${VISTA_CMAKE_COMMON}/share/.+)/.*" _MATCHED ${_FILE} )
 				if( _MATCHED )
-					set( _DIR ${CMAKE_MATCH_1} )
+					set( _DIR "${CMAKE_MATCH_1}" )
 					message( STATUS "Removing old config reference copied to \"${_DIR}\"" )
-					file( REMOVE_RECURSE ${_DIR} )
+					file( REMOVE_RECURSE "${_DIR}" )
 				endif( _MATCHED )
 			endif( PACKAGE_REFERENCE_OUTDATED OR "${_PACKAGE_TARGET_FILE}" STREQUAL "${${_PACKAGE_NAME_UPPER}_REFERENCED_FILE}" )
 		endif( NOT _FILE STREQUAL _OWN_FILE )
@@ -279,7 +279,7 @@ function( local_use_existing_config_libs _NAME _ROOT_DIR _CONFIG_FILE _LIBRARY_D
 		include( ${_CONFIG_FILE} )
 		if( "${${_NAME_UPPER}_ROOT_DIR}" STREQUAL "${_ROOT_DIR}" )
 			if( ${_NAME_UPPER}_LIBRARY_DIRS )
-				list( APPEND ${_LIBRARY_DIR_LIST} ${${_NAME_UPPER}_LIBRARY_DIRS} )
+				list( APPEND ${_LIBRARY_DIR_LIST} "${${_NAME_UPPER}_LIBRARY_DIRS}" )
 				list( REMOVE_DUPLICATES ${_LIBRARY_DIR_LIST} )
 			endif( ${_NAME_UPPER}_LIBRARY_DIRS )
 		endif( "${${_NAME_UPPER}_ROOT_DIR}" STREQUAL "${_ROOT_DIR}" )
@@ -996,7 +996,7 @@ macro( vista_create_cmake_config_build _PACKAGE_NAME _CONFIG_PROTO_FILE _TARGET_
 
 		# if any reference already exists, we aparse it and append its library dirs to the current one
 		# this helps if several different build types are used in different cmake-build-dirs, but
-		local_use_existing_config_libs( ${_PACKAGE_NAME} ${_PACKAGE_ROOT_DIR}
+		local_use_existing_config_libs( ${_PACKAGE_NAME} "${_PACKAGE_ROOT_DIR}"
 									"${${_PACKAGE_NAME_UPPER}_BUILD_CONFIG_REFERENCE_DIR}/${_PACKAGE_NAME}Config.cmake"
 									_PACKAGE_LIBRARY_DIRS )
 	endif( VISTA_COPY_BUILD_CONFIGS_REFS_TO_CMAKECOMMON )
@@ -1004,26 +1004,26 @@ macro( vista_create_cmake_config_build _PACKAGE_NAME _CONFIG_PROTO_FILE _TARGET_
 	# retrieve relative pathes for library/include dirs
 	set( _PACKAGE_RELATIVE_INCLUDE_DIRS )
 	foreach( _DIR ${_PACKAGE_INCLUDE_DIRS} )
-		file( RELATIVE_PATH _REL_DIR ${_PACKAGE_ROOT_DIR} ${_DIR} )
+		file( RELATIVE_PATH _REL_DIR "${_PACKAGE_ROOT_DIR}" "${_DIR}" )
 		if( _REL_DIR )
-			list( APPEND _PACKAGE_RELATIVE_INCLUDE_DIRS ${_REL_DIR} )
+			list( APPEND _PACKAGE_RELATIVE_INCLUDE_DIRS "${_REL_DIR}" )
 		else( _REL_DIR )
 			list( APPEND _PACKAGE_RELATIVE_INCLUDE_DIRS "." )
 		endif( _REL_DIR )
 	endforeach( _DIR ${_PACKAGE_INCLUDE_DIRS} )
 
 	set( _PACKAGE_RELATIVE_LIBRARY_DIRS )
-	foreach( _DIR ${_PACKAGE_LIBRARY_DIRS} )
-		file( RELATIVE_PATH _REL_DIR ${_PACKAGE_ROOT_DIR} ${_DIR} )
+	foreach( _DIR ${_PACKAGE_LIBRARY_DIRS} )		
+		file( RELATIVE_PATH _REL_DIR "${_PACKAGE_ROOT_DIR}" "${_DIR}" )
 		if( _REL_DIR )
-			list( APPEND _PACKAGE_RELATIVE_LIBRARY_DIRS ${_REL_DIR} )
+			list( APPEND _PACKAGE_RELATIVE_LIBRARY_DIRS "${_REL_DIR}" )
 		else( _REL_DIR )
 			list( APPEND _PACKAGE_RELATIVE_LIBRARY_DIRS "." )
 		endif( _REL_DIR )
 	endforeach( _DIR ${_PACKAGE_LIBRARY_DIRS} )
 
 	#get_filename_component( _PATH_UP "${CMAKE_CURRENT_SOURCE_DIR}/.." REALPATH  )
-	#list( APPEND _PACKAGE_INCLUDE_DIR ${_PATH_UP} )
+	#list( APPEND _PACKAGE_INCLUDE_DIR "${_PATH_UP}" )
 	#list( REMOVE_DUPLICATES _PACKAGE_INCLUDE_DIR )
 
 	set( _TARGET_FILENAME "${${_PACKAGE_NAME_UPPER}_BUILD_CONFIG_DIR}/${_PACKAGE_NAME}Config.cmake" )
@@ -1036,7 +1036,7 @@ macro( vista_create_cmake_config_build _PACKAGE_NAME _CONFIG_PROTO_FILE _TARGET_
 	if( VISTA_COPY_BUILD_CONFIGS_REFS_TO_CMAKECOMMON )
 		# since prior configure runs may have already added it (before the cache was turned off), we
 		# delete any prior copied versions to this location
-		local_clean_old_config_references( ${_PACKAGE_NAME} ${_REFERENCED_FILE} ${${_PACKAGE_NAME_UPPER}_BUILD_CONFIG_REFERENCE_DIR} )
+		local_clean_old_config_references( ${_PACKAGE_NAME} "${_REFERENCED_FILE}" "${${_PACKAGE_NAME_UPPER}_BUILD_CONFIG_REFERENCE_DIR}" )
 		# find proto file
 		find_file( VISTA_REFERENCE_CONFIG_PROTO_FILE "PackageConfigReference.cmake_proto" PATH ${CMAKE_MODULE_PATH} $ENV{CMAKE_MODULE_PATH} )
 		set( VISTA_REFERENCE_CONFIG_PROTO_FILE ${VISTA_REFERENCE_CONFIG_PROTO_FILE} CACHE INTERNAL "" FORCE )
@@ -1074,7 +1074,7 @@ macro( vista_create_cmake_config_install _PACKAGE_NAME _CONFIG_PROTO_FILE _TARGE
 	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
 
 	# store the directory - it may be used by the versioning lateron
-	set( ${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_DIR ${_TARGET_DIR} )
+	set( ${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_DIR "${_TARGET_DIR}" )
 
 	#if VISTA_CMAKE_COMMON exisits, we give the user the cache options to toggle copying of references
 	# to VISTA_CMAKE_COMMON/share on and off
@@ -1110,9 +1110,9 @@ macro( vista_create_cmake_config_install _PACKAGE_NAME _CONFIG_PROTO_FILE _TARGE
 	#retrieve relative pathes for library/include dirs
 	set( _PACKAGE_RELATIVE_INCLUDE_DIRS )
 	foreach( _DIR ${_PACKAGE_INCLUDE_DIRS} )
-		file( RELATIVE_PATH _REL_DIR ${_PACKAGE_ROOT_DIR} ${_DIR} )
+		file( RELATIVE_PATH _REL_DIR "${_PACKAGE_ROOT_DIR}" "${_DIR}" )
 		if( _REL_DIR )
-			list( APPEND _PACKAGE_RELATIVE_INCLUDE_DIRS ${_REL_DIR} )
+			list( APPEND _PACKAGE_RELATIVE_INCLUDE_DIRS "${_REL_DIR}" )
 		else( _REL_DIR )
 			list( APPEND _PACKAGE_RELATIVE_INCLUDE_DIRS "." )
 		endif( _REL_DIR )
@@ -1120,9 +1120,9 @@ macro( vista_create_cmake_config_install _PACKAGE_NAME _CONFIG_PROTO_FILE _TARGE
 
 	set( _PACKAGE_RELATIVE_LIBRARY_DIRS )
 	foreach( _DIR ${_PACKAGE_LIBRARY_DIRS} )
-		file( RELATIVE_PATH _REL_DIR ${_PACKAGE_ROOT_DIR} ${_DIR} )
+		file( RELATIVE_PATH _REL_DIR "${_PACKAGE_ROOT_DIR}" "${_DIR}" )
 		if( _REL_DIR )
-			list( APPEND _PACKAGE_RELATIVE_LIBRARY_DIRS ${_REL_DIR} )
+			list( APPEND _PACKAGE_RELATIVE_LIBRARY_DIRS "${_REL_DIR}" )
 		else( _REL_DIR )
 			list( APPEND _PACKAGE_RELATIVE_LIBRARY_DIRS "." )
 		endif( _REL_DIR )
@@ -1130,8 +1130,8 @@ macro( vista_create_cmake_config_install _PACKAGE_NAME _CONFIG_PROTO_FILE _TARGE
 
 	set( _TEMPORARY_FILENAME "${CMAKE_BINARY_DIR}/toinstall/${_PACKAGE_NAME}Config.cmake" )
 	# configure the actual file to a local folder, and add it for install
-	configure_file(	${_CONFIG_PROTO_FILE} ${_TEMPORARY_FILENAME} @ONLY )
-	install( FILES ${_TEMPORARY_FILENAME} DESTINATION "${${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_DIR}" )
+	configure_file(	"${_CONFIG_PROTO_FILE}" "${_TEMPORARY_FILENAME}" @ONLY )
+	install( FILES "${_TEMPORARY_FILENAME}" DESTINATION "${${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_DIR}" )
 
 
 
@@ -1155,16 +1155,16 @@ macro( vista_create_cmake_config_install _PACKAGE_NAME _CONFIG_PROTO_FILE _TARGE
 
 		if( VISTA_REFERENCE_CONFIG_PROTO_FILE )
 			#eliminate older installed configs
-			local_clean_old_config_references( ${_PACKAGE_NAME} ${_REFERENCED_FILE} ${${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_REFERENCE_DIR} )
+			local_clean_old_config_references( "${_PACKAGE_NAME}" "${_REFERENCED_FILE}" "${${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_REFERENCE_DIR}" )
 			# configure the reference file
 			set( _TEMPORARY_REF_FILENAME "${CMAKE_BINARY_DIR}/toinstall/references/${_PACKAGE_NAME}Config.cmake" )
-			configure_file(	${VISTA_REFERENCE_CONFIG_PROTO_FILE} ${_TARGET_REF_FILENAME} @ONLY )
-			install( FILES ${_TARGET_REF_FILENAME} DESTINATION ${${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_REFERENCE_DIR} )
+			configure_file(	"${VISTA_REFERENCE_CONFIG_PROTO_FILE}" "${_TARGET_REF_FILENAME}" @ONLY )
+			install( FILES "${_TARGET_REF_FILENAME}" DESTINATION "${${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_REFERENCE_DIR}" )
 		endif( VISTA_REFERENCE_CONFIG_PROTO_FILE )
 	else( VISTA_COPY_INSTALL_CONFIGS_REFS_TO_CMAKECOMMON )
 		# since prior configure runs may have already added it (before the cache was turned off), we
 		# delete any prior copied versions to this location
-		local_clean_old_config_references( ${_PACKAGE_NAME} ${_REFERENCED_FILE} "" )
+		local_clean_old_config_references( ${_PACKAGE_NAME} "${_REFERENCED_FILE}" "" )
 	endif( VISTA_COPY_INSTALL_CONFIGS_REFS_TO_CMAKECOMMON )
 endmacro( vista_create_cmake_config_install )
 
@@ -1196,26 +1196,26 @@ macro( vista_create_version_config _PACKAGE_NAME _VERSION_PROTO_FILE )
 
 		if( ${_PACKAGE_NAME_UPPER}_BUILD_CONFIG_DIR )
 			set( _BUILD_VERSION_TARGET "${${_PACKAGE_NAME_UPPER}_BUILD_CONFIG_DIR}/${_PACKAGE_NAME}ConfigVersion.cmake" )
-			configure_file( ${_VERSION_PROTO_FILE} ${_BUILD_VERSION_TARGET} @ONLY )
+			configure_file( "${_VERSION_PROTO_FILE}" "${_BUILD_VERSION_TARGET}" @ONLY )
 
 			if( VISTA_COPY_BUILD_CONFIGS_REFS_TO_CMAKECOMMON )
-				set( _REFERENCED_FILE ${_BUILD_VERSION_TARGET} )
+				set( _REFERENCED_FILE "${_BUILD_VERSION_TARGET}" )
 				set( _REFERENCE_TARGET_FILENAME "${${_PACKAGE_NAME_UPPER}_BUILD_CONFIG_REFERENCE_DIR}/${_PACKAGE_NAME}ConfigVersion.cmake" )
-				configure_file( ${VISTA_REFERENCE_CONFIG_PROTO_FILE} ${_REFERENCE_TARGET_FILENAME} @ONLY )
+				configure_file( "${VISTA_REFERENCE_CONFIG_PROTO_FILE}" "${_REFERENCE_TARGET_FILENAME}" @ONLY )
 			endif( VISTA_COPY_BUILD_CONFIGS_REFS_TO_CMAKECOMMON )
 		endif( ${_PACKAGE_NAME_UPPER}_BUILD_CONFIG_DIR )
 
 		if( ${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_DIR )
 			set( _TEMPORARY_FILENAME "${CMAKE_BINARY_DIR}/toinstall/${_PACKAGE_NAME}ConfigVersion.cmake" )
-			set( _INSTALL_DIR  ${${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_DIR} )
-			configure_file( ${_VERSION_PROTO_FILE} ${_TEMPORARY_FILENAME} @ONLY )
-			install( FILES ${_TEMPORARY_FILENAME} DESTINATION ${_INSTALL_DIR} )
+			set( _INSTALL_DIR  "${${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_DIR}" )
+			configure_file( "${_VERSION_PROTO_FILE}" "${_TEMPORARY_FILENAME}" @ONLY )
+			install( FILES "${_TEMPORARY_FILENAME}" DESTINATION "${_INSTALL_DIR}" )
 
 			if( VISTA_COPY_INSTALL_CONFIGS_REFS_TO_CMAKECOMMON )
 				set( _REFERENCED_FILE "${_INSTALL_DIR}/${_PACKAGE_NAME}ConfigVersion.cmake" )
 				set( _REFERENCE_TEMPORARY_FILENAME "${CMAKE_BINARY_DIR}/toinstall/references/${_PACKAGE_NAME}ConfigVersion.cmake" )
-				configure_file( ${VISTA_REFERENCE_CONFIG_PROTO_FILE} ${_REFERENCE_TEMPORARY_FILENAME} @ONLY )
-				install( FILES ${_REFERENCE_TEMPORARY_FILENAME} DESTINATION ${${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_REFERENCE_DIR} )
+				configure_file( "${VISTA_REFERENCE_CONFIG_PROTO_FILE}" "${_REFERENCE_TEMPORARY_FILENAME}" @ONLY )
+				install( FILES "${_REFERENCE_TEMPORARY_FILENAME}" DESTINATION "${${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_REFERENCE_DIR}" )
 			endif( VISTA_COPY_INSTALL_CONFIGS_REFS_TO_CMAKECOMMON )
 		endif( ${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_DIR )
 
@@ -1259,16 +1259,16 @@ macro( vista_create_cmake_configs _TARGET )
 	else( ${ARGC} GREATER 1 )
 		#use default config file
 		find_file( VISTA_DEFAULT_CONFIG_PROTO_FILE_BUILD "PackageConfig-build.cmake_proto" PATHS ${CMAKE_MODULE_PATH} $ENV{CMAKE_MODULE_PATH} )
-		set( VISTA_DEFAULT_CONFIG_PROTO_FILE_BUILD ${VISTA_DEFAULT_CONFIG_PROTO_FILE_BUILD} CACHE INTERNAL "Default Prototype file for <Package>Config.cmake in build config" FORCE )
+		set( VISTA_DEFAULT_CONFIG_PROTO_FILE_BUILD "${VISTA_DEFAULT_CONFIG_PROTO_FILE_BUILD}" CACHE INTERNAL "Default Prototype file for <Package>Config.cmake in build config" FORCE )
 		find_file( VISTA_DEFAULT_CONFIG_PROTO_FILE_INSTALL "PackageConfig-install.cmake_proto" PATHS ${CMAKE_MODULE_PATH} $ENV{CMAKE_MODULE_PATH} )
-		set( VISTA_DEFAULT_CONFIG_PROTO_FILE_INSTALL ${VISTA_DEFAULT_CONFIG_PROTO_FILE_INSTALL} CACHE INTERNAL "Default Prototype file for <Package>Config.cmake in install config" FORCE )
+		set( VISTA_DEFAULT_CONFIG_PROTO_FILE_INSTALL "${VISTA_DEFAULT_CONFIG_PROTO_FILE_INSTALL}" CACHE INTERNAL "Default Prototype file for <Package>Config.cmake in install config" FORCE )
 
 		if( NOT VISTA_DEFAULT_CONFIG_PROTO_FILE_BUILD OR NOT VISTA_DEFAULT_CONFIG_PROTO_FILE_INSTALL )
 			message( WARNING "vista_create_cmake_configs( ${_TARGET} ) - Could not find default config file PackageConfig.cmake_proto" )
 			set( _PRECONDITION_FAIL TRUE )
 		endif( NOT VISTA_DEFAULT_CONFIG_PROTO_FILE_BUILD OR NOT VISTA_DEFAULT_CONFIG_PROTO_FILE_INSTALL )
-		set( _CONFIG_PROTO_FILE_BUILD ${VISTA_DEFAULT_CONFIG_PROTO_FILE_BUILD} )
-		set( _CONFIG_PROTO_FILE_INSTALL ${VISTA_DEFAULT_CONFIG_PROTO_FILE_INSTALL} )
+		set( _CONFIG_PROTO_FILE_BUILD "${VISTA_DEFAULT_CONFIG_PROTO_FILE_BUILD}" )
+		set( _CONFIG_PROTO_FILE_INSTALL "${VISTA_DEFAULT_CONFIG_PROTO_FILE_INSTALL}" )
 	endif( ${ARGC} GREATER 1 )
 
 
@@ -1283,7 +1283,7 @@ macro( vista_create_cmake_configs _TARGET )
 		# if there is a version set, we also configure the corresponding version file
 		if( DEFINED ${_PACKAGE_NAME_UPPER}_VERSION_EXT )
 			find_file( VISTA_VERSION_PROTO_FILE "PackageConfigVersion.cmake_proto" PATHS ${CMAKE_MODULE_PATH} )
-			set( VISTA_VERSION_PROTO_FILE ${VISTA_VERSION_PROTO_FILE} CACHE INTERNAL "" )
+			set( VISTA_VERSION_PROTO_FILE "${VISTA_VERSION_PROTO_FILE}" CACHE INTERNAL "" )
 			if( VISTA_VERSION_PROTO_FILE )
 				vista_create_version_config( ${_PACKAGE_NAME} "${VISTA_VERSION_PROTO_FILE}"
 											"${CMAKE_BINARY_DIR}/cmake/${_PACKAGE_NAME}ConfigVersion.cmake" )
@@ -1305,18 +1305,18 @@ macro( vista_set_outdir _PACKAGE_NAME _TARGET_DIR )
 		set_target_properties( ${_PACKAGE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE "${_TARGET_DIR}/Release" )
 		set_target_properties( ${_PACKAGE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL "${_TARGET_DIR}/MinSizeRel" )
 		set_target_properties( ${_PACKAGE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${_TARGET_DIR}/RelWithDebInfo" )
-		set_target_properties( ${_PACKAGE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${_TARGET_DIR} )
+		set_target_properties( ${_PACKAGE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${_TARGET_DIR}" )
 		if( NOT VISTA_${_PACKAGE_NAME_UPPER}_TARGET_TYPE OR VISTA_${_PACKAGE_NAME_UPPER}_TARGET_TYPE STREQUAL "LIB" )
 			set_target_properties( ${_PACKAGE_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY_DEBUG "${_TARGET_DIR}/Debug" )
 			set_target_properties( ${_PACKAGE_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY_RELEASE "${_TARGET_DIR}/Release" )
 			set_target_properties( ${_PACKAGE_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL "${_TARGET_DIR}/MinSizeRel" )
 			set_target_properties( ${_PACKAGE_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO "${_TARGET_DIR}/RelWithDebInfo" )
-			set_target_properties( ${_PACKAGE_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${_TARGET_DIR} )
+			set_target_properties( ${_PACKAGE_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${_TARGET_DIR} ")
 			set_target_properties( ${_PACKAGE_NAME} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${_TARGET_DIR}/Debug" )
 			set_target_properties( ${_PACKAGE_NAME} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${_TARGET_DIR}/Release" )
 			set_target_properties( ${_PACKAGE_NAME} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_MINSIZEREL "${_TARGET_DIR}/MinSizeRel" )
 			set_target_properties( ${_PACKAGE_NAME} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO "${_TARGET_DIR}/RelWithDebInfo" )
-			set_target_properties( ${_PACKAGE_NAME} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${_TARGET_DIR} )
+			set_target_properties( ${_PACKAGE_NAME} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${_TARGET_DIR}" )
 		endif( NOT VISTA_${_PACKAGE_NAME_UPPER}_TARGET_TYPE OR VISTA_${_PACKAGE_NAME_UPPER}_TARGET_TYPE STREQUAL "LIB" )
 		set( ${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR_WITH_CONFIG_SUBDIRS TRUE CACHE INTERNAL "" FORCE )
 	else( ${ARGC} GREATER 2 AND "${ARGV2}" STREQUAL "USE_CONFIG_SUBDIRS" )
@@ -1327,22 +1327,22 @@ macro( vista_set_outdir _PACKAGE_NAME _TARGET_DIR )
 		set_target_properties( ${_PACKAGE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${_TARGET_DIR} )
 		set_target_properties( ${_PACKAGE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${_TARGET_DIR} )
 		if( NOT VISTA_${_PACKAGE_NAME_UPPER}_TARGET_TYPE OR VISTA_${_PACKAGE_NAME_UPPER}_TARGET_TYPE STREQUAL "LIB" )
-			set_target_properties( ${_PACKAGE_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY_DEBUG ${_TARGET_DIR} )
-			set_target_properties( ${_PACKAGE_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY_RELEASE ${_TARGET_DIR} )
-			set_target_properties( ${_PACKAGE_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL ${_TARGET_DIR} )
-			set_target_properties( ${_PACKAGE_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO ${_TARGET_DIR} )
-			set_target_properties( ${_PACKAGE_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${_TARGET_DIR} )
-			set_target_properties( ${_PACKAGE_NAME} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${_TARGET_DIR} )
-			set_target_properties( ${_PACKAGE_NAME} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${_TARGET_DIR} )
-			set_target_properties( ${_PACKAGE_NAME} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_MINSIZEREL ${_TARGET_DIR} )
-			set_target_properties( ${_PACKAGE_NAME} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO ${_TARGET_DIR} )
-			set_target_properties( ${_PACKAGE_NAME} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${_TARGET_DIR} )
+			set_target_properties( ${_PACKAGE_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY_DEBUG "${_TARGET_DIR}" )
+			set_target_properties( ${_PACKAGE_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY_RELEASE "${_TARGET_DIR}" )
+			set_target_properties( ${_PACKAGE_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL "${_TARGET_DIR}" )
+			set_target_properties( ${_PACKAGE_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO "${_TARGET_DIR}" )
+			set_target_properties( ${_PACKAGE_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${_TARGET_DIR}" )
+			set_target_properties( ${_PACKAGE_NAME} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${_TARGET_DIR}" )
+			set_target_properties( ${_PACKAGE_NAME} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${_TARGET_DIR}" )
+			set_target_properties( ${_PACKAGE_NAME} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_MINSIZEREL "${_TARGET_DIR}" )
+			set_target_properties( ${_PACKAGE_NAME} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO "${_TARGET_DIR}" )
+			set_target_properties( ${_PACKAGE_NAME} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${_TARGET_DIR}" )
 		endif( NOT VISTA_${_PACKAGE_NAME_UPPER}_TARGET_TYPE OR VISTA_${_PACKAGE_NAME_UPPER}_TARGET_TYPE STREQUAL "LIB" )
 		set( ${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR_WITH_CONFIG_SUBDIRS FALSE CACHE INTERNAL "" FORCE )
 	endif( ${ARGC} GREATER 2 AND "${ARGV2}" STREQUAL "USE_CONFIG_SUBDIRS" )
 	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
 
-	set( ${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR ${_TARGET_DIR} CACHE INTERNAL "" FORCE )
+	set( ${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR "${_TARGET_DIR}" CACHE INTERNAL "" FORCE )
 endmacro( vista_set_outdir _PACKAGE_NAME TARGET_DIR )
 
 # vista_set_version( PACKAGE TYPE NAME [ MAJOR [ MINOR [ PATCH [ TWEAK ]]]] )
@@ -1585,9 +1585,9 @@ macro( vista_create_info_file _PACKAGE_NAME _TARGET_DIR _INSTALL_DIR )
 		set( INFO_STRING "${INFO_STRING}\n    CMAKE_${_CONFIG_UPPER}_POSTFIX:\n\t\t\t${CMAKE_${_CONFIG_UPPER}_POSTFIX}" )
 	endforeach( _CONFIG ${_CONFIGS} )
 
-	file( WRITE ${INFO_FILENAME} "${INFO_STRING}" )
+	file( WRITE "${INFO_FILENAME}" "${INFO_STRING}" )
 	if( NOT "${_INSTALL_DIR}" STREQUAL "" )
-		install( FILES ${INFO_FILENAME} DESTINATION "${_INSTALL_DIR}" )
+		install( FILES "${INFO_FILENAME}" DESTINATION "${_INSTALL_DIR}" )
 	endif( NOT "${_INSTALL_DIR}" STREQUAL "" )
 endmacro( vista_create_info_file )
 
@@ -1601,7 +1601,7 @@ macro( vista_delete_info_file _PACKAGE_NAME _TARGET_DIR )
 		set( INFO_FILENAME "${_TARGET_DIR}/${${_PACKAGE_NAME_UPPER}_OUTPUT_NAME}BuildInfo${CMAKE_BUILD_TYPE}.txt" )
 	endif( MSVC )
 	if( EXISTS "${INFO_FILENAME}" )
-		file( REMOVE ${INFO_FILENAME} )
+		file( REMOVE "${INFO_FILENAME}" )
 	endif( EXISTS "${INFO_FILENAME}" )
 endmacro( vista_delete_info_file )
 
@@ -1630,7 +1630,7 @@ macro( vista_create_doxygen_target _DOXYFILE )
 	else()
 		add_custom_target( Doxygen
 			${DOXYGEN_EXECUTABLE} "${_DOXYFILE}"
-			WORKING_DIRECTORY ${_DOXY_ROOT}
+			WORKING_DIRECTORY "${_DOXY_ROOT}"
 			COMMENT "Generating API documentation with Doxygen"
 		)
 		set_target_properties( Doxygen PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD TRUE )
