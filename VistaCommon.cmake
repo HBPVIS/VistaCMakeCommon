@@ -72,7 +72,7 @@ macro( vista_set_defaultvalue _VAR_NAME )
 		else( ${_FORCE_FOUND} EQUAL -1 )
 			set( ${_ARGS} )
 		endif( ${_FORCE_FOUND} EQUAL -1 )
-		set( VISTA_${_VAR_NAME}_ALREADY_INITIALIZED TRUE CACHE "" INTERNAL )
+		set( VISTA_${_VAR_NAME}_ALREADY_INITIALIZED TRUE CACHE "" INTERNAL FORCE )
 	endif( NOT "${VISTA_${_VAR_NAME}_ALREADY_INITIALIZED}" )
 endmacro( vista_set_defaultvalue )
 
@@ -289,20 +289,29 @@ function( local_use_existing_config_libs _NAME _ROOT_DIR _CONFIG_FILE _LIBRARY_D
 endfunction( local_use_existing_config_libs )
 
 macro( vista_set_show_all_warnings )
-	if( MSVC )
-		set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4" )
-	elseif( GCC )
-		set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra" )
-	endif( MSVC )
+	if( NOT "${VISTA_SHOW_ALL_WARNINGS_EXECUTED}" )
+		set( VISTA_SHOW_ALL_WARNINGS_EXECUTED TRUE CACHE "" INTERNAL )
+		if( MSVC )
+			set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4" CACHE STRING "" FORCE )
+		elseif( UNIX )
+			set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra" CACHE STRING "" FORCE )
+		endif( MSVC )
+	endif( NOT "${VISTA_SHOW_ALL_WARNINGS_EXECUTED}" )
 endmacro( vista_set_show_all_warnings )
 
  
 macro( vista_set_show_most_warnings )
-	if( MSVC )
-		set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall" )
-	elseif( GCC )
-	endif( MSVC )
+	if( NOT "${VISTA_SHOW_MOST_WARNINGS_EXECUTED}" )
+		set( VISTA_SHOW_MOST_WARNINGS_EXECUTED TRUE CACHE "" INTERNAL )
+		if( MSVC )
+			set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /wd4244 /wd4100 /wd4512 /wd4245 /wd4389" CACHE STRING "" FORCE )
+		elseif( UNIX )
+			set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wreorder" CACHE STRING "" FORCE )
+		endif( MSVC )
+	endif( NOT "${VISTA_SHOW_MOST_WARNINGS_EXECUTED}" )
 endmacro( vista_set_show_most_warnings )
+
+
 
 ###########################
 ###   Package macros    ###
