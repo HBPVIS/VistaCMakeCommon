@@ -61,9 +61,9 @@ include( VistaFindUtils )
 
 # vista_set_defaultvalue( <cmake set() syntax> )
 # macro for overriding default values of pre-initialized variables
-# sets the variable using the same sysntax as set, but only on the first configuration run
-macro( vista_set_defaultvalue )
-	if( FIRST_CONFIGURE_RUN )
+# sets the variable only once
+macro( vista_set_defaultvalue _VAR_NAME )
+	if( NOT "${VISTA_${_VAR_NAME}_ALREADY_INITIALIZED}" )
 		set( _ARGS )
 		list( APPEND _ARGS ${ARGV} )
 		list( FIND _ARGS FORCE _FORCE_FOUND )
@@ -72,7 +72,8 @@ macro( vista_set_defaultvalue )
 		else( ${_FORCE_FOUND} EQUAL -1 )
 			set( ${_ARGS} )
 		endif( ${_FORCE_FOUND} EQUAL -1 )
-	endif( FIRST_CONFIGURE_RUN )
+		set( VISTA_${_VAR_NAME}_ALREADY_INITIALIZED TRUE CACHE "" INTERNAL )
+	endif( NOT "${VISTA_${_VAR_NAME}_ALREADY_INITIALIZED}" )
 endmacro( vista_set_defaultvalue )
 
 # vista_add_files_to_sources( TARGET_LIST ROOT_DIR [SOURCE_GROUP group_name] EXTENSION1 [EXTENSION2 ...] )
@@ -287,7 +288,21 @@ function( local_use_existing_config_libs _NAME _ROOT_DIR _CONFIG_FILE _LIBRARY_D
 	set( ${_LIBRARY_DIR_LIST} ${${_LIBRARY_DIR_LIST}} PARENT_SCOPE )
 endfunction( local_use_existing_config_libs )
 
+macro( vista_set_show_all_warnings )
+	if( MSVC )
+		set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4" )
+	elseif( GCC )
+		set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra" )
+	endif( MSVC )
+endmacro( vista_set_show_all_warnings )
 
+ 
+macro( vista_set_show_most_warnings )
+	if( MSVC )
+		set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall" )
+	elseif( GCC )
+	endif( MSVC )
+endmacro( vista_set_show_most_warnings )
 
 ###########################
 ###   Package macros    ###
@@ -664,10 +679,6 @@ endmacro( vista_use_package _PACKAGE_NAME )
 #	for MSVC, a *.vcproj.user file is created, setting Working Directory and Path Environment
 macro( vista_configure_app _PACKAGE_NAME )
 	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
-	if( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
-		vista_set_defaultvalue( CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}/dist/${VISTA_HWARCH}" CACHE PATH "distribution directory" FORCE )
-		set( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT FALSE )
-	endif( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
 
 	set( ${_PACKAGE_NAME_UPPER}_TARGET_TYPE "APP" )
 
@@ -775,11 +786,6 @@ endmacro( vista_configure_app )
 #	adds *_EXPORT or *_STATIC definition
 macro( vista_configure_lib _PACKAGE_NAME )
 	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
-
-	if( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
-		vista_set_defaultvalue( CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}/dist/${VISTA_HWARCH}" CACHE PATH "distribution directory" FORCE )
-		set( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT FALSE )
-	endif( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
 
 	set( ${_PACKAGE_NAME_UPPER}_TARGET_TYPE "LIB" )
 
@@ -1719,6 +1725,12 @@ endif( UNIX )
 
 # Platform dependent definitions
 add_definitions( ${VISTA_PLATFORM_DEFINE} ) # adds -DWIN32 / -DLINUX or similar
+
+
+if( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
+	vista_set_defaultvalue( CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}/dist/${VISTA_HWARCH}" CACHE PATH "distribution directory" FORCE )
+	set( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT FALSE )
+endif( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
 
 if( WIN32 )
 	if( MSVC )
