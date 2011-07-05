@@ -29,6 +29,8 @@
 # vista_get_svn_info( REVISION_VARIABLE REPOS_VARIABLE DATE_VARIABLE [DIRECTORY] )
 # vista_get_svn_revision( TARGET_VARIABLE )
 # replace_svn_revision_tag( STRING )
+# vista_set_show_all_compiler_warnings()
+# vista_set_show_most_compiler_warnings()
 
 # GENERAL SETTINGS
 # adds info variables
@@ -72,7 +74,7 @@ macro( vista_set_defaultvalue _VAR_NAME )
 		else( ${_FORCE_FOUND} EQUAL -1 )
 			set( ${_ARGS} )
 		endif( ${_FORCE_FOUND} EQUAL -1 )
-		set( VISTA_${_VAR_NAME}_ALREADY_INITIALIZED TRUE CACHE "" INTERNAL FORCE )
+		set( VISTA_${_VAR_NAME}_ALREADY_INITIALIZED TRUE CACHE INTERNAL "" FORCE )
 	endif( NOT "${VISTA_${_VAR_NAME}_ALREADY_INITIALIZED}" )
 endmacro( vista_set_defaultvalue )
 
@@ -288,25 +290,29 @@ function( local_use_existing_config_libs _NAME _ROOT_DIR _CONFIG_FILE _LIBRARY_D
 	set( ${_LIBRARY_DIR_LIST} ${${_LIBRARY_DIR_LIST}} PARENT_SCOPE )
 endfunction( local_use_existing_config_libs )
 
-macro( vista_set_show_all_warnings )
+# vista_set_show_most_compiler_warnings()
+# Enables all compiler warnings, excluding some (subjectively less important) ones
+macro( vista_set_show_all_compiler_warnings )
 	if( NOT "${VISTA_SHOW_ALL_WARNINGS_EXECUTED}" )
-		set( VISTA_SHOW_ALL_WARNINGS_EXECUTED TRUE CACHE "" INTERNAL )
+		set( VISTA_SHOW_ALL_WARNINGS_EXECUTED TRUE CACHE INTERNAL "" )
 		if( MSVC )
-			set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4" CACHE STRING "" FORCE )
+			set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4" CACHE STRING "Flags used by the compiler during all build types." FORCE )
 		elseif( UNIX )
-			set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra" CACHE STRING "" FORCE )
+			set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra" CACHE STRING "Flags used by the compiler during all build types." FORCE )
 		endif( MSVC )
 	endif( NOT "${VISTA_SHOW_ALL_WARNINGS_EXECUTED}" )
 endmacro( vista_set_show_all_warnings )
 
- 
-macro( vista_set_show_most_warnings )
+
+# vista_set_show_most_compiler_warnings()
+# Enables most compilerwarnings, excluding some (subjectively less important) ones
+macro( vista_set_show_most_compiler_warnings )
 	if( NOT "${VISTA_SHOW_MOST_WARNINGS_EXECUTED}" )
-		set( VISTA_SHOW_MOST_WARNINGS_EXECUTED TRUE CACHE "" INTERNAL )
+		set( VISTA_SHOW_ALL_WARNINGS_EXECUTED TRUE CACHE INTERNAL "" )
 		if( MSVC )
-			set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /wd4244 /wd4100 /wd4512 /wd4245 /wd4389" CACHE STRING "" FORCE )
+			set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /wd4244 /wd4100 /wd4512 /wd4245 /wd4389" CACHE STRING "Flags used by the compiler during all build types." FORCE )
 		elseif( UNIX )
-			set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wreorder" CACHE STRING "" FORCE )
+			set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wreorder" CACHE STRING "Flags used by the compiler during all build types." FORCE )
 		endif( MSVC )
 	endif( NOT "${VISTA_SHOW_MOST_WARNINGS_EXECUTED}" )
 endmacro( vista_set_show_most_warnings )
