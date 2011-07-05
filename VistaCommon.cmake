@@ -301,7 +301,7 @@ macro( vista_set_show_all_compiler_warnings )
 			set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra" CACHE STRING "Flags used by the compiler during all build types." FORCE )
 		endif( MSVC )
 	endif( NOT "${VISTA_SHOW_ALL_WARNINGS_EXECUTED}" )
-endmacro( vista_set_show_all_warnings )
+endmacro( vista_set_show_all_compiler_warnings )
 
 
 # vista_set_show_most_compiler_warnings()
@@ -315,7 +315,7 @@ macro( vista_set_show_most_compiler_warnings )
 			set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wreorder" CACHE STRING "Flags used by the compiler during all build types." FORCE )
 		endif( MSVC )
 	endif( NOT "${VISTA_SHOW_MOST_WARNINGS_EXECUTED}" )
-endmacro( vista_set_show_most_warnings )
+endmacro( vista_set_show_most_compiler_warnings )
 
 
 
