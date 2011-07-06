@@ -29,8 +29,8 @@
 # vista_get_svn_info( REVISION_VARIABLE REPOS_VARIABLE DATE_VARIABLE [DIRECTORY] )
 # vista_get_svn_revision( TARGET_VARIABLE )
 # replace_svn_revision_tag( STRING )
-# vista_set_show_all_compiler_warnings()
-# vista_set_show_most_compiler_warnings()
+# vista_enable_all_compiler_warnings()
+# vista_enable_most_compiler_warnings()
 
 # GENERAL SETTINGS
 # adds info variables
@@ -290,9 +290,9 @@ function( local_use_existing_config_libs _NAME _ROOT_DIR _CONFIG_FILE _LIBRARY_D
 	set( ${_LIBRARY_DIR_LIST} ${${_LIBRARY_DIR_LIST}} PARENT_SCOPE )
 endfunction( local_use_existing_config_libs )
 
-# vista_set_show_most_compiler_warnings()
+# vista_enable_most_compiler_warnings()
 # Enables all compiler warnings, excluding some (subjectively less important) ones
-macro( vista_set_show_all_compiler_warnings )
+macro( vista_enable_all_compiler_warnings )
 	if( NOT "${VISTA_SHOW_ALL_WARNINGS_EXECUTED}" )
 		set( VISTA_SHOW_ALL_WARNINGS_EXECUTED TRUE CACHE INTERNAL "" )
 		if( MSVC )
@@ -301,12 +301,12 @@ macro( vista_set_show_all_compiler_warnings )
 			set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra" CACHE STRING "Flags used by the compiler during all build types." FORCE )
 		endif( MSVC )
 	endif( NOT "${VISTA_SHOW_ALL_WARNINGS_EXECUTED}" )
-endmacro( vista_set_show_all_compiler_warnings )
+endmacro( vista_enable_all_compiler_warnings )
 
 
-# vista_set_show_most_compiler_warnings()
+# vista_enable_most_compiler_warnings()
 # Enables most compilerwarnings, excluding some (subjectively less important) ones
-macro( vista_set_show_most_compiler_warnings )
+macro( vista_enable_most_compiler_warnings )
 	if( NOT "${VISTA_SHOW_MOST_WARNINGS_EXECUTED}" )
 		set( VISTA_SHOW_ALL_WARNINGS_EXECUTED TRUE CACHE INTERNAL "" )
 		if( MSVC )
@@ -315,7 +315,7 @@ macro( vista_set_show_most_compiler_warnings )
 			set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wreorder" CACHE STRING "Flags used by the compiler during all build types." FORCE )
 		endif( MSVC )
 	endif( NOT "${VISTA_SHOW_MOST_WARNINGS_EXECUTED}" )
-endmacro( vista_set_show_most_compiler_warnings )
+endmacro( vista_enable_most_compiler_warnings )
 
 
 
