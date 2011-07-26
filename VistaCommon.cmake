@@ -878,13 +878,13 @@ macro( vista_install _PACKAGE_NAME )
 		install( TARGETS ${_PACKAGE_NAME}
 			RUNTIME DESTINATION ${${_PACKAGE_NAME_UPPER}_BIN_INSTALLDIR}
 		)
-		if( WIN32 )
-			install( FILES "${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR}/set_path_for_${_PACKAGE_NAME}.bat"
-						DESTINATION ${${_PACKAGE_NAME_UPPER}_BIN_INSTALLDIR} )
-		else( WIN32 )
-			install( FILES "${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR}/set_path_for_${_PACKAGE_NAME}.sh"
-						DESTINATION ${${_PACKAGE_NAME_UPPER}_BIN_INSTALLDIR} )
-		endif( WIN32 )
+		#if( WIN32 )
+		#	install( FILES "${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR}/set_path_for_${_PACKAGE_NAME}.bat"
+		#				DESTINATION ${${_PACKAGE_NAME_UPPER}_BIN_INSTALLDIR} )
+		#else( WIN32 )
+		#	install( FILES "${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR}/set_path_for_${_PACKAGE_NAME}.sh"
+		#				DESTINATION ${${_PACKAGE_NAME_UPPER}_BIN_INSTALLDIR} )
+		#endif( WIN32 )
 	else( ${_PACKAGE_NAME_UPPER}_TARGET_TYPE STREQUAL "APP" )
 		install( TARGETS ${_PACKAGE_NAME}
 			LIBRARY DESTINATION ${${_PACKAGE_NAME_UPPER}_LIB_INSTALLDIR}
@@ -941,6 +941,21 @@ macro( vista_install_files_by_extension _SEARCH_ROOT _INSTALL_SUBDIR )
 		endforeach( _EXT ${_EXTENSIONS} )
 	endif( "${ARGV2}" STREQUAL "NON_RECURSIVE" )
 endmacro( vista_install_files_by_extension )
+
+# vista_install_files_by_extension( INSTALL_SUBDIR )
+# searches for ALL .dll's or .so's in all link directories, and installs them
+# to the specified subdir. Only dlls that already exist at configure time will be installed!
+# WARNING use with great care! this can potentially copy a whole lot of dlls if
+# one of the lib's link dirs contains other dll's, too (e.g. /usr/lib)
+macro( vista_install_all_dlls _INSTALL_SUBDIR )		
+	foreach( _DIR ${VISTA_TARGET_LINK_DIRS} ${VISTACORELIBS_DRIVER_PLUGIN_DIRS} )
+		if( WIN32 )
+			vista_install_files_by_extension( ${_DIR} ${_INSTALL_SUBDIR} NON_RECURSIVE "dll" )
+		elseif( LINUX )
+			vista_install_files_by_extension( ${_DIR} ${_INSTALL_SUBDIR} NON_RECURSIVE "so" )
+		endif( WIN32 )
+	endforeach( _DIR ${VISTA_TARGET_LINK_DIRS} ${VISTACORELIBS_DRIVER_PLUGIN_DIRS} )
+endmacro( vista_install_all_dlls )
 
 
 
