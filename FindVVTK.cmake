@@ -117,7 +117,7 @@ if( NOT VVTK_FOUND )
 								debug vtkzlibD
 			)
 
-		elseif( _DEBUG_AVAILABLE ) # no debug libraries available
+		else( _DEBUG_AVAILABLE ) # no debug libraries available
 			set( VTK_LIBRARIES	vtkCommon
 								vtkDICOMParser
 								vtkexoIIc
