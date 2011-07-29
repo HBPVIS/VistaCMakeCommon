@@ -1726,7 +1726,7 @@ endmacro( vista_create_uninstall_target )
 ###########################
 
 set( VISTACMAKECOMMON_REVISION "$Rev$" )
-string( REGEX MATCH " ([0-9]+)\\$$" _MATCH "${VISTACMAKECOMMON_REVISION}" )
+string( REGEX MATCH " ([0-9]+) " _MATCH "${VISTACMAKECOMMON_REVISION}" )
 set( VISTACMAKECOMMON_REVISION ${CMAKE_MATCH_1} )
 
 # if VISTA_CMAKE_COMMON envvar is set, we buffer it and add it to CMAKE_MODULE_PATH and CMAKE_PREFIX_PATH
