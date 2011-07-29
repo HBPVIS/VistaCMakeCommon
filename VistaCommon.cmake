@@ -23,6 +23,7 @@
 # vista_create_uninstall_target( [ON|OFF] )
 
 # UTILITY MACROS:
+# require_vistacommon_version( SVN_REVISION )
 # vista_set_defaultvalue( <cmake set syntax> )
 # vista_add_files_to_sources( TARGET_LIST ROOT_DIR [SOURCE_GROUP group_name] EXTENSION1 [EXTENSION2 ...] )
 # vista_conditional_add_subdirectory( VARIABLE_NAME DIRECTORY [ON|OFF] [ADVANCED [MSG string] )
@@ -34,6 +35,7 @@
 
 # GENERAL SETTINGS
 # adds info variables
+#	VISTACMAKECOMMON_REVISION - current svn revision of the VistaCMakeCommon
 #	FIRST_CONFIGURATION_RUN - true if this is the first configuration run
 #   VISTA_HWARCH    - variable describing Hardware architecture, e.g. win32.vc9 or LINUX.X86
 #   VISTA_COMPATIBLE_HWARCH - architectures that are compatible to the current HWARCH,
@@ -49,7 +51,7 @@
 #	scans XYZConfig.cmake files in VISTA_CMAKE_COMMON/share, and deletes outdated ones
 
 
-# avoid multiply includions (for performance reasons )
+# avoid multiple includes of this file (for performance reasons )
 if( NOT VISTA_COMMON_INCLUDED )
 set( VISTA_COMMON_INCLUDED TRUE )
 
@@ -60,6 +62,16 @@ include( VistaFindUtils )
 ###########################
 ###   Utility macros    ###
 ###########################
+
+# require_vistacommon_version( SVN_REVISION )
+# macro to verify that the VistaCMakeCommon's svn revision is high enough (e.g. to ensure that bugfixes are
+# used. If the VistaCMakeCommon's svn revisionis less than the provided number, a warning it emitted
+macro( require_vistacommon_version _SVN_REVISION )
+	if( ${VISTACMAKECOMMON_REVISION} LESS ${_SVN_REVISION} )
+		message( WARNING "VistaCMakeCommon is requested to have at least revision ${_SVN_REVISION}, but is only "
+						"Revision ${VISTACMAKECOMMON_REVISION} - please update your VistaCMakeCommon!" )
+	endif( ${VISTACMAKECOMMON_REVISION} LESS ${_SVN_REVISION} )
+endmacro( require_vistacommon_version )
 
 # vista_set_defaultvalue( <cmake set() syntax> )
 # macro for overriding default values of pre-initialized variables
@@ -386,17 +398,19 @@ macro( vista_find_package _PACKAGE_NAME )
 		set( _DO_FIND FALSE )
 
 		set( _PREVIOUSLY_FOUND_VERSION )
-		if( ${_PACKAGE_NAME_UPPER}_VERSION )
-			set( _PREVIOUSLY_FOUND_VERSION ${${_PACKAGE_NAME_UPPER}_VERSION} )
+		if( ${_PACKAGE_NAME_UPPER}_VERSION_EXT )
+			set( _PREVIOUSLY_FOUND_VERSION ${${_PACKAGE_NAME_UPPER}_VERSION_EXT} )
+		elseif( ${_PACKAGE_NAME}_VERSION_EXT )
+			set( _PREVIOUSLY_FOUND_VERSION ${${_PACKAGE_NAME}_VERSION_EXT} )
+		elseif( ${_PACKAGE_NAME_UPPER}_VERSION )
+			set( _PREVIOUSLY_FOUND_VERSION ${${_PACKAGE_NAME_UPPER}_VERSION_EXT} )
 		elseif( ${_PACKAGE_NAME}_VERSION )
 			set( _PREVIOUSLY_FOUND_VERSION ${${_PACKAGE_NAME}_VERSION} )
 		elseif( ${_PACKAGE_NAME_UPPER}_VERSION_STRING )
 			set( _PREVIOUSLY_FOUND_VERSION ${${_PACKAGE_NAME_UPPER}_VERSION_STRING} )
 		elseif( ${_PACKAGE_NAME}_VERSION_STRING )
 			set( _PREVIOUSLY_FOUND_VERSION ${${_PACKAGE_NAME}_VERSION_STRING} )
-		elseif( ${_PACKAGE_NAME_UPPER}_VERSION_STRING )
-			set( _PREVIOUSLY_FOUND_VERSION ${${_PACKAGE_NAME_UPPER}_VERSION_STRING} )
-		endif( ${_PACKAGE_NAME_UPPER}_VERSION )
+		endif( ${_PACKAGE_NAME_UPPER}_VERSION_EXT )
 
 		if( _PREVIOUSLY_FOUND_VERSION AND _PACKAGE_VERSION )
 			# we have to check that we don't include different versions!
@@ -1710,6 +1724,10 @@ endmacro( vista_create_uninstall_target )
 ###########################
 ###   General Settings  ###
 ###########################
+
+set( VISTACMAKECOMMON_REVISION "$Revision: 22657$" )
+string( REGEX MATCH " ([0-9]+)\\$$" _MATCH "${VISTACMAKECOMMON_REVISION}" )
+set( VISTACMAKECOMMON_REVISION ${CMAKE_MATCH_1} )
 
 # if VISTA_CMAKE_COMMON envvar is set, we buffer it and add it to CMAKE_MODULE_PATH and CMAKE_PREFIX_PATH
 if( EXISTS "$ENV{VISTA_CMAKE_COMMON}" )
