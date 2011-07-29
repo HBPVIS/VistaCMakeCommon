@@ -1725,7 +1725,7 @@ endmacro( vista_create_uninstall_target )
 ###   General Settings  ###
 ###########################
 
-set( VISTACMAKECOMMON_REVISION "$Revision: 22657$" )
+set( VISTACMAKECOMMON_REVISION "$Rev$" )
 string( REGEX MATCH " ([0-9]+)\\$$" _MATCH "${VISTACMAKECOMMON_REVISION}" )
 set( VISTACMAKECOMMON_REVISION ${CMAKE_MATCH_1} )
 
