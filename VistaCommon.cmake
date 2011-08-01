@@ -9,6 +9,8 @@
 # vista_configure_lib( PACKAGE_NAME [OUT_NAME] )
 # vista_install( TARGET [INCLUDE/BIN_SUBDIRECTORY [LIBRARY_SUBDIRECTORY] ] [NO_POSTFIX] )
 # vista_install_files_by_extension( SEARCH_ROOT INSTALL_SUBDIR EXTENSION1 [EXTENSION2 ...] )
+# vista_add_target_script_envvar( _PACKAGE_NAME _ENVVAR _VALUE )
+# vista_set_target_msvc_arguments( _PACKAGE_NAME _COMMANDLINE_VARS )
 # vista_create_cmake_config_build( PACKAGE_NAME CONFIG_PROTO_FILE TARGET_DIR )
 # vista_create_cmake_config_install( PACKAGE_NAME CONFIG_PROTO_FILE TARGET_DIR )
 # vista_create_version_config( PACKAGE_NAME VERSION_PROTO_FILE )
@@ -701,7 +703,7 @@ endmacro( vista_use_package _PACKAGE_NAME )
 
 # vista_configure_app( _PACKAGE_NAME [OUT_NAME] )
 # sets some general properties for the target to configure it as application
-#	sets default value for CMAKE_INSTALL_PREFIX (if not set otherwise) to source directory
+#	sets default out_dir (i.e. where the executable will be built) to source directory
 #	sets the Application Name to _PACKAGE_NAME with "D"-PostFix under Debug
 #	if not overwritten, sets the outdir to the target's source directory
 #	creates a shell script that sets the path to find required libraries
@@ -738,10 +740,21 @@ macro( vista_configure_app _PACKAGE_NAME )
 	# create a script that sets the path
 	if( VISTA_TARGET_LINK_DIRS )
 		if( WIN32 )
-			set( _LIBRARY_PATHES ${VISTA_TARGET_LINK_DIRS} )
-			set( _DRIVER_PLUGIN_DIRS ${VISTACORELIBS_DRIVER_PLUGIN_DIRS} )
 			find_file( VISTA_ENVIRONMENT_SCRIPT_FILE "set_path.bat_proto" ${CMAKE_MODULE_PATH} )
 			mark_as_advanced( VISTA_ENVIRONMENT_SCRIPT_FILE )
+			
+			set( _ENTRIES "SET PATH=${VISTA_TARGET_LINK_DIRS};%PATH%\n" )
+			set( _ENTRIES "${_ENTRIES}SET VISTACORELIBS_DRIVER_PLUGIN_DIRS=${VISTACORELIBS_DRIVER_PLUGIN_DIRS}\n" )
+			set( _ENVVARNAME "" )
+			foreach( _ENTRY ${VISTA_${_PACKAGE_NAME}_ENVVARS} )
+				if( "${_ENVVARNAME}" STREQUAL "" )
+					set( _ENVVARNAME ${_ENTRY} )
+				else()
+					set( _ENTRIES "${_ENTRIES}SET ${_ENVVARNAME}=${_ENTRY}\n" )
+					set( _ENVVARNAME "" )
+				endif( "${_ENVVARNAME}" STREQUAL "" )
+			endforeach( _ENTRY ${VISTA_${_PACKAGE_NAME}_ENVVAR} )
+						
 			if( VISTA_ENVIRONMENT_SCRIPT_FILE )
 				configure_file(
 						${VISTA_ENVIRONMENT_SCRIPT_FILE}
@@ -750,10 +763,21 @@ macro( vista_configure_app _PACKAGE_NAME )
 				)
 			endif( VISTA_ENVIRONMENT_SCRIPT_FILE )
 		elseif( UNIX )
-			string( REPLACE ";" ":" _LIBRARY_PATHES "${VISTA_TARGET_LINK_DIRS}" )
-			string( REPLACE ";" ":" _DRIVER_PLUGIN_DIRS "${VISTACORELIBS_DRIVER_PLUGIN_DIRS}" )
 			find_file( VISTA_ENVIRONMENT_SCRIPT_FILE "set_path.sh_proto" ${CMAKE_MODULE_PATH} )
 			mark_as_advanced( VISTA_ENVIRONMENT_SCRIPT_FILE )
+			
+			set( _ENTRIES "export LD_LIBRARY_PATH=${VISTA_TARGET_LINK_DIRS}:$LD_LIBRARY_PATH\n" )
+			set( _ENTRIES "${_ENTRIES}export VISTACORELIBS_DRIVER_PLUGIN_DIRS=${VISTACORELIBS_DRIVER_PLUGIN_DIRS}\n" )
+			set( _ENVVARNAME "" )
+			foreach( _ENTRY ${VISTA_${_PACKAGE_NAME}_ENVVARS} )
+				if( "${_ENVVARNAME}" STREQUAL "" )
+					set( _ENVVARNAME ${_ENTRY} )
+				else()
+					set( _ENTRIES "${_ENTRIES}export ${_ENVVARNAME}=${_ENTRY}\n" )
+					set( _ENVVARNAME "" )
+				endif( "${_ENVVARNAME}" STREQUAL "" )
+			endforeach( _ENTRY ${VISTA_${_PACKAGE_NAME}_ENVVAR} )
+			
 			if( VISTA_ENVIRONMENT_SCRIPT_FILE )
 				configure_file(
 						"${VISTA_ENVIRONMENT_SCRIPT_FILE}"
@@ -796,6 +820,18 @@ macro( vista_configure_app _PACKAGE_NAME )
 			if( VISTACORELIBS_DRIVER_PLUGIN_DIRS )
 				set( _ENVIRONMENT "${_ENVIRONMENT}VISTACORELIBS_DRIVER_PLUGIN_DIRS=${VISTACORELIBS_DRIVER_PLUGIN_DIRS}&#x0A;" )
 			endif( VISTACORELIBS_DRIVER_PLUGIN_DIRS )
+			set( _ENVVARNAME "" )
+			foreach( _ENTRY ${VISTA_${_PACKAGE_NAME}_ENVVARS} )
+				if( "${_ENVVARNAME}" STREQUAL "" )
+					set( _ENVVARNAME ${_ENTRY} )
+				else()
+					set( _ENVIRONMENT "${_ENVIRONMENT}${_ENVVARNAME}=${_ENTRY}&#x0A;" )
+					set( _ENVVARNAME "" )
+				endif( "${_ENVVARNAME}" STREQUAL "" )
+			endforeach( _ENTRY ${VISTA_${_PACKAGE_NAME}_ENVVAR} )
+			
+			set( _COMMANDARGS ${VISTA_${_PACKAGE_NAME}_MSVC_ARGUMENTS} )
+			
 
 			configure_file(
 				${VISTA_VCPROJUSER_PROTO_FILE}
@@ -849,6 +885,19 @@ macro( vista_configure_lib _PACKAGE_NAME )
 		endif( BUILD_SHARED_LIBS )
 	endif( WIN32 )
 endmacro( vista_configure_lib _PACKAGE_NAME)
+
+# vista_add_target_script_envvar( _PACKAGE_NAME _ENVVAR _VALUE )
+# adds an environment variable that will be added to the set_path_for_* scripts
+# and the msvc projects for the specified application target
+macro( vista_add_target_script_envvar _PACKAGE_NAME _ENVVAR _VALUE )
+	list( APPEND VISTA_${_PACKAGE_NAME}_ENVVARS "${_ENVVAR}" "${_VALUE}" )
+endmacro( vista_add_target_script_envvar )
+
+# vista_set_target_msvc_arguments( _PACKAGE_NAME _COMMANDLINE_VARS )
+# sets the default commandline args in the msvc project for the specified application target
+macro( vista_set_target_msvc_arguments _PACKAGE_NAME _COMMANDLINE_VARS )
+	set( VISTA_${_PACKAGE_NAME}_MSVC_ARGUMENTS ${_COMMANDLINE_VARS} )
+endmacro( vista_set_target_msvc_arguments )
 
 # vista_install( TARGET [INCLUDE/BIN_SUBDIRECTORY [LIBRARY_SUBDIRECTORY] ] [NO_POSTFIX] )
 # can only be called after vista_configure_[app|lib]
