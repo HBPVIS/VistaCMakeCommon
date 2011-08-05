@@ -779,7 +779,7 @@ macro( vista_configure_app _PACKAGE_NAME )
 				set( _ENTRIES "export LD_LIBRARY_PATH=" )
 				foreach (_ENTRY ${_DYNAMIC_LIB_DIRS} )
 					set( _ENTRIES "${_ENTRIES}${_ENTRY}:" )
-				foreach (_ENTRY ${_DYNAMIC_LIB_DIRS} )
+				endforeach (_ENTRY ${_DYNAMIC_LIB_DIRS} )
 				set ( _ENTRIES "${_ENTRIES}$LD_LIBRARY_PATH\n" )
 			endif( _DYNAMIC_LIB_DIRS )
 			
