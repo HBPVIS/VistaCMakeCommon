@@ -15,13 +15,13 @@ set( VISTA_FIND_UTILS_INCLUDED TRUE )
 include( VistaHWArchSettings )
 
 set( VISTA_PACKAGE_SEARCH_PATHS )
-foreach( _PATH $ENV{VRDEV} $ENV{VISTA_EXTERNAL_LIBS} $ENV{VRSOFTWARE}
+foreach( _PATH "$ENV{VRDEV}" $ENV{VISTA_EXTERNAL_LIBS} "$ENV{VRSOFTWARE}"
 						${CMAKE_PREFIX_PATH} $ENV{CMAKE_PREFIX_PATH}
 						${CMAKE_SYSTEM_PREFIX_PATH}	$ENV{CMAKE_SYSTEM_PREFIX_PATH} )
-	if( NOT _PATH STREQUAL "/" )
-		file( TO_CMAKE_PATH ${_PATH} _PATH)
+	if( NOT _PATH STREQUAL "/" AND NOT _PATH STREQUAL "" )
+		file( TO_CMAKE_PATH "${_PATH}" _PATH )
 		list( APPEND VISTA_PACKAGE_SEARCH_PATHS ${_PATH} )
-	endif( NOT _PATH STREQUAL "/" )
+	endif( NOT _PATH STREQUAL "/" AND NOT _PATH STREQUAL "" )
 endforeach( _PATH )
 list( REMOVE_DUPLICATES VISTA_PACKAGE_SEARCH_PATHS )
 
@@ -260,17 +260,17 @@ macro( vista_find_package_dirs _PACKAGE_NAME _EXAMPLE_FILE )
 	endforeach( _PATH ${_SEARCH_DIRS} )
 
 	if( _UNVERSIONED )
-		file( TO_CMAKE_PATH ${_UNVERSIONED} ${_PACKAGE_NAME_UPPER}_CANDIDATE_UNVERSIONED )
+		file( TO_CMAKE_PATH ${_UNVERSIONED} "${_PACKAGE_NAME_UPPER}_CANDIDATE_UNVERSIONED" )
 	endif( _UNVERSIONED )
 
 	#check unversioned pathes
 	foreach( _PATH ${_VERSIONED_PATHES} )
-		file( TO_CMAKE_PATH ${_PATH} _PATH )
+		file( TO_CMAKE_PATH "${_PATH}" _PATH )
 		# determine version
-		string( REGEX REPLACE "([+-.])" "\\\\\\1" _REGEX_PATH ${_PATH} )
-		string( REGEX MATCH ".+\\-([0-9a-zA-Z_\\-\\.]+)" _MATCHED ${_REGEX_PATH} )
+		string( REGEX REPLACE "([+-.])" "\\\\\\1" _REGEX_PATH "${_PATH}" )
+		string( REGEX MATCH ".+\\-([0-9a-zA-Z_\\-\\.]+)" _MATCHED "${_REGEX_PATH}" )
 		if( _MATCHED )
-			string( REPLACE "\\" "" _CLEANED_VERSION ${CMAKE_MATCH_1} )
+			string( REPLACE "\\" "" _CLEANED_VERSION "${CMAKE_MATCH_1}" )
 			if( EXISTS "${_PATH}/${_EXAMPLE_FILE}" )
 				list( APPEND ${_PACKAGE_NAME_UPPER}_CANDIDATE_DIRS "${_PATH}" )				
 				list( APPEND ${_PACKAGE_NAME_UPPER}_CANDIDATE_VERSIONS ${_CLEANED_VERSION} )
@@ -298,7 +298,7 @@ endmacro( vista_find_package_dirs )
 # ...<NAME>-VERSION[/..]
 # the found version is stored in VERSION_VAR
 macro( vista_get_version_from_path _PATH _NAME_LIST _VERSION_VAR )
-	file( TO_CMAKE_PATH ${_PATH} _PATH )
+	file( TO_CMAKE_PATH "${_PATH}" _PATH )
 	set( ${_VERSION_VAR} )
 	# determine version
 	foreach( _NAME ${${_NAME_LIST}} )

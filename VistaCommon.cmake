@@ -9,7 +9,10 @@
 # vista_configure_lib( PACKAGE_NAME [OUT_NAME] )
 # vista_install( TARGET [INCLUDE/BIN_SUBDIRECTORY [LIBRARY_SUBDIRECTORY] ] [NO_POSTFIX] )
 # vista_install_files_by_extension( SEARCH_ROOT INSTALL_SUBDIR EXTENSION1 [EXTENSION2 ...] )
-# vista_add_target_script_envvar( _PACKAGE_NAME _ENVVAR _VALUE )
+# vista_add_target_pathscript_dynamic_lib_path( _PACKAGE_NAME _ENVVAR _VALUE )
+# vista_add_pathscript_dynamic_lib_path( _ENVVAR _VALUE )
+# vista_add_target_pathscript_envvar( _PACKAGE_NAME _ENVVAR _VALUE )
+# vista_add_pathscript_envvar( _ENVVAR _VALUE )
 # vista_set_target_msvc_arguments( _PACKAGE_NAME _COMMANDLINE_VARS )
 # vista_create_cmake_config_build( PACKAGE_NAME CONFIG_PROTO_FILE TARGET_DIR )
 # vista_create_cmake_config_install( PACKAGE_NAME CONFIG_PROTO_FILE TARGET_DIR )
@@ -737,16 +740,21 @@ macro( vista_configure_app _PACKAGE_NAME )
 	# we store the dependencies as required
 	set( ${_PACKAGE_NAME_UPPER}_DEPENDENCIES ${VISTA_TARGET_DEPENDENCIES} CACHE INTERNAL "" FORCE )
 	set( ${_PACKAGE_NAME_UPPER}_FULL_DEPENDENCIES ${VISTA_TARGET_FULL_DEPENDENCIES} CACHE INTERNAL "" FORCE )
+	
+	set( _DYNAMIC_LIB_DIRS ${VISTA_TARGET_LINK_DIRS} ${VISTA_${_PACKAGE_NAME}_ADDITIONAL_PATHENTRIES} ${VISTA_ADDITIONAL_PATHENTRIES} )
 	# create a script that sets the path
 	if( VISTA_TARGET_LINK_DIRS )
 		if( WIN32 )
 			find_file( VISTA_ENVIRONMENT_SCRIPT_FILE "set_path.bat_proto" ${CMAKE_MODULE_PATH} )
 			mark_as_advanced( VISTA_ENVIRONMENT_SCRIPT_FILE )
 			
-			set( _ENTRIES "SET PATH=${VISTA_TARGET_LINK_DIRS};%PATH%\n" )
+			set( _ENTRIES "" )
+			if( _DYNAMIC_LIB_DIRS )
+				set( _ENTRIES "SET PATH=${_DYNAMIC_LIB_DIRS};%PATH%\n" )
+			endif( _DYNAMIC_LIB_DIRS )
 			set( _ENTRIES "${_ENTRIES}SET VISTACORELIBS_DRIVER_PLUGIN_DIRS=${VISTACORELIBS_DRIVER_PLUGIN_DIRS}\n" )
 			set( _ENVVARNAME "" )
-			foreach( _ENTRY ${VISTA_${_PACKAGE_NAME}_ENVVARS} )
+			foreach( _ENTRY ${VISTA_ENVVARS} ${VISTA_${_PACKAGE_NAME}_ENVVARS} )
 				if( "${_ENVVARNAME}" STREQUAL "" )
 					set( _ENVVARNAME ${_ENTRY} )
 				else()
@@ -766,11 +774,14 @@ macro( vista_configure_app _PACKAGE_NAME )
 			find_file( VISTA_ENVIRONMENT_SCRIPT_FILE "set_path.sh_proto" ${CMAKE_MODULE_PATH} )
 			mark_as_advanced( VISTA_ENVIRONMENT_SCRIPT_FILE )
 			
-			set( _ENTRIES "export LD_LIBRARY_PATH=" )
-			foreach (_ENTRY ${VISTA_TARGET_LINK_DIRS} )
-				set( _ENTRIES "${_ENTRIES}${_ENTRY}:" )
-			endforeach (_ENTRY ${VISTA_TARGET_LINK_DIRS} )
-			set ( _ENTRIES "${_ENTRIES}$LD_LIBRARY_PATH\n" )
+			set( _ENTRIES "" )
+			if( _DYNAMIC_LIB_DIRS )
+				set( _ENTRIES "export LD_LIBRARY_PATH=" )
+				foreach (_ENTRY ${_DYNAMIC_LIB_DIRS} )
+					set( _ENTRIES "${_ENTRIES}${_ENTRY}:" )
+				foreach (_ENTRY ${_DYNAMIC_LIB_DIRS} )
+				set ( _ENTRIES "${_ENTRIES}$LD_LIBRARY_PATH\n" )
+			endif( _DYNAMIC_LIB_DIRS )
 			
 			set( _ENTRIES "${_ENTRIES}export VISTACORELIBS_DRIVER_PLUGIN_DIRS=${VISTACORELIBS_DRIVER_PLUGIN_DIRS}\n" )
 			set( _ENVVARNAME "" )
@@ -818,15 +829,15 @@ macro( vista_configure_app _PACKAGE_NAME )
 
 			set( _WORK_DIR ${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR} )
 
-			set( _ENVIRONMENT )
-			if( VISTA_TARGET_LINK_DIRS )
-				set( _ENVIRONMENT "PATH=${VISTA_TARGET_LINK_DIRS};%PATH%&#x0A;" )
-			endif( VISTA_TARGET_LINK_DIRS )
+			set( _ENVIRONMENT "" )
+			if( _DYNAMIC_LIB_DIRS )
+				set( _ENVIRONMENT "PATH=${_DYNAMIC_LIB_DIRS};%PATH%&#x0A;" )
+			endif( _DYNAMIC_LIB_DIRS )
 			if( VISTACORELIBS_DRIVER_PLUGIN_DIRS )
 				set( _ENVIRONMENT "${_ENVIRONMENT}VISTACORELIBS_DRIVER_PLUGIN_DIRS=${VISTACORELIBS_DRIVER_PLUGIN_DIRS}&#x0A;" )
 			endif( VISTACORELIBS_DRIVER_PLUGIN_DIRS )
 			set( _ENVVARNAME "" )
-			foreach( _ENTRY ${VISTA_${_PACKAGE_NAME}_ENVVARS} )
+			foreach( _ENTRY ${VISTA_${_PACKAGE_NAME}_ENVVARS} ${VISTA_ENVVARS} )
 				if( "${_ENVVARNAME}" STREQUAL "" )
 					set( _ENVVARNAME ${_ENTRY} )
 				else()
@@ -891,12 +902,35 @@ macro( vista_configure_lib _PACKAGE_NAME )
 	endif( WIN32 )
 endmacro( vista_configure_lib _PACKAGE_NAME)
 
-# vista_add_target_script_envvar( _PACKAGE_NAME _ENVVAR _VALUE )
+# vista_add_target_pathscript_dynamic_lib_path( _PATH )
 # adds an environment variable that will be added to the set_path_for_* scripts
 # and the msvc projects for the specified application target
-macro( vista_add_target_script_envvar _PACKAGE_NAME _ENVVAR _VALUE )
+macro( vista_add_target_pathscript_dynamic_lib_path _PATH )
+	list( APPEND VISTA_${_PACKAGE_NAME}_ADDITIONAL_PATHENTRIES "${_PATH}" )
+endmacro( vista_add_target_pathscript_dynamic_lib_path _PATH )
+
+# vista_add_pathscript_dynamic_lib_path( _PATH )
+# adds an environment variable that will be added to the set_path_for_* scripts
+# and the msvc projects for all apps that are configured afterwards
+macro( vista_add_pathscript_dynamic_lib_path _PATH )
+	list( APPEND VISTA_ADDITIONAL_PATHENTRIES "${_PATH}" )
+endmacro( vista_add_pathscript_dynamic_lib_path _PATH )
+
+
+# vista_add_target_pathscript_envvar( _PACKAGE_NAME _ENVVAR _VALUE )
+# adds an environment variable that will be added to the set_path_for_* scripts
+# and the msvc projects for the specified application target
+macro( vista_add_target_pathscript_envvar _PACKAGE_NAME _ENVVAR _VALUE )
 	list( APPEND VISTA_${_PACKAGE_NAME}_ENVVARS "${_ENVVAR}" "${_VALUE}" )
-endmacro( vista_add_target_script_envvar )
+endmacro( vista_add_target_pathscript_envvar )
+
+# vista_add_target_pathscript_envvar( _ENVVAR _VALUE )
+# adds an environment variable that will be added to the set_path_for_* scripts
+# and the msvc projects for all apps that are configured afterwards
+macro( vista_add_pathscript_envvar _ENVVAR _VALUE )
+	list( APPEND VISTA_ENVVARS "${_ENVVAR}" "${_VALUE}" )
+endmacro( vista_add_pathscript_envvar )
+
 
 # vista_set_target_msvc_arguments( _PACKAGE_NAME _COMMANDLINE_VARS )
 # sets the default commandline args in the msvc project for the specified application target
