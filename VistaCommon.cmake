@@ -766,7 +766,12 @@ macro( vista_configure_app _PACKAGE_NAME )
 			find_file( VISTA_ENVIRONMENT_SCRIPT_FILE "set_path.sh_proto" ${CMAKE_MODULE_PATH} )
 			mark_as_advanced( VISTA_ENVIRONMENT_SCRIPT_FILE )
 			
-			set( _ENTRIES "export LD_LIBRARY_PATH=${VISTA_TARGET_LINK_DIRS}:$LD_LIBRARY_PATH\n" )
+			set( _ENTRIES "export LD_LIBRARY_PATH=" )
+			foreach (_ENTRY ${VISTA_TARGET_LINK_DIRS} )
+				set( _ENTRIES "${_ENTRIES}${_ENTRY}:" )
+			endforeach (_ENTRY ${VISTA_TARGET_LINK_DIRS} )
+			set ( _ENTRIES "${_ENTRIES}$LD_LIBRARY_PATH\n" )
+			
 			set( _ENTRIES "${_ENTRIES}export VISTACORELIBS_DRIVER_PLUGIN_DIRS=${VISTACORELIBS_DRIVER_PLUGIN_DIRS}\n" )
 			set( _ENVVARNAME "" )
 			foreach( _ENTRY ${VISTA_${_PACKAGE_NAME}_ENVVARS} )
