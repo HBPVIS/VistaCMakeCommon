@@ -9,10 +9,10 @@
 # vista_configure_lib( PACKAGE_NAME [OUT_NAME] )
 # vista_install( TARGET [INCLUDE/BIN_SUBDIRECTORY [LIBRARY_SUBDIRECTORY] ] [NO_POSTFIX] )
 # vista_install_files_by_extension( SEARCH_ROOT INSTALL_SUBDIR EXTENSION1 [EXTENSION2 ...] )
-# vista_add_target_pathscript_dynamic_lib_path( _PACKAGE_NAME _ENVVAR _VALUE )
-# vista_add_pathscript_dynamic_lib_path( _ENVVAR _VALUE )
-# vista_add_target_pathscript_envvar( _PACKAGE_NAME _ENVVAR _VALUE )
-# vista_add_pathscript_envvar( _ENVVAR _VALUE )
+# vista_add_target_pathscript_dynamic_lib_path( _PACKAGE_NAME _ENVVAR _VALUE [PATH_LIST] )
+# vista_add_pathscript_dynamic_lib_path( _ENVVAR _VALUE [PATH_LIST] )
+# vista_add_target_pathscript_envvar( _PACKAGE_NAME _ENVVAR _VALUE [PATH_LIST] )
+# vista_add_pathscript_envvar( _ENVVAR _VALUE [PATH_LIST] )
 # vista_set_target_msvc_arguments( _PACKAGE_NAME _COMMANDLINE_VARS )
 # vista_create_cmake_config_build( PACKAGE_NAME CONFIG_PROTO_FILE TARGET_DIR )
 # vista_create_cmake_config_install( PACKAGE_NAME CONFIG_PROTO_FILE TARGET_DIR )
@@ -329,7 +329,7 @@ macro( vista_enable_most_compiler_warnings )
 		if( MSVC )
 			set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /wd4244 /wd4100 /wd4512 /wd4245 /wd4389" CACHE STRING "Flags used by the compiler during all build types." FORCE )
 		elseif( UNIX )
-			set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wreorder" CACHE STRING "Flags used by the compiler during all build types." FORCE )
+			set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-reorder" CACHE STRING "Flags used by the compiler during all build types." FORCE )
 		endif( MSVC )
 	endif( NOT "${VISTA_SHOW_MOST_WARNINGS_EXECUTED}" )
 endmacro( vista_enable_most_compiler_warnings )
@@ -752,7 +752,9 @@ macro( vista_configure_app _PACKAGE_NAME )
 			if( _DYNAMIC_LIB_DIRS )
 				set( _ENTRIES "SET PATH=${_DYNAMIC_LIB_DIRS};%PATH%\n" )
 			endif( _DYNAMIC_LIB_DIRS )
-			set( _ENTRIES "${_ENTRIES}SET VISTACORELIBS_DRIVER_PLUGIN_DIRS=${VISTACORELIBS_DRIVER_PLUGIN_DIRS}\n" )
+			if( VISTACORELIBS_DRIVER_PLUGIN_DIRS )
+				set( _ENTRIES "${_ENTRIES}SET VISTACORELIBS_DRIVER_PLUGIN_DIRS=${VISTACORELIBS_DRIVER_PLUGIN_DIRS}\n" )
+			endif( VISTACORELIBS_DRIVER_PLUGIN_DIRS )
 			set( _ENVVARNAME "" )
 			foreach( _ENTRY ${VISTA_ENVVARS} ${VISTA_${_PACKAGE_NAME}_ENVVARS} )
 				if( "${_ENVVARNAME}" STREQUAL "" )
@@ -782,8 +784,10 @@ macro( vista_configure_app _PACKAGE_NAME )
 				endforeach (_ENTRY ${_DYNAMIC_LIB_DIRS} )
 				set ( _ENTRIES "${_ENTRIES}$LD_LIBRARY_PATH\n" )
 			endif( _DYNAMIC_LIB_DIRS )
-			
-			set( _ENTRIES "${_ENTRIES}export VISTACORELIBS_DRIVER_PLUGIN_DIRS=${VISTACORELIBS_DRIVER_PLUGIN_DIRS}\n" )
+			if( VISTACORELIBS_DRIVER_PLUGIN_DIRS)
+				 string( REPLACE ";" ":" _VISTACORELIBS_DRIVER_PLUGIN_DIRS_ENV ${VISTACORELIBS_DRIVER_PLUGIN_DIRS} )
+				set( _ENTRIES "${_ENTRIES}export VISTACORELIBS_DRIVER_PLUGIN_DIRS=${_VISTACORELIBS_DRIVER_PLUGIN_DIRS_ENV}\n" )					
+			endif( VISTACORELIBS_DRIVER_PLUGIN_DIRS )
 			set( _ENVVARNAME "" )
 			foreach( _ENTRY ${VISTA_${_PACKAGE_NAME}_ENVVARS} )
 				if( "${_ENVVARNAME}" STREQUAL "" )
@@ -902,40 +906,73 @@ macro( vista_configure_lib _PACKAGE_NAME )
 	endif( WIN32 )
 endmacro( vista_configure_lib _PACKAGE_NAME)
 
-# vista_add_target_pathscript_dynamic_lib_path( _PATH )
+# vista_add_target_pathscript_dynamic_lib_path( _PACKAGE_NAME _PATH [PATH_LIST] )
 # adds an environment variable that will be added to the set_path_for_* scripts
 # and the msvc projects for the specified application target
-macro( vista_add_target_pathscript_dynamic_lib_path _PATH )
-	list( APPEND VISTA_${_PACKAGE_NAME}_ADDITIONAL_PATHENTRIES "${_PATH}" )
+# if the option PATH_LIST is provided, the input will be transformed to a list
+# of pathes using the OS-specific separator
+macro( vista_add_target_pathscript_dynamic_lib_path _PACKAGE_NAME _PATH )
+	if( UNIX AND ${ARGC} GREATER 2 AND ${ARGV2} STREQUAL "PATH_LIST" )
+		string( REPLACE ";" ":" _OUTPUT_LIST "${_PATH}" )
+		list( APPEND VISTA_${_PACKAGE_NAME}_ADDITIONAL_PATHENTRIES "${_OUTPUT_LIST}" )
+	else()
+		list( APPEND VISTA_${_PACKAGE_NAME}_ADDITIONAL_PATHENTRIES "${_PATH}" )
+	endif( UNIX AND ${ARGC} GREATER 2 AND ${ARGV2} STREQUAL "PATH_LIST" )
 endmacro( vista_add_target_pathscript_dynamic_lib_path _PATH )
 
 # vista_add_pathscript_dynamic_lib_path( _PATH )
 # adds an environment variable that will be added to the set_path_for_* scripts
 # and the msvc projects for all apps that are configured afterwards
+# if the option PATH_LIST is provided, the input will be transformed to a list
+# of pathes using the OS-specific separator
 macro( vista_add_pathscript_dynamic_lib_path _PATH )
-	list( APPEND VISTA_ADDITIONAL_PATHENTRIES "${_PATH}" )
+	if( UNIX AND ${ARGC} GREATER 1 AND ${ARGV1} STREQUAL "PATH_LIST" )
+		string( REPLACE ";" ":" _OUTPUT_LIST "${_PATH}" )
+		list( APPEND VISTA_${_PACKAGE_NAME}_ADDITIONAL_PATHENTRIES "${_OUTPUT_LIST}" )
+	else()
+		list( APPEND VISTA_ADDITIONAL_PATHENTRIES "${_PATH}" )
+	endif( UNIX AND ${ARGC} GREATER 1 AND ${ARGV1} STREQUAL "PATH_LIST" )
 endmacro( vista_add_pathscript_dynamic_lib_path _PATH )
 
 
 # vista_add_target_pathscript_envvar( _PACKAGE_NAME _ENVVAR _VALUE )
 # adds an environment variable that will be added to the set_path_for_* scripts
 # and the msvc projects for the specified application target
+# if the option PATH_LIST is provided, the input will be transformed to a list
+# of pathes using the OS-specific separator
 macro( vista_add_target_pathscript_envvar _PACKAGE_NAME _ENVVAR _VALUE )
-	list( APPEND VISTA_${_PACKAGE_NAME}_ENVVARS "${_ENVVAR}" "${_VALUE}" )
+	if( UNIX AND ${ARGC} GREATER 4 AND ${ARGV4} STREQUAL "PATH_LIST" )
+		string( REPLACE ";" ":" _OUTPUT_LIST "${_VALUE}" )
+		list( APPEND VISTA_${_PACKAGE_NAME}_ENVVARS "${_ENVVAR}" "${_OUTPUT_LIST}" )
+	else()
+		list( APPEND VISTA_${_PACKAGE_NAME}_ENVVARS "${_ENVVAR}" "${_VALUE}" )
+	endif( UNIX AND ${ARGC} GREATER 4 AND ${ARGV4} STREQUAL "PATH_LIST" )
 endmacro( vista_add_target_pathscript_envvar )
 
 # vista_add_target_pathscript_envvar( _ENVVAR _VALUE )
 # adds an environment variable that will be added to the set_path_for_* scripts
 # and the msvc projects for all apps that are configured afterwards
+# if the option PATH_LIST is provided, the input will be transformed to a list
+# of pathes using the OS-specific separator
 macro( vista_add_pathscript_envvar _ENVVAR _VALUE )
-	list( APPEND VISTA_ENVVARS "${_ENVVAR}" "${_VALUE}" )
+	if( UNIX AND ${ARGC} GREATER 3 AND ${ARGV3} STREQUAL "PATH_LIST" )
+		string( REPLACE ";" ":" _OUTPUT_LIST "${_VALUE}" )
+		list( APPEND VISTA_ENVVARS "${_ENVVAR}" "${_OUTPUT_LIST}" )
+	else()
+		list( APPEND VISTA_ENVVARS "${_ENVVAR}" "${_VALUE}" )
+	endif( UNIX AND ${ARGC} GREATER 3 AND ${ARGV3} STREQUAL "PATH_LIST" )
 endmacro( vista_add_pathscript_envvar )
 
 
 # vista_set_target_msvc_arguments( _PACKAGE_NAME _COMMANDLINE_VARS )
 # sets the default commandline args in the msvc project for the specified application target
 macro( vista_set_target_msvc_arguments _PACKAGE_NAME _COMMANDLINE_VARS )
-	set( VISTA_${_PACKAGE_NAME}_MSVC_ARGUMENTS ${_COMMANDLINE_VARS} )
+	if( UNIX AND ${ARGC} GREATER 1 AND ${ARGV1} STREQUAL "PATH_LIST" )
+		string( REPLACE ";" ":" _OUTPUT_LIST "${_COMMANDLINE_VARS}" )
+		set( VISTA_${_PACKAGE_NAME}_MSVC_ARGUMENTS ${_OUTPUT_LIST} )
+	else()
+		set( VISTA_${_PACKAGE_NAME}_MSVC_ARGUMENTS ${_COMMANDLINE_VARS} )
+	endif( UNIX AND ${ARGC} GREATER 1 AND ${ARGV1} STREQUAL "PATH_LIST" )
 endmacro( vista_set_target_msvc_arguments )
 
 # vista_install( TARGET [INCLUDE/BIN_SUBDIRECTORY [LIBRARY_SUBDIRECTORY] ] [NO_POSTFIX] )
