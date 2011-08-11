@@ -138,79 +138,77 @@ else( NOT EXISTS ${PACKAGE_REFERENCE_DIR} )
 	else( NOT PACKAGE_FIND_VERSION_EXT )
 		set( PACKAGE_VERSION "${@_PACKAGE_NAME_UPPER@_VERSION_EXT}" )
 
-		if( NOT VISTA_HWARCH STREQUAL @_PACKAGE_NAME_UPPER@_VERSION_HWARCH )
-			set( PACKAGE_VERSION_EXACT FALSE )
-			set( PACKAGE_VERSION_COMPATIBLE FALSE )
-			set( PACKAGE_VERSION_UNSUITABLE TRUE )
+		# first, we decompose the input
+		set( _REMAINING_VERSION ${PACKAGE_FIND_VERSION_EXT} )
 
-		else( NOT VISTA_HWARCH STREQUAL @_PACKAGE_NAME_UPPER@_VERSION_HWARCH )
+		_local_extract_part( _IN_TYPE  "[a-zA-Z]+" "_" )
 
-			# first, we decompose the input
+		if( NOT _IN_TYPE STREQUAL "HEAD"
+			AND NOT _IN_TYPE STREQUAL "RELEASE"
+			AND NOT _IN_TYPE STREQUAL "BRANCH"
+			AND NOT _IN_TYPE STREQUAL "TRUNK" )
+			set( _IN_TYPE )
 			set( _REMAINING_VERSION ${PACKAGE_FIND_VERSION_EXT} )
+		endif( NOT _IN_TYPE STREQUAL "HEAD"
+			AND NOT _IN_TYPE STREQUAL "RELEASE"
+			AND NOT _IN_TYPE STREQUAL "BRANCH"
+			AND NOT _IN_TYPE STREQUAL "TRUNK" )
 
-			_local_extract_part( _IN_TYPE  "[a-zA-Z]+" "_" )
+		_local_extract_part( _IN_NAME  "[a-zA-Z][^\\\\-]+" "\\\\-" )
+		_local_extract_part( _IN_MAJOR "[0-9\\\\+\\\\-]+" "\\\\." )
+		_local_extract_part( _IN_MINOR "[0-9\\\\+\\\\-]+" "\\\\." )
+		_local_extract_part( _IN_PATCH "[0-9\\\\+\\\\-]+" "\\\\." )
+		_local_extract_part( _IN_TWEAK "[0-9\\\\+\\\\-]+" "$" )
 
-			if( NOT _IN_TYPE STREQUAL "HEAD"
-				AND NOT _IN_TYPE STREQUAL "RELEASE"
-				AND NOT _IN_TYPE STREQUAL "BRANCH"
-				AND NOT _IN_TYPE STREQUAL "TRUNK" )
-				set( _IN_TYPE )
-				set( _REMAINING_VERSION ${PACKAGE_FIND_VERSION_EXT} )
-			endif( NOT _IN_TYPE STREQUAL "HEAD"
-				AND NOT _IN_TYPE STREQUAL "RELEASE"
-				AND NOT _IN_TYPE STREQUAL "BRANCH"
-				AND NOT _IN_TYPE STREQUAL "TRUNK" )
+		#we assume match, and only change this if we find non-matches
+		set( PACKAGE_VERSION_EXACT TRUE )
+		set( PACKAGE_VERSION_COMPATIBLE TRUE )
+		set( PACKAGE_VERSION_UNSUITABLE FALSE )
 
-			_local_extract_part( _IN_NAME  "[a-zA-Z][^\\\\-]+" "\\\\-" )
-			_local_extract_part( _IN_MAJOR "[0-9\\\\+\\\\-]+" "\\\\." )
-			_local_extract_part( _IN_MINOR "[0-9\\\\+\\\\-]+" "\\\\." )
-			_local_extract_part( _IN_PATCH "[0-9\\\\+\\\\-]+" "\\\\." )
-			_local_extract_part( _IN_TWEAK "[0-9\\\\+\\\\-]+" "$" )
+		#if there is just one entry, it's the name
+		if( _IN_TYPE AND NOT _IN_NAME AND NOT _IN_MAJOR )
+			set( _IN_NAME ${_IN_TYPE} )
+			set( _IN_TYPE "" )
+		endif( _IN_TYPE AND NOT _IN_NAME AND NOT _IN_MAJOR )
 
-			#we assume match, and only change this if we find non-matches
-			set( PACKAGE_VERSION_EXACT TRUE )
-			set( PACKAGE_VERSION_COMPATIBLE TRUE )
-			set( PACKAGE_VERSION_UNSUITABLE FALSE )
+		if( NOT _IN_TYPE OR _IN_TYPE STREQUAL @_PACKAGE_NAME_UPPER@_VERSION_TYPE )
+			# in case of releases, we don't need a name
+			if( NOT _IN_NAME AND @_PACKAGE_NAME_UPPER@_VERSION_TYPE STREQUAL "RELEASE" )
+				set( _IN_NAME ${@_PACKAGE_NAME_UPPER@_VERSION_NAME} )
+			endif( NOT _IN_NAME AND @_PACKAGE_NAME_UPPER@_VERSION_TYPE STREQUAL "RELEASE" )
 
-			#if there is just one entry, it's the name
-			if( _IN_TYPE AND NOT _IN_NAME AND NOT _IN_MAJOR )
-				set( _IN_NAME ${_IN_TYPE} )
-				set( _IN_TYPE "" )
-			endif( _IN_TYPE AND NOT _IN_NAME AND NOT _IN_MAJOR )
+			# in case of head, either type or name has to be head
+			if( _IN_TYPE STREQUAL "HEAD" AND NOT _IN_NAME )
+				set( _IN_NAME "HEAD" )
+			endif( _IN_TYPE STREQUAL "HEAD" AND NOT _IN_NAME )
 
-			if( NOT _IN_TYPE OR _IN_TYPE STREQUAL @_PACKAGE_NAME_UPPER@_VERSION_TYPE )
-				# in case of releases, we don't need a name
-				if( NOT _IN_NAME AND @_PACKAGE_NAME_UPPER@_VERSION_TYPE STREQUAL "RELEASE" )
-					set( _IN_NAME ${@_PACKAGE_NAME_UPPER@_VERSION_NAME} )
-				endif( NOT _IN_NAME AND @_PACKAGE_NAME_UPPER@_VERSION_TYPE STREQUAL "RELEASE" )
-
-				# in case of head, either type or name has to be head
-				if( _IN_TYPE STREQUAL "HEAD" AND NOT _IN_NAME )
-					set( _IN_NAME "HEAD" )
-				endif( _IN_TYPE STREQUAL "HEAD" AND NOT _IN_NAME )
-
-				#check name
-				if( NOT _IN_NAME STREQUAL @_PACKAGE_NAME_UPPER@_VERSION_NAME )
-					set( PACKAGE_VERSION_EXACT FALSE )
-					set( PACKAGE_VERSION_COMPATIBLE FALSE )
-				else( NOT _IN_NAME STREQUAL @_PACKAGE_NAME_UPPER@_VERSION_NAME )
-					#check versions - these automatically adjust PACKAGE_VERSION_EXACT and PACKAGE_VERSION_COMPATIBLE
-					_local_check_valid_subversion( "${_IN_MAJOR}" "${@_PACKAGE_NAME_UPPER@_VERSION_MAJOR}" FALSE )
-					_local_check_valid_subversion( "${_IN_MINOR}" "${@_PACKAGE_NAME_UPPER@_VERSION_MINOR}" FALSE )
-					_local_check_valid_subversion( "${_IN_PATCH}" "${@_PACKAGE_NAME_UPPER@_VERSION_PATCH}" TRUE )
-					_local_check_valid_subversion( "${_IN_TWEAK}" "${@_PACKAGE_NAME_UPPER@_VERSION_TWEAK}" TRUE )
-				endif( NOT _IN_NAME STREQUAL @_PACKAGE_NAME_UPPER@_VERSION_NAME )
-
-			else( NOT _IN_TYPE OR _IN_TYPE STREQUAL @_PACKAGE_NAME_UPPER@_VERSION_TYPE )
+			#check name
+			if( NOT _IN_NAME STREQUAL @_PACKAGE_NAME_UPPER@_VERSION_NAME )
 				set( PACKAGE_VERSION_EXACT FALSE )
 				set( PACKAGE_VERSION_COMPATIBLE FALSE )
-			endif( NOT _IN_TYPE OR _IN_TYPE STREQUAL @_PACKAGE_NAME_UPPER@_VERSION_TYPE )
+			else( NOT _IN_NAME STREQUAL @_PACKAGE_NAME_UPPER@_VERSION_NAME )
+				#check versions - these automatically adjust PACKAGE_VERSION_EXACT and PACKAGE_VERSION_COMPATIBLE
+				_local_check_valid_subversion( "${_IN_MAJOR}" "${@_PACKAGE_NAME_UPPER@_VERSION_MAJOR}" FALSE )
+				_local_check_valid_subversion( "${_IN_MINOR}" "${@_PACKAGE_NAME_UPPER@_VERSION_MINOR}" FALSE )
+				_local_check_valid_subversion( "${_IN_PATCH}" "${@_PACKAGE_NAME_UPPER@_VERSION_PATCH}" TRUE )
+				_local_check_valid_subversion( "${_IN_TWEAK}" "${@_PACKAGE_NAME_UPPER@_VERSION_TWEAK}" TRUE )
+			endif( NOT _IN_NAME STREQUAL @_PACKAGE_NAME_UPPER@_VERSION_NAME )
 
-		endif( NOT VISTA_HWARCH STREQUAL @_PACKAGE_NAME_UPPER@_VERSION_HWARCH )
+		else( NOT _IN_TYPE OR _IN_TYPE STREQUAL @_PACKAGE_NAME_UPPER@_VERSION_TYPE )
+			set( PACKAGE_VERSION_EXACT FALSE )
+			set( PACKAGE_VERSION_COMPATIBLE FALSE )
+		endif( NOT _IN_TYPE OR _IN_TYPE STREQUAL @_PACKAGE_NAME_UPPER@_VERSION_TYPE )
 
 	endif( NOT PACKAGE_FIND_VERSION_EXT )
 
 endif( "${PACKAGE_FIND_VERSION}" STREQUAL "" AND "${PACKAGE_FIND_VERSION_EXT}" STREQUAL "" )
+
+# finally: verify that the HWARCH is corect (if the varexists)
+if( VISTA_HWARCH AND NOT VISTA_HWARCH STREQUAL @_PACKAGE_NAME_UPPER@_VERSION_HWARCH )
+	set( PACKAGE_VERSION_EXACT FALSE )
+	set( PACKAGE_VERSION_COMPATIBLE FALSE )
+	set( PACKAGE_VERSION_UNSUITABLE TRUE )
+endif( VISTA_HWARCH AND NOT VISTA_HWARCH STREQUAL @_PACKAGE_NAME_UPPER@_VERSION_HWARCH )
 
 
 
