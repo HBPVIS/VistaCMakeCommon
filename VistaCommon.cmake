@@ -912,12 +912,12 @@ endmacro( vista_configure_lib _PACKAGE_NAME)
 # if the option PATH_LIST is provided, the input will be transformed to a list
 # of pathes using the OS-specific separator
 macro( vista_add_target_pathscript_dynamic_lib_path _PACKAGE_NAME _PATH )
-	if( UNIX AND ${ARGC} GREATER 2 AND ${ARGV2} STREQUAL "PATH_LIST" )
+	if( UNIX AND ${ARGC} GREATER 2 AND "${ARGV2}" STREQUAL "PATH_LIST" )
 		string( REPLACE ";" ":" _OUTPUT_LIST "${_PATH}" )
 		list( APPEND VISTA_${_PACKAGE_NAME}_ADDITIONAL_PATHENTRIES "${_OUTPUT_LIST}" )
 	else()
 		list( APPEND VISTA_${_PACKAGE_NAME}_ADDITIONAL_PATHENTRIES "${_PATH}" )
-	endif( UNIX AND ${ARGC} GREATER 2 AND ${ARGV2} STREQUAL "PATH_LIST" )
+	endif( UNIX AND ${ARGC} GREATER 2 AND "${ARGV2}" STREQUAL "PATH_LIST" )
 endmacro( vista_add_target_pathscript_dynamic_lib_path _PATH )
 
 # vista_add_pathscript_dynamic_lib_path( _PATH )
@@ -926,12 +926,12 @@ endmacro( vista_add_target_pathscript_dynamic_lib_path _PATH )
 # if the option PATH_LIST is provided, the input will be transformed to a list
 # of pathes using the OS-specific separator
 macro( vista_add_pathscript_dynamic_lib_path _PATH )
-	if( UNIX AND ${ARGC} GREATER 1 AND ${ARGV1} STREQUAL "PATH_LIST" )
+	if( UNIX AND ${ARGC} GREATER 1 AND "${ARGV1}" STREQUAL "PATH_LIST" )
 		string( REPLACE ";" ":" _OUTPUT_LIST "${_PATH}" )
 		list( APPEND VISTA_${_PACKAGE_NAME}_ADDITIONAL_PATHENTRIES "${_OUTPUT_LIST}" )
 	else()
 		list( APPEND VISTA_ADDITIONAL_PATHENTRIES "${_PATH}" )
-	endif( UNIX AND ${ARGC} GREATER 1 AND ${ARGV1} STREQUAL "PATH_LIST" )
+	endif( UNIX AND ${ARGC} GREATER 1 AND "${ARGV1}" STREQUAL "PATH_LIST" )
 endmacro( vista_add_pathscript_dynamic_lib_path _PATH )
 
 
@@ -941,12 +941,12 @@ endmacro( vista_add_pathscript_dynamic_lib_path _PATH )
 # if the option PATH_LIST is provided, the input will be transformed to a list
 # of pathes using the OS-specific separator
 macro( vista_add_target_pathscript_envvar _PACKAGE_NAME _ENVVAR _VALUE )
-	if( UNIX AND ${ARGC} GREATER 4 AND ${ARGV4} STREQUAL "PATH_LIST" )
+	if( UNIX AND ${ARGC} GREATER 4 AND "${ARGV4}" STREQUAL "PATH_LIST" )
 		string( REPLACE ";" ":" _OUTPUT_LIST "${_VALUE}" )
 		list( APPEND VISTA_${_PACKAGE_NAME}_ENVVARS "${_ENVVAR}" "${_OUTPUT_LIST}" )
 	else()
 		list( APPEND VISTA_${_PACKAGE_NAME}_ENVVARS "${_ENVVAR}" "${_VALUE}" )
-	endif( UNIX AND ${ARGC} GREATER 4 AND ${ARGV4} STREQUAL "PATH_LIST" )
+	endif( UNIX AND ${ARGC} GREATER 4 AND "${ARGV4}" STREQUAL "PATH_LIST" )
 endmacro( vista_add_target_pathscript_envvar )
 
 # vista_add_target_pathscript_envvar( _ENVVAR _VALUE )
@@ -955,24 +955,24 @@ endmacro( vista_add_target_pathscript_envvar )
 # if the option PATH_LIST is provided, the input will be transformed to a list
 # of pathes using the OS-specific separator
 macro( vista_add_pathscript_envvar _ENVVAR _VALUE )
-	if( UNIX AND ${ARGC} GREATER 3 AND ${ARGV3} STREQUAL "PATH_LIST" )
+	if( UNIX AND ${ARGC} GREATER 3 AND "${ARGV3}" STREQUAL "PATH_LIST" )
 		string( REPLACE ";" ":" _OUTPUT_LIST "${_VALUE}" )
 		list( APPEND VISTA_ENVVARS "${_ENVVAR}" "${_OUTPUT_LIST}" )
 	else()
 		list( APPEND VISTA_ENVVARS "${_ENVVAR}" "${_VALUE}" )
-	endif( UNIX AND ${ARGC} GREATER 3 AND ${ARGV3} STREQUAL "PATH_LIST" )
+	endif( UNIX AND ${ARGC} GREATER 3 AND "${ARGV3}" STREQUAL "PATH_LIST" )
 endmacro( vista_add_pathscript_envvar )
 
 
 # vista_set_target_msvc_arguments( _PACKAGE_NAME _COMMANDLINE_VARS )
 # sets the default commandline args in the msvc project for the specified application target
 macro( vista_set_target_msvc_arguments _PACKAGE_NAME _COMMANDLINE_VARS )
-	if( UNIX AND ${ARGC} GREATER 1 AND ${ARGV1} STREQUAL "PATH_LIST" )
+	if( UNIX AND ${ARGC} GREATER 1 AND "${ARGV1}" STREQUAL "PATH_LIST" )
 		string( REPLACE ";" ":" _OUTPUT_LIST "${_COMMANDLINE_VARS}" )
 		set( VISTA_${_PACKAGE_NAME}_MSVC_ARGUMENTS ${_OUTPUT_LIST} )
 	else()
 		set( VISTA_${_PACKAGE_NAME}_MSVC_ARGUMENTS ${_COMMANDLINE_VARS} )
-	endif( UNIX AND ${ARGC} GREATER 1 AND ${ARGV1} STREQUAL "PATH_LIST" )
+	endif( UNIX AND ${ARGC} GREATER 1 AND "${ARGV1}" STREQUAL "PATH_LIST" )
 endmacro( vista_set_target_msvc_arguments )
 
 # vista_install( TARGET [INCLUDE/BIN_SUBDIRECTORY [LIBRARY_SUBDIRECTORY] ] [NO_POSTFIX] )

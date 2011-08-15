@@ -4,7 +4,7 @@ include( FindPackageHandleStandardArgs )
 include( VistaFindUtils )
 
 if( NOT VEIGEN_FOUND )
-	vista_find_package_root( Eigen Dense )	
+	vista_find_package_root( Eigen Eigen/Dense )	
 
 	if( EIGEN_ROOT_DIR )
 		set( EIGEN_INCLUDE_DIRS ${EIGEN_ROOT_DIR})		
