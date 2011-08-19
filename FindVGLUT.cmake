@@ -12,18 +12,19 @@ if( NOT VGLUT_FOUND )
 		
 		vista_find_package_root( GLUT "include/GL/glut.h" NAMES freeglut glut OpenSG )
 		
+		set( GLUT_LIBRARIES "GLUT_LIBRARIES-NOTFOUND" )
 		find_library( GLUT_LIBRARIES NAMES freeglut freeglut-msvc90x86 glut glut32
 						PATHS "${GLUT_ROOT_DIR}/lib" "${GLUT_ROOT_DIR}/lib/opt"
 						NO_DEFAULT_PATH
 						CACHE "Glut/freeglut library" )
 
 		if( GLUT_ROOT_DIR AND GLUT_LIBRARIES )
-
+		
 			set( GLUT_INCLUDE_DIRS "${GLUT_ROOT_DIR}/include" )
 			get_filename_component( GLUT_LIBRARY_DIRS ${GLUT_LIBRARIES} PATH )
 
 		else( GLUT_ROOT_DIR AND GLUT_LIBRARIES )
-			
+		
 			find_package( GLUT )
 
 			if( GLUT_FOUND )
