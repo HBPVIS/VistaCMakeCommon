@@ -1826,11 +1826,6 @@ macro( vista_create_doxygen_target _DOXYFILE )
 		if( NOT EXISTS _WORKDIR )
 			file( MAKE_DIRECTORY "${_WORKDIR}" )
 		endif( NOT EXISTS _WORKDIR )
-		message( "add_custom_target( Doxygen
-			${DOXYGEN_EXECUTABLE} ${_DOXYFILE}
-			WORKING_DIRECTORY ${_WORKDIR}
-			COMMENT Generating API documentation with Doxygen
-		)" )
 		add_custom_target( Doxygen
 			"${DOXYGEN_EXECUTABLE}" "${_DOXYFILE}"
 			WORKING_DIRECTORY "${_WORKDIR}"
