@@ -1805,18 +1805,35 @@ macro( vista_create_default_info_file _PACKAGE_NAME )
 	endif( VISTA_CREATE_BUILD_INFO_FILES )
 endmacro( vista_create_default_info_file )
 
-# vista_create_doxygen_target( DOXYFILE )
+# vista_create_doxygen_target( DOXYFILE [WORKING_DIR] )
 # adds a target for creating doxygen info
 # only works if Doxygen can be found on the system. If successfull, doxygen can be
 # creating by running the "Doxygen" project in MSVC or by calling make Doxygen
+# The path to the Doxy-File has to be absolute!
+# Doxygen is run in either the localion specified by the optional parameter WORKING_DIR, or 
+# by default in the same location as the doxyfile. This means, the OUTPUT_DIRECTORY and INPUT targets
+# specified inside the Doxyfile are relative to this working dir
 macro( vista_create_doxygen_target _DOXYFILE )
 	find_package( Doxygen )
 	if( NOT DOXYGEN_FOUND )
 		message( STATUS "vista_create_doxygen - Doxygen executable not found - cant create doxygen target" )
 	else()
+		if( ${ARGC} GREATER 1 )
+			set( _WORKDIR ${ARGV1} )
+		else()
+			get_filename_component( _WORKDIR "${_DOXYFILE}" PATH )
+		endif( ${ARGC} GREATER 1 )
+		if( NOT EXISTS _WORKDIR )
+			file( MAKE_DIRECTORY "${_WORKDIR}" )
+		endif( NOT EXISTS _WORKDIR )
+		message( "add_custom_target( Doxygen
+			${DOXYGEN_EXECUTABLE} ${_DOXYFILE}
+			WORKING_DIRECTORY ${_WORKDIR}
+			COMMENT Generating API documentation with Doxygen
+		)" )
 		add_custom_target( Doxygen
-			${DOXYGEN_EXECUTABLE} "${_DOXYFILE}"
-			WORKING_DIRECTORY "${_DOXY_ROOT}"
+			"${DOXYGEN_EXECUTABLE}" "${_DOXYFILE}"
+			WORKING_DIRECTORY "${_WORKDIR}"
 			COMMENT "Generating API documentation with Doxygen"
 		)
 		set_target_properties( Doxygen PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD TRUE )
