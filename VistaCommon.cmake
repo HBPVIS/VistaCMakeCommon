@@ -814,7 +814,11 @@ macro( vista_configure_app _PACKAGE_NAME )
 
 	#if we're usign MSVC, we set up a *.vcproj.user file
 	if( MSVC )
-		find_file( VISTA_VCPROJUSER_PROTO_FILE "VisualStudio.vcproj.user_proto" ${CMAKE_MODULE_PATH} )
+		if( MSVC10 )
+			find_file( VISTA_VCPROJUSER_PROTO_FILE "VisualStudio2010.vcxproj.user_proto" ${CMAKE_MODULE_PATH} )
+		else( MSVC10 )
+			find_file( VISTA_VCPROJUSER_PROTO_FILE "VisualStudio.vcproj.user_proto" ${CMAKE_MODULE_PATH} )
+		endif( MSVC10 )
 		set( VISTA_VCPROJUSER_PROTO_FILE ${VISTA_VCPROJUSER_PROTO_FILE} CACHE INTERNAL "" )
 		if( VISTA_VCPROJUSER_PROTO_FILE )
 			if( VISTA_64BIT )
@@ -852,12 +856,19 @@ macro( vista_configure_app _PACKAGE_NAME )
 			
 			set( _COMMANDARGS ${VISTA_${_PACKAGE_NAME}_MSVC_ARGUMENTS} )
 			
-
-			configure_file(
-				${VISTA_VCPROJUSER_PROTO_FILE}
-				${CMAKE_CURRENT_BINARY_DIR}/${_PACKAGE_NAME}.vcproj.user
-				@ONLY
-			)
+			if( MSVC10 )
+				configure_file(
+					${VISTA_VCPROJUSER_PROTO_FILE}
+					${CMAKE_CURRENT_BINARY_DIR}/${_PACKAGE_NAME}.vcxproj.user
+					@ONLY
+				)
+			else( MSVC10 )
+				configure_file(
+					${VISTA_VCPROJUSER_PROTO_FILE}
+					${CMAKE_CURRENT_BINARY_DIR}/${_PACKAGE_NAME}.vcproj.user
+					@ONLY
+				)
+			endif( MSVC10 )						
 		else( VISTA_VCPROJUSER_PROTO_FILE )
 			message( WARNING "vista_configure_app( ${_PACKAGE_NAME} ) - could not find file VisualStudio.vcproj.user_proto" )
 		endif( VISTA_VCPROJUSER_PROTO_FILE )
