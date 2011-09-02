@@ -60,6 +60,8 @@
 if( NOT VISTA_COMMON_INCLUDED )
 set( VISTA_COMMON_INCLUDED TRUE )
 
+set( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )
+
 #this package sets the variables VISTA_HWARCH, VISTA_COMPATIBLE_HWARCH and VISTA_64BIT
 include( VistaHWArchSettings )
 include( VistaFindUtils )

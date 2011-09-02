@@ -12,6 +12,8 @@
 if( NOT VISTA_FIND_UTILS_INCLUDED )
 set( VISTA_FIND_UTILS_INCLUDED TRUE )
 
+set( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )
+
 include( VistaHWArchSettings )
 
 set( VISTA_PACKAGE_SEARCH_PATHS )
@@ -21,8 +23,8 @@ foreach( _PATH "$ENV{VRDEV}" $ENV{VISTA_EXTERNAL_LIBS} "$ENV{VRSOFTWARE}"
 	if( NOT _PATH STREQUAL "/" AND NOT _PATH STREQUAL "" )
 		file( TO_CMAKE_PATH "${_PATH}" _PATH )
 		list( APPEND VISTA_PACKAGE_SEARCH_PATHS ${_PATH} )
-	endif( NOT _PATH STREQUAL "/" AND NOT _PATH STREQUAL "" )
-endforeach( _PATH )
+	endif()
+endforeach()
 list( REMOVE_DUPLICATES VISTA_PACKAGE_SEARCH_PATHS )
 
 # vista_check_version_entry( INPUT_VERSION OWN_VERSION DIFFERENCE_VAR )
@@ -44,7 +46,7 @@ macro( vista_check_version_entry INPUT_VERSION OWN_VERSION DIFFERENCE_OUTPUT_VAR
 		if( _STRING_IS_MIN )
 			if( ( ${OWN_VERSION} EQUAL ${CMAKE_MATCH_1} ) OR ( ${OWN_VERSION} GREATER ${CMAKE_MATCH_1} ) )
 				set( ${DIFFERENCE_OUTPUT_VAR} 0 )
-			endif( ( ${OWN_VERSION} EQUAL ${CMAKE_MATCH_1} ) OR ( ${OWN_VERSION} GREATER ${CMAKE_MATCH_1} ) )
+			endif()
 		else()
 			string( REGEX MATCH "([0-9]+)\\-([0-9]+)$" _STRING_IS_RANGE ${INPUT_VERSION} )
 			if( _STRING_IS_RANGE )
@@ -52,16 +54,16 @@ macro( vista_check_version_entry INPUT_VERSION OWN_VERSION DIFFERENCE_OUTPUT_VAR
 					if( ( ${OWN_VERSION} EQUAL ${CMAKE_MATCH_2} ) OR ( ${OWN_VERSION} LESS ${CMAKE_MATCH_2} ) )
 						set( ${DIFFERENCE_OUTPUT_VAR} 0 )
 					endif( ( ${OWN_VERSION} EQUAL ${CMAKE_MATCH_2} ) OR ( ${OWN_VERSION} LESS ${CMAKE_MATCH_2} ) )
-				endif( ( ${OWN_VERSION} EQUAL ${CMAKE_MATCH_1} ) OR ( ${OWN_VERSION} GREATER ${CMAKE_MATCH_1} ) )
+				endif()
 			elseif( "${INPUT_VERSION}" VERSION_EQUAL "${OWN_VERSION}" )
 				# exact match
 				set( ${DIFFERENCE_OUTPUT_VAR} 0 )
 			elseif( "${INPUT_VERSION}" VERSION_LESS "${OWN_VERSION}" )
 				# compatible match
 				math( EXPR ${DIFFERENCE_OUTPUT_VAR}  "${OWN_VERSION} - ${INPUT_VERSION}" )
-			endif( _STRING_IS_RANGE )
-		endif( _STRING_IS_MIN )
-	endif( "${INPUT_VERSION}" STREQUAL "" OR  "${OWN_VERSION}" STREQUAL "" )
+			endif()
+		endif()
+	endif()
 endmacro( vista_check_version_entry )
 
 # vista_extract_version_part( TARGET ENTRY SEPARATOR )
