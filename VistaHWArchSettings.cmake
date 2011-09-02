@@ -24,6 +24,8 @@ if( NOT VISTA_HWARCH )
 		else( VISTA_64BIT )
 			set( VISTA_HWARCH "win32" )
 		endif( VISTA_64BIT )
+		
+		set( VISTA_COMPATIBLE_HWARCH ${VISTA_HWARCH} ${VISTA_COMPATIBLE_HWARCH} )
 
 		if( MSVC )
 			if( MSVC80 )
