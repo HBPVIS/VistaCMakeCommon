@@ -342,6 +342,79 @@ endmacro( vista_enable_most_compiler_warnings )
 ###   Package macros    ###
 ###########################
 
+
+# vista_add_external_msvc_project_of_package( PACKAGE_NAME [SOLUTION_FOLDER] [DEPENDENT (DENENDENT_TARGET)+ ] )
+# note: the targets will NOT be named by their original name, but
+# instead external_NAME, to prevent name clashes (e.g. with included libraries)
+# will only work if a project exists, and other wise fails silently
+# Parameters:
+#    - PACKAGE_NAME: name of the package (from vista_find|use_package) whose projects should become included
+#    - SOLUTION_FOLDER (optional): Visual Studio solution folder where the project(s) should be put
+#    - DEPENDENT (targets)* (optional): list of targets that should depend on the added projects
+#                            Note: for this to work, the macro has to be called AFTER defining the dependent targets
+macro( vista_add_external_msvc_project_of_package _PACKAGE_NAME )
+	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
+	set( _NEXT_IS_NAME FALSE )
+	set( _NEXT_IS_PROJ FALSE )
+	set( _NEXT_IS_DEP FALSE )
+	set( _NAME "" )
+	set( _POSSIBLE_DEPENDENCIES "" )
+	set( _FOLDER "" )
+	set( _DEPENDENT_TARGETS "" )
+	if( "${ARGC}" GREATER 1 )
+		if( "${_ARGV1}" STREQUAL "DEPENDENT" )
+			set( _DEPENDENT_TARGETS ${_ARGV} )
+			list( REMOVE_AT _DEPENDENT_TARGETS 0 1 )
+		else()
+			set( _FOLDER "${ARGV1}" )
+			if( "${ARGV2}" STREQUAL "DEPENDENT" )
+				set( _DEPENDENT_TARGETS ${ARGV} )
+				list( REMOVE_AT _DEPENDENT_TARGETS 0 1 2 )
+			endif()
+		endif()
+	endif()
+	
+	foreach( _ENTRY ${${_PACKAGE_NAME_UPPER}_MSVC_PROJECT} )
+		if( "${_ENTRY}" STREQUAL "PROJ" )
+			set( _NEXT_IS_NAME TRUE )
+			set( _NEXT_IS_PROJ FALSE )			
+			set( _NEXT_IS_DEP FALSE )
+		elseif( "${_ENTRY}" STREQUAL "DEP" )
+			set( _NEXT_IS_PROJ FALSE )
+			set( _NEXT_IS_NAME FALSE )
+			set( _NEXT_IS_DEP TRUE )
+		elseif( _NEXT_IS_NAME )
+			set( _NEXT_IS_NAME FALSE )
+			set( _NEXT_IS_PROJ TRUE )
+			set( _NEXT_IS_DEP FALSE )
+			set( _NAME "${_ENTRY}" )
+		elseif( _NEXT_IS_PROJ )
+			set( _NEXT_IS_PROJ FALSE )
+			set( _NEXT_IS_NAME FALSE )
+			set( _NEXT_IS_DEP FALSE )
+			# sanity check if project exists
+			if( EXISTS "${_ENTRY}" )
+				message( STATUS "vista_add_external_msvc_project_of_package( ${_PACKAGE_NAME_UPPER} ) - adding external project as external_${_NAME}" )
+				include_external_msproject( "external_${_NAME}" "${_ENTRY}" )
+				list( APPEND _POSSIBLE_DEPENDENCIES ${_NAME} )
+				if( _FOLDER AND CMAKE_VERSION VERSION_GREATER 2.8.4 )
+					set_target_properties( "external_${_NAME}" PROPERTIES FOLDER ${_FOLDER} )
+				endif()
+				foreach( _DEP ${_DEPENDENT_TARGETS} )
+					add_dependencies( ${_DEP} external_${_NAME} )
+				endforeach()
+			endif()
+		elseif( _NEXT_IS_DEP )
+			list( FIND _POSSIBLE_DEPENDENCIES ${_ENTRY} _FOUND )
+			if( _FOUND GREATER -1 )
+				add_dependencies( external_${_NAME} external_${_ENTRY} )
+			else()
+				message( "vista_add_external_msvc_project_of_package( ${_PACKAGE_NAME} ) - project ${_NAME} requests unknown dependency ${_ENTRY}" )
+			endif()
+		endif()
+	endforeach()
+endmacro( vista_add_external_msvc_project_of_package )
+
 # vista_find_package( <package> [version] [EXACT] [QUIET] [[REQUIRED|COMPONENTS] [components...]] [NO_POLICY_SCOPE] [NO_MODULE] )
 # wrapper for the cmake-native find_package with the same (basic) syntax and the following extensions:
 # - allows extended versions (e.g. NAME, 1.2.4-8, etc.)
@@ -815,6 +888,8 @@ macro( vista_configure_app _PACKAGE_NAME )
 		endif( WIN32 )
 	endif( VISTA_TARGET_LINK_DIRS )
 
+	set( ${_PACKAGE_NAME_UPPER}_TARGET_MSVC_PROJECT "" CACHE INTERNAL "" FORCE )
+	
 	#if we're usign MSVC, we set up a *.vcproj.user file
 	if( MSVC )
 		if( MSVC10 )
@@ -865,12 +940,14 @@ macro( vista_configure_app _PACKAGE_NAME )
 					${CMAKE_CURRENT_BINARY_DIR}/${_PACKAGE_NAME}.vcxproj.user
 					@ONLY
 				)
+				set( ${_PACKAGE_NAME_UPPER}_TARGET_MSVC_PROJECT "${CMAKE_CURRENT_BINARY_DIR}/${_PACKAGE_NAME}.vcxproj" CACHE INTERNAL "" FORCE )
 			else( MSVC10 )
 				configure_file(
 					${VISTA_VCPROJUSER_PROTO_FILE}
 					${CMAKE_CURRENT_BINARY_DIR}/${_PACKAGE_NAME}.vcproj.user
 					@ONLY
 				)
+				set( ${_PACKAGE_NAME_UPPER}_TARGET_MSVC_PROJECT "${CMAKE_CURRENT_BINARY_DIR}/${_PACKAGE_NAME}.vcproj" CACHE INTERNAL "" FORCE )
 			endif( MSVC10 )						
 		else( VISTA_VCPROJUSER_PROTO_FILE )
 			message( WARNING "vista_configure_app( ${_PACKAGE_NAME} ) - could not find file VisualStudio.vcproj.user_proto" )
@@ -911,14 +988,24 @@ macro( vista_configure_lib _PACKAGE_NAME )
 
 	string( TOUPPER ${_PACKAGE_NAME} _NAME_UPPER )
 	vista_set_defaultvalue( BUILD_SHARED_LIBS ON CACHE BOOL "Build shared libraries if ON, static libraries if OFF" FORCE )
+	
+	set( ${_PACKAGE_NAME_UPPER}_TARGET_MSVC_PROJECT "" CACHE INTERNAL "" FORCE )
 	if( WIN32 )
 		if( BUILD_SHARED_LIBS )
 			set_target_properties( ${_PACKAGE_NAME} PROPERTIES COMPILE_FLAGS -D${_NAME_UPPER}_EXPORTS )
 		else( BUILD_SHARED_LIBS )
 			set_target_properties( ${_PACKAGE_NAME} PROPERTIES COMPILE_FLAGS -D${_NAME_UPPER}_STATIC )
 		endif( BUILD_SHARED_LIBS )
+		
+		# store location to msvcproj file
+		if( MSVC10 )
+			set( ${_PACKAGE_NAME_UPPER}_TARGET_MSVC_PROJECT "${CMAKE_CURRENT_BINARY_DIR}/${_PACKAGE_NAME}.vcxproj" CACHE INTERNAL "" FORCE )
+		elseif( MSVC )
+			set( ${_PACKAGE_NAME_UPPER}_TARGET_MSVC_PROJECT "${CMAKE_CURRENT_BINARY_DIR}/${_PACKAGE_NAME}.vcproj" CACHE INTERNAL "" FORCE )
+		endif()
 	endif( WIN32 )
 endmacro( vista_configure_lib _PACKAGE_NAME)
+
 
 # vista_add_target_pathscript_dynamic_lib_path( _PACKAGE_NAME _PATH [PATH_LIST] )
 # adds an environment variable that will be added to the set_path_for_* scripts
@@ -1112,7 +1199,7 @@ endmacro( vista_install_all_dlls )
 
 
 
-# vista_create_cmake_config( PACKAGE_NAME CONFIG_PROTO_FILE TARGET_DIR )
+# vista_create_cmake_config_build( PACKAGE_NAME CONFIG_PROTO_FILE TARGET_DIR )
 # configures the specified <package>Config.cmake prototype file, and copies it to the
 # target directory.
 # Has to be called after vista_configure_lib to work properly
@@ -1136,6 +1223,10 @@ endmacro( vista_install_all_dlls )
 #     _PACKAGE_RELATIVE_INCLUDE_DIRS - _PACKAGE_INCLUDE_DIRS relative to current dir
 #     _PACKAGE_DEFINITIONS   - definitions for the package, defaults to nothing
 #                              can be overwritten by defining ${_PACKAGE_NAME_UPPER}_CONFIG_DEFINITIONS before calling the macro
+#     _PACKAGE_MSVC_PROJECT  - msvc project(s) that can be added to other solutions
+#                              format: ( PROJ name location [ DEP ( dependency)* ] )*
+#                              usually set to the internally stored ${_PACKAGE_NAME_UPPER}_TARGET_MSVC_PROJECT
+#                              can be overwritten by setting ${_PACKAGE_NAME_UPPER}_MSVC_PROJECT_OVERWRITE
 macro( vista_create_cmake_config_build _PACKAGE_NAME _CONFIG_PROTO_FILE _TARGET_DIR )
 	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
 
@@ -1171,6 +1262,13 @@ macro( vista_create_cmake_config_build _PACKAGE_NAME _CONFIG_PROTO_FILE _TARGET_
 	if( ${_PACKAGE_NAME_UPPER}_CONFIG_DEFINITIONS )
 		set( _PACKAGE_DEFINITIONS ${${_PACKAGE_NAME_UPPER}_CONFIG_DEFINITIONS} )
 	endif( ${_PACKAGE_NAME_UPPER}_CONFIG_DEFINITIONS )
+	
+	# set the msvc project (check for overwrite)
+	if( ${_PACKAGE_NAME_UPPER}_MSVC_PROJECT_OVERWRITE )
+		set( _PACKAGE_MSVC_PROJECT ${${_PACKAGE_NAME_UPPER}_MSVC_PROJECT_OVERWRITE} )
+	else()
+		set( _PACKAGE_MSVC_PROJECT "PROJ ${_PACKAGE_NAME} \"${${_PACKAGE_NAME_UPPER}_TARGET_MSVC_PROJECT}\"" )
+	endif()
 
 	# if we should create a referenced config file, we create it's target dir
 	if( VISTA_COPY_BUILD_CONFIGS_REFS_TO_CMAKECOMMON )
@@ -1295,6 +1393,8 @@ macro( vista_create_cmake_config_install _PACKAGE_NAME _CONFIG_PROTO_FILE _TARGE
 	if( ${_PACKAGE_NAME_UPPER}_CONFIG_DEFINITIONS )
 		set( _PACKAGE_DEFINITIONS ${${_PACKAGE_NAME_UPPER}_CONFIG_DEFINITIONS} )
 	endif( ${_PACKAGE_NAME_UPPER}_CONFIG_DEFINITIONS )
+	
+	set( _PACKAGE_MSVC_PROJECT "" )
 
 	#retrieve relative pathes for library/include dirs
 	set( _PACKAGE_RELATIVE_INCLUDE_DIRS )

@@ -8,4 +8,8 @@ set( @_PACKAGE_NAME_UPPER@_LIBRARIES
 		debug @_PACKAGE_LIBRARY_NAME@@CMAKE_DEBUG_POSTFIX@ )
 set( @_PACKAGE_NAME_UPPER@_DEPENDENCIES @VISTA_TARGET_DEPENDENCIES@ )
 
+# msvc-project for inclusion in other solutions
+# Format: ( PROJ name location [DEP ( dependency )+ ] )*
+set( @_PACKAGE_NAME_UPPER@_MSVC_PROJECT @_PACKAGE_MSVC_PROJECT@ )
+
 set( @_PACKAGE_NAME_UPPER@_FOUND TRUE )
