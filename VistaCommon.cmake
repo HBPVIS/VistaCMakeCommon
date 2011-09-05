@@ -3,6 +3,7 @@
 # This file contains common settings and macros for setting up Vista projects
 
 # PACKAGE MACROS:
+# vista_add_external_msvc_project_of_package( PACKAGE_NAME [SOLUTION_FOLDER] [DEPENDENT (DENENDENT_TARGET)+ ] )
 # vista_find_package( <package> [version] [EXACT] [QUIET] [[REQUIRED|COMPONENTS] [components...]] [NO_POLICY_SCOPE] [NO_MODULE] )
 # vista_use_package( <package> [version] [EXACT] [QUIET] [[REQUIRED|COMPONENTS] [components...]] [NO_POLICY_SCOPE] [NO_MODULE] [FIND_DEPENDENCIES] )
 # vista_configure_app( PACKAGE_NAME [OUT_NAME] )
@@ -344,6 +345,7 @@ endmacro( vista_enable_most_compiler_warnings )
 
 
 # vista_add_external_msvc_project_of_package( PACKAGE_NAME [SOLUTION_FOLDER] [DEPENDENT (DENENDENT_TARGET)+ ] )
+# Adds msvc projects that were exported by a package to the solution (Visual Studio only)
 # note: the targets will NOT be named by their original name, but
 # instead external_NAME, to prevent name clashes (e.g. with included libraries)
 # will only work if a project exists, and other wise fails silently
