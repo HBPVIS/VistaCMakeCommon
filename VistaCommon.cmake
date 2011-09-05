@@ -24,7 +24,7 @@
 # vista_create_info_file( PACKAGE_NAME TARGET_DIR INSTALL_DIR )
 # vista_delete_info_file( PACKAGE_NAME TARGET_DIR )
 # vista_create_default_info_file( PACKAGE_NAME )
-# vista_create_doxygen_target( DOXYFILE )
+# vista_create_doxygen_target( DOXYFILE [WORKING_DIR] )
 # vista_create_uninstall_target( [ON|OFF] )
 
 # UTILITY MACROS:
