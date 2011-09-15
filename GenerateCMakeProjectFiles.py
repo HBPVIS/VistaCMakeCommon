@@ -349,6 +349,7 @@ def GenCMakeForLib( startDir, projectName, renew, version, linkVistaCoreLibs, mu
 		fileHandle.write( "vista_configure_lib( " + projectName + " )\n" )
 		fileHandle.write( "vista_install( " + projectName + " )\n" )
 		fileHandle.write( "vista_create_cmake_configs( " + projectName + " )\n" )
+		fileHandle.write( "vista_create_default_info_file( " + projectName + " )\n" )
 	else:
 		fileHandle.write( "vista_configure_lib( " + projectName + " )\n" )
 		fileHandle.write( "if( " + str.upper(multiProjectParent) + "_COMMON_BUILD )\n" )
@@ -358,7 +359,7 @@ def GenCMakeForLib( startDir, projectName, renew, version, linkVistaCoreLibs, mu
 		fileHandle.write( "endif( " + str.upper(multiProjectParent) + "_COMMON_BUILD )\n" )
 		fileHandle.write( "vista_create_cmake_configs( " + projectName + " )\n" )
 		fileHandle.write( "vista_create_default_info_file( " + projectName + " )\n" )
-		fileHandle.write( "\n" )
+	fileHandle.write( "\n" )
 
 	return True
 
