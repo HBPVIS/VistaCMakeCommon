@@ -8,7 +8,7 @@ if( NOT VZMQ_FOUND )
 	vista_find_package_root( ZMQ include/zmq.h NAMES ZeroMQ zeromq Zeromq)
 
 	if( ZMQ_ROOT_DIR )
-		find_library( ZMQ_LIBRARIES NAMES zmq ZMQ
+		find_library( ZMQ_LIBRARIES NAMES zmq ZMQ libzmq
 					PATHS ${ZMQ_ROOT_DIR}/lib
 					CACHE "ZMQ library" )
 		mark_as_advanced( ZMQ_LIBRARIES )
