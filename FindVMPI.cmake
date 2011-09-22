@@ -1,0 +1,25 @@
+# $Id: FindVMPI.cmake 21620 2011-05-30 10:28:48Z dr165799 $
+
+include( FindPackageHandleStandardArgs )
+include( VistaFindUtils )
+
+if( NOT VMPI_FOUND )
+
+	set( _FLAG )
+	if( MPI_FIND_REQUIRED )
+		set( _FLAG REQUIRED )
+	endif( MPI_FIND_REQUIRED )
+	if( MPI_FIND_QUIETLY )
+		set( _FLAG ${_FLAG} QUIET )
+	endif( MPI_FIND_QUIETLY )
+	find_package(MPI ${_FLAG} )
+	
+	if( MPI_FOUND )
+		set( MPI_DEFINITIONS ${MPI_COMPILE_FLAGS} )
+		set( MPI_INCLUDE_DIRS ${MPI_INCLUDE_PATH} )
+		get_filename_component( MPI_LIBRARY_DIRS ${MPI_LIBRARIES} PATH )
+	endif( MPI_FOUND )
+
+endif( NOT VMPI_FOUND )
+
+find_package_handle_standard_args( VMPI "MPI could not be found" MPI_INCLUDE_DIRS )
