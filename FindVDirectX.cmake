@@ -33,7 +33,6 @@ if( NOT VDIRECTX_FOUND )
 			set( DIRECTX_LIBRARY_DIRS ${DIRECTX_ROOT_DIR}/lib/x86 )
 		endif( CMAKE_CL_64 )
 		set( DIRECTX_LIBRARIES
-			ddraw
 			dinput8
 			dsound
 			dwrite
