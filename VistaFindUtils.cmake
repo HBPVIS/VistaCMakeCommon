@@ -172,7 +172,7 @@ macro( vista_compare_versions INPUT_VERSION_PREFIX OWN_VERSION_PREFIX DIFFERENCE
 	endif( _MATCHED )
 endmacro( vista_compare_versions )
 
-# vista_find_package_dirs( PACKAGE_NAME EXAMPLE_FILE [NAMES folder1 folder2 ...] )
+# vista_find_package_dirs( PACKAGE_NAME EXAMPLE_FILE [NAMES folder1 folder2 ...] [PATHS path1 path2] )
 # parses the standard search directories
 # CMAKE_PREFIX_PATH and CMAKE_SYSTEM_PREFIX_PATH -- to find any root dirs and their version
 # Parameters:
@@ -181,6 +181,8 @@ endmacro( vista_compare_versions )
 #                         that is located in the searched-for root dir
 #      NAMES folder1 folder2 ... - list of alternate names for the folders that should be
 #                         accepted, e.g. glut and freeglut as alternatives
+#      PATHS path1 path2 ... - list of (absolute) base pathes that are to be used in
+#                         addition to the default ones
 # Output: The following variables will be set
 #      <PACKAGE_NAME>_CANDIDATE_DIRS        - List of versioned dirs that were found
 #      <PACKAGE_NAME>_CANDIDATE_VERSIONS    - List of versions for the found candidates
@@ -197,13 +199,22 @@ macro( vista_find_package_dirs _PACKAGE_NAME _EXAMPLE_FILE )
 	else()
 		set( _PACKAGE_FOLDER_NAMES ${_PACKAGE_NAME} ${_PACKAGE_NAME_UPPER} ${_PACKAGE_NAME_LOWER} )
 	endif( WIN32 )
+	
+	set( _ADDITIONAL_PATHES "" )
 
-	set( _NEXT_IS_FOLDER FALSE )
+	set( _NEXT_IS_NAME FALSE )
+	set( _NEXT_IS_PATH FALSE )
 	foreach( _ARG ${_ARGS} )
 		if( ${_ARG} STREQUAL "NAMES" )
-			set( _NEXT_IS_FOLDER TRUE )
-		elseif( _NEXT_IS_FOLDER )
+			set( _NEXT_IS_NAME TRUE )
+			set( _NEXT_IS_PATH FALSE )
+		elseif( ${_ARG} STREQUAL "PATHS" )
+			set( _NEXT_IS_NAME FALSE)
+			set( _NEXT_IS_PATH TRUE )
+		elseif( _NEXT_IS_NAME )
 			list( APPEND _PACKAGE_FOLDER_NAMES ${_ARG} )
+		elseif( _NEXT_IS_PATH )
+			list( APPEND _ADDITIONAL_PATHES ${_ARG} )
 		else()
 			message( WARNING "vista_find_package_dirs() - unknown argument ${_ARG}" )
 		endif( ${_ARG} STREQUAL "NAMES" )
@@ -226,12 +237,12 @@ macro( vista_find_package_dirs _PACKAGE_NAME _EXAMPLE_FILE )
 		endif( EXISTS "$ENV{${_PACKAGE_NAME_UPPER}_ROOT}/${_VISTA_HWARCH}/${_EXAMPLE_FILE}" )
 	endif( EXISTS "$ENV{${_PACKAGE_NAME_UPPER}_ROOT}" )
 
-	foreach( _PATH $ENV{${_PACKAGE_NAME_UPPER}_ROOT} ${VISTA_PACKAGE_SEARCH_PATHS} )
+	foreach( _PATH $ENV{${_PACKAGE_NAME_UPPER}_ROOT} ${_ADDITIONAL_PATHES} ${VISTA_PACKAGE_SEARCH_PATHS} )
 		foreach( _FOLDER ${_PACKAGE_FOLDER_NAMES} )			
 			# look for pathes with a version
 			file( GLOB _TMP_PATHES "${_PATH}/${_FOLDER}/${_FOLDER}-*/" )
 			list( APPEND _VERSIONED_PATHES ${_TMP_PATHES} )
-			file( GLOB _TMP_PATHES "${_PATH}/${_FOLDER}-*/" )
+			file( GLOB _TMP_PATHES "${_PATH}/${_FOLDER}-*" )
 			list( APPEND _VERSIONED_PATHES ${_TMP_PATHES} )
 
 			# look for unversioned pathes
@@ -312,7 +323,7 @@ macro( vista_get_version_from_path _PATH _NAME_LIST _VERSION_VAR )
 	endforeach( _NAME ${${_NAME_LIST}} )
 endmacro( vista_get_version_from_path )
 
-# vista_find_package_root( PACKAGE EXAMPLE_FILE [DONT_ALLOW_UNVERSIONED] [QUIET] [NAMES name1 name2 ...] [ADVANCED] [NO_CACHE] )
+# vista_find_package_root( PACKAGE EXAMPLE_FILE [DONT_ALLOW_UNVERSIONED] [QUIET] [NAMES name1 name2 ...] [PATHS path1 path2] [ADVANCED] [NO_CACHE] )
 # finds the package root fr PACKAGE, and stores it in the variable <PACKAGE>_ROOT_DIR
 # Should only be called from the context of a Find<XYZ>.cmake file - it automatically checks if
 # versions are requested, and if so, looks for an appropriately versioned dir, otherwise, it
@@ -324,6 +335,7 @@ endmacro( vista_get_version_from_path )
 # if QUIET is specified, no info messages will be printed
 # if DONT_ALLOW_UNVERSIONED is specified, no unversioned path is accepted when a versioned one is requested
 # the NAMES list provides alternative names to be searched (equivalently to vista_find_package_dirs)
+# the PATHS list provides additional (absolute) base pathes to search (equivalently to vista_find_package_dirs)
 macro( vista_find_package_root _PACKAGE_NAME _EXAMPLE_FILE )
 	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
 	string( TOLOWER ${_PACKAGE_NAME} _PACKAGE_NAME_LOWER )
