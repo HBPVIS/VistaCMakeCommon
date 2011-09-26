@@ -18,7 +18,7 @@ if( NOT VDIRECTX_FOUND )
 				list( GET _TMP_FILES 0 _FILE )
 				get_filename_component( _FOLDER ${_FILE} PATH ) # one up - include dir
 				get_filename_component( _FOLDER ${_FOLDER} PATH ) # one up - root dir
-				set( DIRECTX_ROOT_DIR ${_FOLDER} CACHE PATH "DirectX SDK root directory" )
+				set( DIRECTX_ROOT_DIR ${_FOLDER} CACHE PATH "DirectX SDK root directory" FORCE )
 				break()
 			endif( _TMP_FILES )
 		endforeach( _PATH ${_SEARCH_DIRS} )
