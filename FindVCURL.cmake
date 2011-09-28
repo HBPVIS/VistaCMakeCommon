@@ -8,7 +8,7 @@ if( NOT VCURL_FOUND )
 
 	if( CURL_ROOT_DIR )
 		set( CURL_LIBRARIES libcurl )
-		mark_as_advanced( SQLITE_LIBRARIES )
+		mark_as_advanced( CURL_LIBRARIES )
 
 		set( CURL_INCLUDE_DIRS ${CURL_ROOT_DIR}/include )
 		set( CURL_LIBRARY_DIRS ${CURL_ROOT_DIR}/lib )
