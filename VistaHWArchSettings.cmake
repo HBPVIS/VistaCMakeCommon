@@ -24,7 +24,7 @@ if( NOT VISTA_HWARCH )
 
 		if( VISTA_64BIT )
 			set( VISTA_HWARCH "win32-x64" )
-		else( VISTA_64BIT )
+		else()
 			set( VISTA_HWARCH "win32" )
 		endif( VISTA_64BIT )
 		
@@ -47,7 +47,7 @@ if( NOT VISTA_HWARCH )
 		endif( MSVC )
 
 		set( VISTA_COMPATIBLE_HWARCH ${VISTA_HWARCH} ${VISTA_COMPATIBLE_HWARCH} )
-
+		
 	elseif( APPLE )
 		set( VISTA_PLATFORM_DEFINE -DDARWIN )
 		set( VISTA_HWARCH "DARWIN" )

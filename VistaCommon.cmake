@@ -1385,7 +1385,9 @@ endmacro( vista_create_cmake_config_build )
 #     _PACKAGE_LIBRARY_NAME  - output name of the package (not including Debug Postifix)
 #     _PACKAGE_ROOT_DIR      - toplevel file of the package (i.e. directory from which vista_create_cmake_config_build is called)
 #     _PACKAGE_LIBRARY_DIRS  - folder where the libraries are installed to
+#                              can be overwritten by defining ${_PACKAGE_NAME_UPPER}_LIBRARY_INSTALLDIR before calling the macro
 #     _PACKAGE_INCLUDE_DIRS  - folder where the header files are installed to
+#                              can be overwritten by defining ${_PACKAGE_NAME_UPPER}_INCLUDE_INSTALLDIR before calling the macro
 #     _PACKAGE_RELATIVE_LIBRARY_DIRS - _PACKAGE_LIBRARY_DIRS relative to current dir
 #     _PACKAGE_RELATIVE_INCLUDE_DIRS - _PACKAGE_INCLUDE_DIRS relative to current dir
 #     _PACKAGE_DEFINITIONS   - definitions for the package, defaults to nothing
@@ -1412,16 +1414,21 @@ macro( vista_create_cmake_config_install _PACKAGE_NAME _CONFIG_PROTO_FILE _TARGE
 	set( _TARGET_REF_FILENAME "${CMAKE_BINARY_DIR}/toinstall/references/${_PACKAGE_NAME}Config.cmake" )
 
 	set( _PACKAGE_ROOT_DIR "${CMAKE_INSTALL_PREFIX}" )
-	if( ${${_PACKAGE_NAME_UPPER}_INC_INSTALLDIR} )
+	if( ${_PACKAGE_NAME_UPPER}_INCLUDE_INSTALLDIR )
+		set( _PACKAGE_INCLUDE_DIRS ${${_PACKAGE_NAME_UPPER}_INCLUDE_INSTALLDIR}  )
+	elseif( ${${_PACKAGE_NAME_UPPER}_INC_INSTALLDIR} )
 		set( _PACKAGE_INCLUDE_DIRS "${_PACKAGE_ROOT_DIR}/${${_PACKAGE_NAME_UPPER}_INC_INSTALLDIR}" )
-	else( ${${_PACKAGE_NAME_UPPER}_INC_INSTALLDIR} )
+	else()
 		set( _PACKAGE_INCLUDE_DIRS "${_PACKAGE_ROOT_DIR}/include" )
-	endif( ${${_PACKAGE_NAME_UPPER}_INC_INSTALLDIR} )
-	if( ${${_PACKAGE_NAME_UPPER}_LIB_INSTALLDIR} )
+	endif()
+	
+	if( ${_PACKAGE_NAME_UPPER}_LIBRARY_INSTALLDIR )
+		set( _PACKAGE_LIBRARY_DIRS ${${_PACKAGE_NAME_UPPER}_LIBRARY_INSTALLDIR}  )
+	elseif( ${${_PACKAGE_NAME_UPPER}_LIB_INSTALLDIR} )
 		set( _PACKAGE_LIBRARY_DIRS "${_PACKAGE_ROOT_DIR}/${${_PACKAGE_NAME_UPPER}_LIB_INSTALLDIR}" )
-	else( ${${_PACKAGE_NAME_UPPER}_LIB_INSTALLDIR} )
+	else()
 		set( _PACKAGE_LIBRARY_DIRS "${_PACKAGE_ROOT_DIR}/lib" )
-	endif( ${${_PACKAGE_NAME_UPPER}_LIB_INSTALLDIR} )
+	endif()
 	set(_PACKAGE_DEFINITIONS )
 	if( ${_PACKAGE_NAME_UPPER}_CONFIG_DEFINITIONS )
 		set( _PACKAGE_DEFINITIONS ${${_PACKAGE_NAME_UPPER}_CONFIG_DEFINITIONS} )
