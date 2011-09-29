@@ -4,7 +4,7 @@ include( FindPackageHandleStandardArgs )
 include( VistaFindUtils )
 
 if( NOT VQWT_FOUND )
-	vista_find_package_root( Qwt include/qwt.h )
+	vista_find_package_root( Qwt src/qwt.h )
 
 	if( QWT_ROOT_DIR )
 		find_library( QWT_LIBRARIES_OPT NAMES qwt
