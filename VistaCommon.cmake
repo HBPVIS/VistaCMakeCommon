@@ -374,7 +374,7 @@ macro( vista_add_external_msvc_project_of_package _PACKAGE_NAME )
 	set( _DEPENDENT_TARGETS "" )
 	
 	set( _ARGUMENTS ${ARGV} )
-	if( "${ARGC}" GREATER 1 AND NOT "${_ARGV1}" STREQUAL "DEPENDENT" AND NOT "${_ARGV1}" STREQUAL "DEPENDS" )
+	if( "${ARGC}" GREATER 1 AND NOT "${ARGV1}" STREQUAL "DEPENDENT" AND NOT "${ARGV1}" STREQUAL "DEPENDS" )
 		set( _FOLDER "${ARGV1}" )
 		list( REMOVE_AT _ARGUMENTS 0 1 )
 	else()
