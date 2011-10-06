@@ -16,6 +16,49 @@ set( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )
 
 include( VistaHWArchSettings )
 
+# vista_find_package_from_module( OWN_PREFIX [ORIGINAL_NAME] )
+# Finds and loads an 'original' FindORIGINAL_NAME module from within a
+# VModule file
+# OWN_PREFIX is the name of the current FindModule file (including the V!)
+# ORIGINAL_NAME is the optional name of the original module file (defaults 
+#                to OWN_PREFIX without preceeding V)
+macro( vista_find_original_package _OWNPREFIX )
+	if( "${ARGC}" EQUAL 1 )
+		string( REGEX MATCH "^V(.*)$" _MATCH ${_OWNPREFIX} )
+		if( _MATCH )
+			set( _FINDARGS ${CMAKE_MATCH_1} )
+		else()
+			set( _FINDARGS ${_OWNPREFIX} )
+		endif()
+	else()
+		set( _FINDARGS ${ARGV1} )
+	endif()
+	
+	set( _FINDARGS ${_FINDARGS} ${${_OWNPREFIX}_FIND_VERSION} )
+	
+	if( ${_OWNPREFIX}_FIND_COMPONENTS )
+		set( _FINDARGS ${_FINDARGS} COMPONENTS ${${_OWNPREFIX}_FIND_COMPONENTS} )
+	endif()
+	
+	if( ${_OWNPREFIX}_FIND_REQUIRED )
+		set( _FINDARGS ${_FINDARGS} REQUIRED )
+	endif()
+	
+	if( ${_OWNPREFIX}_FIND_QUIETLY )
+		set( _FINDARGS ${_FINDARGS} QUIET )
+	endif()
+	
+	if( ${PREFIX}_FIND_QUIETLY )
+	set( _FINDARGS ${_FINDARGS} QUIET )
+	endif()
+	if( ${PREFIX}_FIND_REQUIRED )
+		set( _FINDARGS ${_FINDARGS} REQUIRED )
+	endif()
+	
+	find_package( ${_FINDARGS} )
+endmacro( vista_find_original_package )
+
+
 set( VISTA_PACKAGE_SEARCH_PATHS )
 foreach( _PATH "$ENV{VRDEV}" $ENV{VISTA_EXTERNAL_LIBS} "$ENV{VRSOFTWARE}"
 						${CMAKE_PREFIX_PATH} $ENV{CMAKE_PREFIX_PATH}
