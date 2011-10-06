@@ -19,9 +19,9 @@ if( NOT VNIFTI_FOUND )
 					CACHE "NIFTI FSLIO library" )
 		set( NIFTI_LIBRARIES ${NIFTI_IO_LIBRARY} ${NIFTI_ZNZ_LIBRARY} ${NIFTI_FSLIO_LIBRARY})
 					
-		set( NIFTI_INCLUDE_DIRS ${NIFTI_ROOT_DIR}/include CACHE STRING "Nifti include dir.")
+		set( NIFTI_INCLUDE_DIRS ${NIFTI_ROOT_DIR}/include ${NIFTI_ROOT_DIR}/include/nifti CACHE STRING "Nifti include dir.")
 		mark_as_advanced( NIFTI_INCLUDE_DIRS )
-		set( NIFTI_LIBRARY_DIRS ${NIFTI_ROOT_DIR}/lib CACHE STRING "Nifti library dir.")
+		set( NIFTI_LIBRARY_DIRS ${NIFTI_ROOT_DIR}/lib ${NIFTI_ROOT_DIR}/bin CACHE STRING "Nifti library dir.")
 		mark_as_advanced( NIFTI_LIBRARY_DIRS )
 
 	endif( NIFTI_ROOT_DIR )
