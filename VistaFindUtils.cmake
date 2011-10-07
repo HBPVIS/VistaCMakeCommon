@@ -382,6 +382,54 @@ endmacro( vista_get_version_from_path )
 macro( vista_find_package_root _PACKAGE_NAME _EXAMPLE_FILE )
 	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
 	string( TOLOWER ${_PACKAGE_NAME} _PACKAGE_NAME_LOWER )
+	
+	if( ${_PACKAGE_NAME_UPPER}_ROOT_DIR )
+		# we first check if the set dir actually exists
+		
+		if( NOT EXISTS "${${_PACKAGE_NAME_UPPER}_ROOT_DIR}" )
+			# the formerly found or manually set dir doesn't exist - warn, and re-search
+			message( WARNING "${_PACKAGE_NAME_UPPER}_ROOT_DIR was set to non-existant directory "
+					"\"${${_PACKAGE_NAME_UPPER}_ROOT_DIR}\" - discarding dir and performing new search" )
+			set( ${_PACKAGE_NAME_UPPER}_ROOT_DIR "${_PACKAGE_NAME_UPPER}_ROOT_DIR-NOTFOUND" CACHE PATH "${_PACKAGE_NAME} package root dir" FORCE )
+			set( ${_PACKAGE_NAME_UPPER}_LAST_CACHED_PATCH ${${_PACKAGE_NAME_UPPER}_ROOT_DIR} CACHE INTERNAL "" FORCE )
+		elseif( NOT ${_PACKAGE_NAME_UPPER}_ROOT_DIR STREQUAL ${_PACKAGE_NAME_UPPER}_LAST_CACHED_PATCH )
+			# version was changed - we parse args to find the possible names, and then
+			# try to extract a version from the path
+			set( _ARGS ${ARGV} )
+			if( WIN32 )
+				set( _PACKAGE_FOLDER_NAMES ${_PACKAGE_NAME} )
+			else()
+				set( _PACKAGE_FOLDER_NAMES ${_PACKAGE_NAME} ${_PACKAGE_NAME_UPPER} ${_PACKAGE_NAME_LOWER} )
+			endif( WIN32 )
+			set( _NEXT_IS_FOLDER FALSE )
+			foreach( _ARG ${_ARGS} )
+				if( ${_ARG} STREQUAL "NAMES" )
+					set( _NEXT_IS_FOLDER TRUE )
+				elseif( _NEXT_IS_FOLDER )
+					if( ${_ARG} STREQUAL "DONT_ALLOW_UNVERSIONED"
+						OR ${_ARG} STREQUAL "QUIET"
+						OR ${_ARG} STREQUAL "ADVANCED"
+						OR ${_ARG} STREQUAL "NO_CACHE" )
+						break()
+					else()
+						list( APPEND _PACKAGE_FOLDER_NAMES ${_ARG} )
+					endif()
+				endif()
+			endforeach()
+
+			set( ${_PACKAGE_NAME_UPPER}_LAST_CACHED_PATCH ${${_PACKAGE_NAME_UPPER}_ROOT_DIR} CACHE INTERNAL "" FORCE )
+			vista_get_version_from_path( ${${_PACKAGE_NAME_UPPER}_ROOT_DIR} _PACKAGE_FOLDER_NAMES _VERSION )
+			if( _VERSION )
+				if( NOT QUIET )
+					message( STATUS "${_PACKAGE_NAME_UPPER}_ROOT_DIR was overwritten to \"${${_PACKAGE_NAME_UPPER}_ROOT_DIR}\""
+								" - extracted version (${_VERSION}) from directory name" )
+				endif( NOT QUIET )
+				set( ${_PACKAGE_NAME_UPPER}_VERSION_STRING ${_VERSION} CACHE INTERNAL "" )
+				set( ${_PACKAGE_NAME}_VERSION ${${_PACKAGE_NAME_UPPER}_VERSION_STRING} )
+				vista_string_to_version( "${${_PACKAGE_NAME_UPPER}_VERSION_STRING}" "${_PACKAGE_NAME_UPPER}" )
+			endif( _VERSION )
+		endif()
+	endif()
 
 	if( NOT ${_PACKAGE_NAME_UPPER}_ROOT_DIR )
 		# parse arguments
@@ -520,46 +568,7 @@ macro( vista_find_package_root _PACKAGE_NAME _EXAMPLE_FILE )
 			vista_string_to_version( "${${_PACKAGE_NAME_UPPER}_VERSION_STRING}" "${_PACKAGE_NAME_UPPER}" )
 		endif( _FOUND_VERSION )
 
-	elseif( NOT ${_PACKAGE_NAME_UPPER}_ROOT_DIR STREQUAL ${_PACKAGE_NAME_UPPER}_LAST_CACHED_PATCH )
-		# version was changed - we parse args to find the possible names, and then
-		# try to extract a version from the path
-		set( _ARGS ${ARGV} )
-		if( WIN32 )
-			set( _PACKAGE_FOLDER_NAMES ${_PACKAGE_NAME} )
-		else()
-			set( _PACKAGE_FOLDER_NAMES ${_PACKAGE_NAME} ${_PACKAGE_NAME_UPPER} ${_PACKAGE_NAME_LOWER} )
-		endif( WIN32 )
-		set( _NEXT_IS_FOLDER FALSE )
-		foreach( _ARG ${_ARGS} )
-			if( ${_ARG} STREQUAL "NAMES" )
-				set( _NEXT_IS_FOLDER TRUE )
-			elseif( _NEXT_IS_FOLDER )
-				if( ${_ARG} STREQUAL "DONT_ALLOW_UNVERSIONED"
-					OR ${_ARG} STREQUAL "QUIET"
-					OR ${_ARG} STREQUAL "ADVANCED"
-					OR ${_ARG} STREQUAL "NO_CACHE" )
-					break()
-				else()
-					list( APPEND _PACKAGE_FOLDER_NAMES ${_ARG} )
-				endif( ${_ARG} STREQUAL "DONT_ALLOW_UNVERSIONED"
-					OR ${_ARG} STREQUAL "QUIET"
-					OR ${_ARG} STREQUAL "ADVANCED"
-					OR ${_ARG} STREQUAL "NO_CACHE" )
-			endif( ${_ARG} STREQUAL "NAMES" )
-		endforeach( _ARG ${_ARGS} )
-
-		set( ${_PACKAGE_NAME_UPPER}_LAST_CACHED_PATCH ${${_PACKAGE_NAME_UPPER}_ROOT_DIR} CACHE INTERNAL "" FORCE )
-		vista_get_version_from_path( ${${_PACKAGE_NAME_UPPER}_ROOT_DIR} _PACKAGE_FOLDER_NAMES _VERSION )
-		if( _VERSION )
-			if( NOT QUIET )
-				message( STATUS "${_PACKAGE_NAME_UPPER}_ROOT_DIR was overwritten to \"${${_PACKAGE_NAME_UPPER}_ROOT_DIR}\""
-							" - extracted version (${_VERSION}) from directory name" )
-			endif( NOT QUIET )
-			set( ${_PACKAGE_NAME_UPPER}_VERSION_STRING ${_VERSION} CACHE INTERNAL "" )
-			set( ${_PACKAGE_NAME}_VERSION ${${_PACKAGE_NAME_UPPER}_VERSION_STRING} )
-			vista_string_to_version( "${${_PACKAGE_NAME_UPPER}_VERSION_STRING}" "${_PACKAGE_NAME_UPPER}" )
-		endif( _VERSION )
-	endif( NOT ${_PACKAGE_NAME_UPPER}_ROOT_DIR )
+	endif()
 
 endmacro( vista_find_package_root _PACKAGE_NAME _EXAMPLE_FILE )
 
