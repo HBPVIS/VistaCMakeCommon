@@ -525,25 +525,27 @@ macro( vista_find_package _PACKAGE_NAME )
 			set( _PREVIOUSLY_FOUND_VERSION ${${_PACKAGE_NAME}_VERSION_STRING} )
 		endif( ${_PACKAGE_NAME_UPPER}_VERSION_EXT )
 
-		if( _PREVIOUSLY_FOUND_VERSION AND _PACKAGE_VERSION )
-			# we have to check that we don't include different versions!
-			vista_string_to_version( ${_PREVIOUSLY_FOUND_VERSION} "PREVIOUS" )
-			vista_string_to_version( ${_PACKAGE_VERSION} "REQUESTED" )
-			vista_compare_versions( "REQUESTED" "PREVIOUS" _DIFFERENCE )
-			if( _DIFFERENCE EQUAL -1 )
-				message( WARNING "vista_find_package( ${_PACKAGE_NAME} ) - Package was previously found with"
-				                  " version (${_PREVIOUSLY_FOUND_VERSION}), but is now requested with"
-								  " incompatible version (${_PACKAGE_VERSION}) - first found version is used,"
-								  " but this may lead to conflicts" )
-			elseif( _DIFFERENCE VERSION_GREATER 0.0.0.0 AND _EXACT )
-				message( "vista_find_package( ${_PACKAGE_NAME} ) - Package was previously found with"
-				                  " version (${_PREVIOUSLY_FOUND_VERSION}), but is now requested with"
-								  " different, but compatible version (${_PACKAGE_VERSION}) - first found version is used" )
-			#else: prefect match
-			endif( _DIFFERENCE EQUAL -1 )
+		if( _PREVIOUSLY_FOUND_VERSION )
+			if( _PACKAGE_VERSION )
+				# we have to check that we don't include different versions!
+				vista_string_to_version( ${_PREVIOUSLY_FOUND_VERSION} "PREVIOUS" )
+				vista_string_to_version( ${_PACKAGE_VERSION} "REQUESTED" )
+				vista_compare_versions( "REQUESTED" "PREVIOUS" _DIFFERENCE )
+				if( _DIFFERENCE EQUAL -1 )
+					message( WARNING "vista_find_package( ${_PACKAGE_NAME} ) - Package was previously found with"
+									  " version (${_PREVIOUSLY_FOUND_VERSION}), but is now requested with"
+									  " incompatible version (${_PACKAGE_VERSION}) - first found version is used,"
+									  " but this may lead to conflicts" )
+				elseif( _DIFFERENCE VERSION_GREATER 0.0.0.0 AND _EXACT )
+					message( "vista_find_package( ${_PACKAGE_NAME} ) - Package was previously found with"
+									  " version (${_PREVIOUSLY_FOUND_VERSION}), but is now requested with"
+									  " different, but compatible version (${_PACKAGE_VERSION}) - first found version is used" )
+				#else: prefect match
+				endif( _DIFFERENCE EQUAL -1 )
+			endif()
 			# we always want to find the sam eversiona gain, so set it to the former one
 			set( _PACKAGE_VERSION ${_PREVIOUSLY_FOUND_VERSION} )
-		endif( _PREVIOUSLY_FOUND_VERSION AND _PACKAGE_VERSION )
+		endif()
 
 		if( _USING_COMPONENTS )
 			# we need to check if the components are already included or not
