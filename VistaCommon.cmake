@@ -729,30 +729,14 @@ macro( vista_use_package _PACKAGE_NAME )
 				link_directories( ${${_PACKAGE_NAME_UPPER}_LIBRARY_DIRS} )
 				add_definitions( ${${_PACKAGE_NAME_UPPER}_DEFINITIONS} )
 			endif( ${_PACKAGE_NAME_UPPER}_USE_FILE )
+		
 
-
-			# check if HWARCH matches
-			if( ${_PACKAGE_NAME_UPPER}_HWARCH AND NOT ${${_PACKAGE_NAME_UPPER}_HWARCH} STREQUAL ${VISTA_HWARCH} )
-				message( WARNING "vista_use_package( ${_PACKAGE_NAME} ) - Package was built as ${${_PACKAGE_NAME_UPPER}_HWARCH}, but is used with ${VISTA_HWARCH}" )
-			endif( ${_PACKAGE_NAME_UPPER}_HWARCH AND NOT ${${_PACKAGE_NAME_UPPER}_HWARCH} STREQUAL ${VISTA_HWARCH} )
-
-			#set variables for Vista BuildSystem to track dependencies
-			list( APPEND VISTA_USE_PACKAGE_LIBRARIES ${${_PACKAGE_NAME_UPPER}_LIBRARIES} )
-			# TODO: removing duplicates also removes optimized and debug flags...
-			#list( REMOVE_DUPLICATES VISTA_USE_PACKAGE_LIBRARIES )
-			list( APPEND VISTA_TARGET_LINK_DIRS ${${_PACKAGE_NAME_UPPER}_LIBRARY_DIRS} )
-			if( VISTA_TARGET_LINK_DIRS )
-				list( REMOVE_DUPLICATES VISTA_TARGET_LINK_DIRS )
-			endif( VISTA_TARGET_LINK_DIRS )
-			list( APPEND VISTA_TARGET_FULL_DEPENDENCIES ${_PACKAGE_NAME} )
-			list( APPEND VISTA_TARGET_DEPENDENCIES "package" ${ARGV} )
-			set( VISTA_USING_${_PACKAGE_NAME_UPPER} TRUE )
-
+			# parse dependencies automatically call vista_use_package on not previously found ones
+			set( _DEPENDENCY_ARGS )
+			
 			# we dont want to add second-level dependencies to VISTA_TARGET_DEPENDENCIES, so be buffer it and reset it later
 			set( _TMP_VISTA_TARGET_DEPENDENCIES ${VISTA_TARGET_DEPENDENCIES} )
-
-			#handle dependencies
-			set( _DEPENDENCY_ARGS )
+			
 			foreach( _DEPENDENCY ${${_PACKAGE_NAME_UPPER}_DEPENDENCIES} )
 				string( REGEX MATCH "^([^\\-]+)\\-(.+)$" _MATCHED ${_DEPENDENCY} )
 				if( _DEPENDENCY STREQUAL "package" )
@@ -809,6 +793,21 @@ macro( vista_use_package _PACKAGE_NAME )
 
 			#restore dependencies as they were before FIND_DEPENDENCY calls
 			set( VISTA_TARGET_DEPENDENCIES ${_TMP_VISTA_TARGET_DEPENDENCIES} )
+			
+			# check if HWARCH matches
+			if( ${_PACKAGE_NAME_UPPER}_HWARCH AND NOT ${${_PACKAGE_NAME_UPPER}_HWARCH} STREQUAL ${VISTA_HWARCH} )
+				message( WARNING "vista_use_package( ${_PACKAGE_NAME} ) - Package was built as ${${_PACKAGE_NAME_UPPER}_HWARCH}, but is used with ${VISTA_HWARCH}" )
+			endif( ${_PACKAGE_NAME_UPPER}_HWARCH AND NOT ${${_PACKAGE_NAME_UPPER}_HWARCH} STREQUAL ${VISTA_HWARCH} )
+
+			#set variables for Vista BuildSystem to track dependencies
+			set( VISTA_USE_PACKAGE_LIBRARIES ${${_PACKAGE_NAME_UPPER}_LIBRARIES} ${VISTA_USE_PACKAGE_LIBRARIES} )
+			list( APPEND VISTA_TARGET_LINK_DIRS ${${_PACKAGE_NAME_UPPER}_LIBRARY_DIRS} )
+			if( VISTA_TARGET_LINK_DIRS )
+				list( REMOVE_DUPLICATES VISTA_TARGET_LINK_DIRS )
+			endif( VISTA_TARGET_LINK_DIRS )
+			list( APPEND VISTA_TARGET_FULL_DEPENDENCIES ${_PACKAGE_NAME} )
+			list( APPEND VISTA_TARGET_DEPENDENCIES "package" ${ARGV} )
+			set( VISTA_USING_${_PACKAGE_NAME_UPPER} TRUE )
 
 		endif( ${_PACKAGE_NAME_UPPER}_FOUND AND ( _DO_FIND OR NOT VISTA_USE_${_PACKAGE_NAME_UPPER} ) )
 		
