@@ -720,6 +720,11 @@ macro( vista_use_package _PACKAGE_NAME )
 
 		# set required variables if package was found AND it wasn't sufficiently included before (in which case _DO_FIND is FALSE )
 		if( ${_PACKAGE_NAME_UPPER}_FOUND AND ( _DO_FIND OR NOT VISTA_USE_${_PACKAGE_NAME_UPPER} ) )
+					# check if HWARCH matches
+			if( ${_PACKAGE_NAME_UPPER}_HWARCH AND NOT ${${_PACKAGE_NAME_UPPER}_HWARCH} STREQUAL ${VISTA_HWARCH} )
+				message( WARNING "vista_use_package( ${_PACKAGE_NAME} ) - Package was built as ${${_PACKAGE_NAME_UPPER}_HWARCH}, but is used with ${VISTA_HWARCH}" )
+			endif( ${_PACKAGE_NAME_UPPER}_HWARCH AND NOT ${${_PACKAGE_NAME_UPPER}_HWARCH} STREQUAL ${VISTA_HWARCH} )
+			
 			# if a USE_FILE is specified, we assume that it handles all the settings
 			# if not, we set the necessary values ourselves
 			if( ${_PACKAGE_NAME_UPPER}_USE_FILE )
@@ -729,15 +734,44 @@ macro( vista_use_package _PACKAGE_NAME )
 				link_directories( ${${_PACKAGE_NAME_UPPER}_LIBRARY_DIRS} )
 				add_definitions( ${${_PACKAGE_NAME_UPPER}_DEFINITIONS} )
 			endif( ${_PACKAGE_NAME_UPPER}_USE_FILE )
+			
+			
+			list( APPEND VISTA_TARGET_LINK_DIRS ${${_PACKAGE_NAME_UPPER}_LIBRARY_DIRS} )
+			if( VISTA_TARGET_LINK_DIRS )
+				list( REMOVE_DUPLICATES VISTA_TARGET_LINK_DIRS )
+			endif( VISTA_TARGET_LINK_DIRS )
+			set( VISTA_USING_${_PACKAGE_NAME_UPPER} TRUE )
+			
+			# store dependencies only if we were not called recursively
+			if( NOT INTERNAL_VISTA_FIND_PACKAGE_LIBS GREATER 1 )
+				list( APPEND VISTA_TARGET_FULL_DEPENDENCIES ${_PACKAGE_NAME} )
+				list( APPEND VISTA_TARGET_DEPENDENCIES "package" ${ARGV} )
+			endif()
+
+			# add libraries to VISTA_USE_PACKAGE_LIBRARIES. We do this after adding dependencies, and
+			# by pre-prending, in order to provide correct static linking under linux, where the dependent library
+			# has to be listed before the one it depends on
+			# To achieve this, we must first build a list of the current package's libraries, then process all
+			# its dependencies (which may append libraries to the internal storage), and finally prepend
+			# the internal storage to VISTA_USE_PACKAGE_LIBRARIES
+			set( INTERNAL_VISTA_FIND_PACKAGE_LIBS ${INTERNAL_VISTA_FIND_PACKAGE_LIBS} ${${_PACKAGE_NAME_UPPER}_LIBRARIES} )
+			
+			#set( VISTA_USE_PACKAGE_LIBRARIES ${${_PACKAGE_NAME_UPPER}_LIBRARIES} ${VISTA_USE_PACKAGE_LIBRARIES} )
+
 		
 
 			# parse dependencies automatically call vista_use_package on not previously found ones
+			# indicate for them that they are recursively called, to prevent adding them to the dependency list,
+			# and to ensure correct ordering of libraries
+			if( NOT VISTA_USE_PACKAGE_RECURSION_COUNT )
+				set( VISTA_USE_PACKAGE_RECURSION_COUNT 1 )
+			else()
+				math( EXPR VISTA_USE_PACKAGE_RECURSION_COUNT "${VISTA_USE_PACKAGE_RECURSION_COUNT} + 1" )
+			endif()
+			
 			set( _DEPENDENCY_ARGS )
-			
-			# we dont want to add second-level dependencies to VISTA_TARGET_DEPENDENCIES, so be buffer it and reset it later
-			set( _TMP_VISTA_TARGET_DEPENDENCIES ${VISTA_TARGET_DEPENDENCIES} )
-			
-			foreach( _DEPENDENCY ${${_PACKAGE_NAME_UPPER}_DEPENDENCIES} )
+			# the last package ensures that the last listed package is included, too
+			foreach( _DEPENDENCY ${${_PACKAGE_NAME_UPPER}_DEPENDENCIES} "package" ) 
 				string( REGEX MATCH "^([^\\-]+)\\-(.+)$" _MATCHED ${_DEPENDENCY} )
 				if( _DEPENDENCY STREQUAL "package" )
 					if( _DEPENDENCY_ARGS AND NOT "${_DEPENDENCY_ARGS}" STREQUAL "" )
@@ -748,7 +782,7 @@ macro( vista_use_package _PACKAGE_NAME )
 								# find and use the dependency. If it fails, utter a warning
 								if( NOT _QUIET )
 									set( _MESSAGE_IF_DO_FIND "Automatically adding ${_PACKAGE_NAME}-dependency \"${_DEPENDENCY_ARGS}\"" )
-								endif( NOT _QUIET )
+								endif( NOT _QUIET )								
 								vista_use_package( ${_DEPENDENCY_ARGS} FIND_DEPENDENCIES )
 								if( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND AND NOT _QUIET )
 									message( WARNING "vista_use_package( ${_PACKAGE_NAME} ) - Package depends on \"${_DEPENDENCY_ARGS}\", but including it failed" )
@@ -768,46 +802,13 @@ macro( vista_use_package _PACKAGE_NAME )
 				endif( _DEPENDENCY STREQUAL "package" )
 			endforeach( _DEPENDENCY ${${_PACKAGE_NAME_UPPER}_DEPENDENCIES} )
 
-			# again, since the last package was not yet included
-			if( _DEPENDENCY_ARGS AND NOT "${_DEPENDENCY_ARGS}" STREQUAL "" )
-				list( GET _DEPENDENCY_ARGS 0 _DEPENDENCY_NAME )
-				string( TOUPPER "${_DEPENDENCY_NAME}" _DEPENDENCY_NAME_UPPER )
-				if( _FIND_DEPENDENCIES )
-					if( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND )
-						# find and use the dependency. If it fails, utter a warning
-						if( NOT _QUIET )
-							message( STATUS "Automatically adding ${_PACKAGE_NAME}-dependency \"${_DEPENDENCY_ARGS}\"" )
-						endif( NOT _QUIET )
-						vista_use_package( ${_DEPENDENCY_ARGS} FIND_DEPENDENCIES )
-						if( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND AND NOT _QUIET )
-							message( WARNING "vista_use_package( ${_PACKAGE_NAME} ) - Package depends on \"${_DEPENDENCY_ARGS}\", but including it failed" )
-						endif( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND AND NOT _QUIET )
-					endif( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND )
-				else( _FIND_DEPENDENCIES )
-					# check if dependencies are already included. If not, utter a warning
-					if( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND AND NOT _QUIET )
-						message( "vista_use_package( ${_PACKAGE_NAME} ) - Package depends on \"${_DEPENDENCY_ARGS}\", which was not found yet" )
-					endif( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND AND NOT _QUIET )
-				endif( _FIND_DEPENDENCIES )
-			endif( _DEPENDENCY_ARGS AND NOT "${_DEPENDENCY_ARGS}" STREQUAL ""  )
+			math( EXPR VISTA_USE_PACKAGE_RECURSION_COUNT "${VISTA_USE_PACKAGE_RECURSION_COUNT} - 1" )
 
-			#restore dependencies as they were before FIND_DEPENDENCY calls
-			set( VISTA_TARGET_DEPENDENCIES ${_TMP_VISTA_TARGET_DEPENDENCIES} )
-			
-			# check if HWARCH matches
-			if( ${_PACKAGE_NAME_UPPER}_HWARCH AND NOT ${${_PACKAGE_NAME_UPPER}_HWARCH} STREQUAL ${VISTA_HWARCH} )
-				message( WARNING "vista_use_package( ${_PACKAGE_NAME} ) - Package was built as ${${_PACKAGE_NAME_UPPER}_HWARCH}, but is used with ${VISTA_HWARCH}" )
-			endif( ${_PACKAGE_NAME_UPPER}_HWARCH AND NOT ${${_PACKAGE_NAME_UPPER}_HWARCH} STREQUAL ${VISTA_HWARCH} )
-
-			#set variables for Vista BuildSystem to track dependencies
-			set( VISTA_USE_PACKAGE_LIBRARIES ${${_PACKAGE_NAME_UPPER}_LIBRARIES} ${VISTA_USE_PACKAGE_LIBRARIES} )
-			list( APPEND VISTA_TARGET_LINK_DIRS ${${_PACKAGE_NAME_UPPER}_LIBRARY_DIRS} )
-			if( VISTA_TARGET_LINK_DIRS )
-				list( REMOVE_DUPLICATES VISTA_TARGET_LINK_DIRS )
-			endif( VISTA_TARGET_LINK_DIRS )
-			list( APPEND VISTA_TARGET_FULL_DEPENDENCIES ${_PACKAGE_NAME} )
-			list( APPEND VISTA_TARGET_DEPENDENCIES "package" ${ARGV} )
-			set( VISTA_USING_${_PACKAGE_NAME_UPPER} TRUE )
+			#finally: prepend correctly ordered list of libraries to VISTA_USE_PACKAGE_LIBRARIES
+			if( VISTA_USE_PACKAGE_RECURSION_COUNT EQUAL 0 )
+				set( VISTA_USE_PACKAGE_LIBRARIES ${INTERNAL_VISTA_FIND_PACKAGE_LIBS} ${VISTA_USE_PACKAGE_LIBRARIES} )
+				set( INTERNAL_VISTA_FIND_PACKAGE_LIBS )
+			endif()			
 
 		endif( ${_PACKAGE_NAME_UPPER}_FOUND AND ( _DO_FIND OR NOT VISTA_USE_${_PACKAGE_NAME_UPPER} ) )
 		
