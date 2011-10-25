@@ -21,5 +21,5 @@ if( NOT VOPENCV_FOUND )
 	
 endif( NOT VOPENCV_FOUND )
 
-find_package_handle_standard_args( VOpenCV "OpenCV could not be found" OPENCV_ROOT_DIR )
+find_package_handle_standard_args( VOpenCV "OpenCV could not be found" OPENCV_LIBRARIES )
 
