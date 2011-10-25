@@ -13,10 +13,10 @@ if( NOT VOPENCV_FOUND )
 		find_package( OpenCV QUIET PATHS ${OPENCV_ROOT_DIR} NO_DEFAULT_PATH )
 		# an OpenCVConfig.cmake has been found and loaded
 		
-		set( OPENCV_LIBRARIES ${OpenCV_LIBS} )
-		set( OPENCV_LIBRARY_DIRS ${OpenCV_LIB_DIR} )
-		set( OPENCV_INCLUDE_DIRS ${OpenCV_INCLUDE_DIRS} )
-		set( OPENCV_VERSION ${OpenCV_VERSION} )
+		set( OPENCV_LIBRARIES "${OpenCV_LIBS}" )
+		set( OPENCV_LIBRARY_DIRS "${OpenCV_LIB_DIR}" "${OpenCV_DIR}/bin"  )
+		set( OPENCV_INCLUDE_DIRS "${OpenCV_INCLUDE_DIRS}" )
+		set( OPENCV_VERSION "${OpenCV_VERSION}" )
 	endif( OPENCV_ROOT_DIR )
 	
 endif( NOT VOPENCV_FOUND )
