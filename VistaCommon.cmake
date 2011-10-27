@@ -1024,8 +1024,7 @@ macro( vista_configure_lib _PACKAGE_NAME )
 	set( ${_PACKAGE_NAME_UPPER}_DEPENDENCIES ${VISTA_TARGET_DEPENDENCIES} CACHE INTERNAL "" FORCE )
 	set( ${_PACKAGE_NAME_UPPER}_FULL_DEPENDENCIES ${VISTA_TARGET_FULL_DEPENDENCIES} CACHE INTERNAL "" FORCE )
 
-	string( TOUPPER ${_PACKAGE_NAME} _NAME_UPPER )
-	vista_set_defaultvalue( BUILD_SHARED_LIBS ON CACHE BOOL "Build shared libraries if ON, static libraries if OFF" FORCE )
+	string( TOUPPER ${_PACKAGE_NAME} _NAME_UPPER )	
 	
 	set( ${_PACKAGE_NAME_UPPER}_TARGET_MSVC_PROJECT "" CACHE INTERNAL "" FORCE )
 	if( WIN32 )
@@ -2024,6 +2023,8 @@ endmacro( vista_create_uninstall_target )
 set( VISTACMAKECOMMON_REVISION "$Rev$" )
 string( REGEX MATCH " ([0-9]+) " _MATCH "${VISTACMAKECOMMON_REVISION}" )
 set( VISTACMAKECOMMON_REVISION ${CMAKE_MATCH_1} )
+
+vista_set_defaultvalue( BUILD_SHARED_LIBS ON CACHE BOOL "Build shared libraries if ON, static libraries if OFF" FORCE )
 
 # if VISTA_CMAKE_COMMON envvar is set, we buffer it and add it to CMAKE_MODULE_PATH and CMAKE_PREFIX_PATH
 if( EXISTS "$ENV{VISTA_CMAKE_COMMON}" )
