@@ -131,6 +131,32 @@ macro( vista_extract_version_part _TARGET _ENTRY _SEPARATOR  )
 	endif( _REMAINING_VERSION )
 endmacro( vista_extract_version_part )
 
+# vista_find_library_dir( TARGET_DIR_VARIABLE LIBRARY_NAME PATH [ PATH... ] )
+# searches the prepended pathes for the specified library, and, if found, adds
+# the path to TARGET_DIR_VARIABLE (by appending it)
+macro( vista_find_library_dir _TARGET_VAR _LIB_NAME )
+	set( _TMP_LIB _TMP_LIB-NOTFOUND CACHE INTERNAL "" FORCE )
+	find_library( _TMP_LIB ${_LIB_NAME} PATHS ${ARGN} NO_DEFAULT_PATH )
+	if( _TMP_LIB )
+		get_filename_component( _TMP_PATH "${_TMP_LIB}" PATH )
+		list( APPEND ${_TARGET_VAR} "${_TMP_PATH}" )
+	endif()
+	set( _TMP_LIB _TMP_LIB-NOTFOUND CACHE INTERNAL "" FORCE )
+endmacro( vista_find_library_dir )
+
+# vista_find_library_dir( OUT_VARIABLE LIBRARY_NAME PATH [ PATH... ] )
+# searches the passed pathes for the specified library, and sers
+# OUT_VARIABLE to either TRUE or FALSE accordingly
+macro( vista_check_library_exists _TARGET_VAR _LIB_NAME )
+	set( ${_TARGET_VAR} FALSE )
+	set( _TMP_LIB _TMP_LIB-NOTFOUND CACHE INTERNAL "" FORCE )
+	find_library( _TMP_LIB ${_LIB_NAME} PATHS ${ARGN} NO_DEFAULT_PATH )
+	if( _TMP_LIB )
+		set( ${_TARGET_VAR} TRUE )
+	endif()
+	set( _TMP_LIB _TMP_LIB-NOTFOUND CACHE INTERNAL "" FORCE )
+endmacro( vista_check_library_exists )
+
 # vista_string_to_version( VERSION_STRING VERSION_VARIABLES_PREFIX )
 # parses the VERSION_STRING and sets the version values for the given prefix
 # The input format can be: V1[.V2[.V3[.V4]]], [TYPE_]NAME, [TYPE_]NAME-V1[.V2[.V3[.V4]]]
