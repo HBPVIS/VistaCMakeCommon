@@ -9,7 +9,7 @@ if( NOT VWIIUSE_FOUND )
 	
 	if( WIIUSE_ROOT_DIR )
 		set( WIIUSE_LIBRARY_DIRS )
-		vista_find_library_dir( WIIUSE_LIBRARY_DIRS wiiuse "${WIIUSE_ROOT_DIR}" )
+		vista_find_library_dir( WIIUSE_LIBRARY_DIRS wiiuse "${WIIUSE_ROOT_DIR}/lib" )
 		if( WIIUSE_LIBRARY_DIRS )
 			if( EXISTS "${WIIUSE_ROOT_DIR}/include/wiiuse.h" )
 				set( WIIUSE_INCLUDE_DIRS "${WIIUSE_ROOT_DIR}/include" )
