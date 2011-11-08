@@ -17,10 +17,10 @@ if( NOT VCHAI3D_FOUND )
 			    set( CHAI3D_DEFINITIONS -D_LINUX )
 			endif( ${CMAKE_SYSTEM_NAME} MATCHES "Linux" )
 		
-		set( CHAI3D_LIBRARIES
-			optimized chai3d
-			debug chai3d-dbg
-		)
+			set( CHAI3D_LIBRARIES
+				optimized chai3d
+				debug chai3d-dbg
+				)
 			
 			
 		elseif(WIN32)
@@ -29,7 +29,9 @@ if( NOT VCHAI3D_FOUND )
 				if( MSVC80 )
 					set( CHAI3D_LIBRARY_DIRS ${CHAI3D_ROOT_DIR}/bin ${CHAI3D_ROOT_DIR}/lib/msvc8 ${CHAI3D_ROOT_DIR}/external/OpenGL/msvc)		
 				elseif( MSVC90 )
-					set( CHAI3D_LIBRARY_DIRS ${CHAI3D_ROOT_DIR}/bin ${CHAI3D_ROOT_DIR}/lib/msvc9 ${CHAI3D_ROOT_DIR}/external/OpenGL/msvc)					
+					set( CHAI3D_LIBRARY_DIRS ${CHAI3D_ROOT_DIR}/bin ${CHAI3D_ROOT_DIR}/lib/msvc9 ${CHAI3D_ROOT_DIR}/external/OpenGL/msvc)
+				elseif( MSVC10 )
+					set( CHAI3D_LIBRARY_DIRS ${CHAI3D_ROOT_DIR}/bin ${CHAI3D_ROOT_DIR}/lib/msvc10 ${CHAI3D_ROOT_DIR}/external/OpenGL/msvc)						
 				else( MSVC80 )
 					message( WARNING "FindPackageCHAI3D - Unknown MSVC version" )
 				endif( MSVC80 )
