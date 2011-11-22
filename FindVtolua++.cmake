@@ -17,6 +17,12 @@ if( NOT VTOLUA++_FOUND )
 		else()
 			set( TOLUA++_LIBRARIES tolua++ )
 		endif( WIN32 )
+		find_program( TOLUA++_EXECUTABLE NAMES tolua tolua++ TOLUA TOLUA++
+					PATHS "${TOLUA++_ROOT_DIR}"
+					PATH_SUFFIXES bin
+					DOC "path to the tolua++ executable"
+					NO_DEFAULT_PATH )
+		mark_as_advanced( TOLUA++_EXECUTABLE )
 
 		set( TOLUA++_DEPENDENCIES package LUA REQUIRED )
 
