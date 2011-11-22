@@ -8,7 +8,7 @@ if( NOT VCATSXFEMSOLVER_FOUND )
 
 	if( CATSXFEMSOLVER_ROOT_DIR )
 		set( CATSXFEMSOLVER_INCLUDE_DIRS ${CATSXFEMSOLVER_ROOT_DIR})	
-		set( CATSXFEMSOLVER_LIBRARY_DIRS ${CATSXFEMSOLVER_ROOT_DIR})
+		set( CATSXFEMSOLVER_LIBRARY_DIRS ${CATSXFEMSOLVER_ROOT_DIR}/CatsXFEMSolver)
 		set( CATSXFEMSOLVER_LIBRARIES libgoto2_nehalemp-r1.13 umfpack libamd libg2c libgcc libshared libSources)
 	else( CATSXFEMSOLVER_ROOT_DIR )
 		message( WARNING "vista_find_package_root - File named CatsXFEMSolver/XFEM.h not found" )	

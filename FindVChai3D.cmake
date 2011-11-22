@@ -43,8 +43,12 @@ if( NOT VCHAI3D_FOUND )
      		set( CHAI3D_LIBRARIES
 	    		optimized chai3d-release
 		    	debug chai3d-debug
+				
 		)
 		endif(UNIX)
+		
+		#this paths contains only libs which are dynamically loaded
+		vista_add_pathscript_dynamic_lib_path( ${CHAI3D_ROOT_DIR}/bin )
 		
 	else( CHAI3D_ROOT_DIR )
 		message( WARNING "vista_find_package_root - scr/chai3d.h not found" )	
