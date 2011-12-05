@@ -261,14 +261,6 @@ macro( vista_get_svn_info _REVISION_VAR _REPOS_VAR _DATE_VAR )
 
 endmacro( vista_get_svn_info )
 
-# vista_get_svn_revision( TARGET_VARIABLE )
-# extracts the svn revision from the file system and stores it in the specified target variable
-# for details, see vista_get_svn_info
-macro( vista_get_svn_revision _TARGET_VAR )
-	vista_get_svn_info( ${_TARGET_VAR} _TMP_SVN_REPOS _TMP_SVN_DATE )
-endmacro( vista_get_svn_revision )
-
-
 # local macro, for use in this file only
 function( local_clean_old_config_references _PACKAGE_NAME _PACKAGE_TARGET_FILE _EXCLUDE_DIR )
 	string( TOUPPER _PACKAGE_NAME_UPPER ${_PACKAGE_NAME} )
@@ -1697,6 +1689,8 @@ endmacro( vista_set_outdir _PACKAGE_NAME TARGET_DIR )
 # <PACKAGE>_VERSION_PATCH
 # <PACKAGE>_VERSION_TWEAK
 macro( vista_set_version _PACKAGE _TYPE _NAME )
+	vista_find_package( SVN QUIET )
+	
 	string( TOUPPER  ${_PACKAGE} _PACKAGE_UPPER )
 	set( ${_PACKAGE_UPPER}_VERSION_TYPE		${_TYPE} )
 	set( ${_PACKAGE_UPPER}_VERSION_NAME		${_NAME} )
