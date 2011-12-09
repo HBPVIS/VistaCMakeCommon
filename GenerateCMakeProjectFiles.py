@@ -406,7 +406,7 @@ def GenCMakeForApp( startDir, projectName, renew, version, linkVistaCoreLibs, mu
 	if os.path.isdir( startDir + "/configfiles" ):
 		fileHandle.write( "vista_add_files_to_sources( ProjectSources \"configfiles\" SOURCE_GROUP \"configfiles\" \"ini\" )\n" )
 	if os.path.isdir( startDir + "/configfiles/xml" ):
-		fileHandle.write( "vista_add_files_to_sources( ProjectSources \"configfiles/xml\" SOURCE_GROUP \"configfiles/xml\" \"xml\" )\n" )
+		fileHandle.write( "vista_add_files_to_sources( ProjectSources \"configfiles/xml\" SOURCE_GROUP \"configfiles\\\\\\\\xml\" \"xml\" )\n" )
 	elif os.path.isdir( startDir + "/xml" ):
 		fileHandle.write( "vista_add_files_to_sources( ProjectSources \"xml\" SOURCE_GROUP \"xml\" \"xml\" )\n" )
 	fileHandle.write( "\n" )
