@@ -402,7 +402,13 @@ def GenCMakeForApp( startDir, projectName, renew, version, linkVistaCoreLibs, mu
 	fileHandle.write( "\n" )
 	fileHandle.write( "# Including the source files of all source subfolders recursively\n" )
 	for dir in sourceSubDirs:
-		fileHandle.write( "include( \"" + dir + "/" + localSourceFileName + "\" )\n" )
+		fileHandle.write( "include( \"" + dir + "/" + localSourceFileName + "\" )\n" )		
+	if os.path.isdir( startDir + "/configfiles" ):
+		fileHandle.write( "vista_add_files_to_sources( ProjectSources \"configfiles\" SOURCE_GROUP \"configfiles\" \"ini\" )\n" )
+	if os.path.isdir( startDir + "/configfiles/xml" ):
+		fileHandle.write( "vista_add_files_to_sources( ProjectSources \"configfiles/xml\" SOURCE_GROUP \"configfiles/xml\" \"xml\" )\n" )
+	elif os.path.isdir( startDir + "/xml" ):
+		fileHandle.write( "vista_add_files_to_sources( ProjectSources \"xml\" SOURCE_GROUP \"xml\" \"xml\" )\n" )
 	fileHandle.write( "\n" )
 	fileHandle.write( "add_executable( " + projectName + " ${ProjectSources} )\n" )
 	fileHandle.write( "target_link_libraries( " + projectName + "\n" )
@@ -411,7 +417,7 @@ def GenCMakeForApp( startDir, projectName, renew, version, linkVistaCoreLibs, mu
 	fileHandle.write( "\n" )
 	fileHandle.write( "vista_configure_app( " + projectName + " )\n" )
 	fileHandle.write( "vista_create_default_info_file( " + projectName + " )\n" )
-	fileHandle.write( "\n" )
+	fileHandle.write( "\n" )	
 
 	return True
 
