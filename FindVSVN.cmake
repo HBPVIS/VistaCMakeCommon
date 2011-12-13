@@ -33,59 +33,56 @@ macro( vista_get_svn_info _REVISION_VAR _REPOS_VAR _DATE_VAR )
 		set( _DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} )
 	endif( ${ARGC} GREATER 3 )	
 		
-	if( EXISTS "${_DIRECTORY}/.svn" OR EXISTS "${_DIRECTORY}/_svn" )
-		if( SVN_EXECUTABLE )
-			# standard SVN CLI		
-			
-			# this is an adoption of the official svn macro, to avoid the SEND_ERROR stuff
-			
-			# the subversion commands should be executed with the C locale, otherwise
-			# the message (which are parsed) may be translated, Alex
-			
-			set( _TMP_SVN_WC_URL )
-			set( _Subversion_SAVED_LC_ALL "$ENV{LC_ALL}" )
-			set( ENV{LC_ALL} C )
-
-			execute_process( COMMAND ${SVN_EXECUTABLE} info ${_DIRECTORY}
-								OUTPUT_VARIABLE _SVN_WC_INFO
-								ERROR_VARIABLE Subversion_svn_info_error
-								RESULT_VARIABLE Subversion_svn_info_result
-								OUTPUT_STRIP_TRAILING_WHITESPACE )
-
-			if( ${Subversion_svn_info_result} EQUAL 0 )
-				string( REGEX REPLACE "^(.*\n)?URL: ([^\n]+).*"
-						"\\2" ${_REPOS_VAR} "${_SVN_WC_INFO}")
-				string( REGEX REPLACE "^(.*\n)?Repository Root: ([^\n]+).*"
-						"\\2" _VOID_OUTPUT "${_SVN_WC_INFO}")
-				string( REGEX REPLACE "^(.*\n)?Revision: ([^\n]+).*"
-						"\\2" ${_REVISION_VAR} "${_SVN_WC_INFO}")
-				string( REGEX REPLACE "^(.*\n)?Last Changed Author: ([^\n]+).*"
-						"\\2" _VOID_OUTPUT "${_SVN_WC_INFO}")
-				string( REGEX REPLACE "^(.*\n)?Last Changed Rev: ([^\n]+).*"
-						"\\2" _VOID_OUTPUT "${_SVN_WC_INFO}")
-				string( REGEX REPLACE "^(.*\n)?Last Changed Date: ([^\n]+).*"
-						"\\2" ${_DATE_VAR} "${_SVN_WC_INFO}")
-			endif()
-
-			# restore the previous LC_ALL
-			set( ENV{LC_ALL} ${_Subversion_SAVED_LC_ALL} )
-			
-		elseif( TORTOISESVN_EXECUTABLE )
-			# check with tortoisesvn
-			set( _SVNINFO_FILENAME "${CMAKE_CURRENT_BINARY_DIR}/svninfo.txt" )
-			file( WRITE "${_SVNINFO_FILENAME}" "$WCREV$\n$WCDATE$\n$WCURL$" )			
-			execute_process( COMMAND ${TORTOISESVN_EXECUTABLE} ${_DIRECTORY}
-								"${_SVNINFO_FILENAME}" "${_SVNINFO_FILENAME}" )
-								
-			file( STRINGS "${_SVNINFO_FILENAME}" _SVNINFO_TEXT )
-			
-			list( GET _SVNINFO_TEXT 0 ${_REVISION_VAR} )
-			list( GET _SVNINFO_TEXT 1 ${_REPOS_VAR} )
-			list( GET _SVNINFO_TEXT 2 ${_DATE_VAR} )
-
-		endif() 
+	if( SVN_EXECUTABLE )
+		# standard SVN CLI		
 		
-	endif()
+		# this is an adoption of the official svn macro, to avoid the SEND_ERROR stuff
+		
+		# the subversion commands should be executed with the C locale, otherwise
+		# the message (which are parsed) may be translated, Alex
+		
+		set( _TMP_SVN_WC_URL )
+		set( _Subversion_SAVED_LC_ALL "$ENV{LC_ALL}" )
+		set( ENV{LC_ALL} C )
+
+		execute_process( COMMAND ${SVN_EXECUTABLE} info ${_DIRECTORY}
+							OUTPUT_VARIABLE _SVN_WC_INFO
+							ERROR_VARIABLE Subversion_svn_info_error
+							RESULT_VARIABLE Subversion_svn_info_result
+							OUTPUT_STRIP_TRAILING_WHITESPACE )
+
+		if( ${Subversion_svn_info_result} EQUAL 0 )
+			string( REGEX REPLACE "^(.*\n)?URL: ([^\n]+).*"
+					"\\2" ${_REPOS_VAR} "${_SVN_WC_INFO}")
+			string( REGEX REPLACE "^(.*\n)?Repository Root: ([^\n]+).*"
+					"\\2" _VOID_OUTPUT "${_SVN_WC_INFO}")
+			string( REGEX REPLACE "^(.*\n)?Revision: ([^\n]+).*"
+					"\\2" ${_REVISION_VAR} "${_SVN_WC_INFO}")
+			string( REGEX REPLACE "^(.*\n)?Last Changed Author: ([^\n]+).*"
+					"\\2" _VOID_OUTPUT "${_SVN_WC_INFO}")
+			string( REGEX REPLACE "^(.*\n)?Last Changed Rev: ([^\n]+).*"
+					"\\2" _VOID_OUTPUT "${_SVN_WC_INFO}")
+			string( REGEX REPLACE "^(.*\n)?Last Changed Date: ([^\n]+).*"
+					"\\2" ${_DATE_VAR} "${_SVN_WC_INFO}")
+		endif()
+
+		# restore the previous LC_ALL
+		set( ENV{LC_ALL} ${_Subversion_SAVED_LC_ALL} )
+		
+	elseif( TORTOISESVN_EXECUTABLE )
+		# check with tortoisesvn
+		set( _SVNINFO_FILENAME "${CMAKE_CURRENT_BINARY_DIR}/svninfo.txt" )
+		file( WRITE "${_SVNINFO_FILENAME}" "$WCREV$\n$WCDATE$\n$WCURL$" )			
+		execute_process( COMMAND ${TORTOISESVN_EXECUTABLE} ${_DIRECTORY}
+							"${_SVNINFO_FILENAME}" "${_SVNINFO_FILENAME}" )
+							
+		file( STRINGS "${_SVNINFO_FILENAME}" _SVNINFO_TEXT )
+		
+		list( GET _SVNINFO_TEXT 0 ${_REVISION_VAR} )
+		list( GET _SVNINFO_TEXT 1 ${_REPOS_VAR} )
+		list( GET _SVNINFO_TEXT 2 ${_DATE_VAR} )
+
+	endif() 
 
 endmacro()
 
