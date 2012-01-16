@@ -79,8 +79,13 @@ macro( vista_get_svn_info _REVISION_VAR _REPOS_VAR _DATE_VAR )
 		file( STRINGS "${_SVNINFO_FILENAME}" _SVNINFO_TEXT )
 		
 		list( GET _SVNINFO_TEXT 0 ${_REVISION_VAR} )
-		list( GET _SVNINFO_TEXT 1 ${_REPOS_VAR} )
-		list( GET _SVNINFO_TEXT 2 ${_DATE_VAR} )
+		if( ${_REVISION_VAR} EQUAL 0 )
+			set( _DATE_VAR "" )
+			set( _REPOS_VAR "" )
+		else()
+			list( GET _SVNINFO_TEXT 1 ${_DATE_VAR} )
+			list( GET _SVNINFO_TEXT 2 ${_REPOS_VAR} )
+		endif()		
 
 	endif() 
 

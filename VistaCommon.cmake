@@ -173,93 +173,6 @@ macro( vista_conditional_add_subdirectory )
 endmacro( vista_conditional_add_subdirectory )
 
 
-# vista_get_svn_info( REVISION_VARIABLE REPOS_VARIABLE DATE_VARIABLE [DIRECTORY] )
-# extracts the svn info (revision, repository, and last change date) of the current source dir
-#  and stores it in the target variables. If the current directory is not under svn versioning, the
-# variables will be empty. If available, svn is used directly to query the info, otherwise,
-# a hand-taylored file parsing is used -- however, this may not work correctly with all versions
-# by default, the svn of the current source directory is parsed. However, the optional DIRECTORY
-# parameter can be used to specify another directory
-macro( vista_get_svn_info _REVISION_VAR _REPOS_VAR _DATE_VAR )
-	set( ${_REVISION_VAR} )
-	set( ${_REPOS_VAR} )
-	set( ${_DATE_VAR} )
-
-	if( ${ARGC} GREATER 3 )
-		set( _DIRECTORY ${ARGV3} )
-	else( ${ARGC} GREATER 3 )
-		set( _DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} )
-	endif( ${ARGC} GREATER 3 )
-
-	if( EXISTS "${_DIRECTORY}/.svn/entries" )
-
-		find_package( Subversion QUIET )
-		if( SUBVERSION_FOUND )
-			set( _TMP_SVN_WC_URL )
-			
-			# this is an adoption of the official svn macro, to avoid the SEND_ERROR stuff
-			
-			# the subversion commands should be executed with the C locale, otherwise
-			# the message (which are parsed) may be translated, Alex
-			set( _Subversion_SAVED_LC_ALL "$ENV{LC_ALL}" )
-			SET( ENV{LC_ALL} C )
-
-			execute_process( COMMAND ${Subversion_SVN_EXECUTABLE} info ${_DIRECTORY}
-								OUTPUT_VARIABLE _SVN_WC_INFO
-								ERROR_VARIABLE Subversion_svn_info_error
-								RESULT_VARIABLE Subversion_svn_info_result
-								OUTPUT_STRIP_TRAILING_WHITESPACE )
-
-			if( NOT ${Subversion_svn_info_result} EQUAL 0 )
-				message( "vista_get_svn_info(): svn info call failed woth error \"${Subversion_svn_info_error}\"" )
-			else( NOT ${Subversion_svn_info_result} EQUAL 0 )
-				string( REGEX REPLACE "^(.*\n)?URL: ([^\n]+).*"
-						"\\2" ${_REPOS_VAR} "${_SVN_WC_INFO}")
-				string( REGEX REPLACE "^(.*\n)?Repository Root: ([^\n]+).*"
-						"\\2" _VOID_OUTPUT "${_SVN_WC_INFO}")
-				string( REGEX REPLACE "^(.*\n)?Revision: ([^\n]+).*"
-						"\\2" ${_REVISION_VAR} "${_SVN_WC_INFO}")
-				string( REGEX REPLACE "^(.*\n)?Last Changed Author: ([^\n]+).*"
-						"\\2" _VOID_OUTPUT "${_SVN_WC_INFO}")
-				string( REGEX REPLACE "^(.*\n)?Last Changed Rev: ([^\n]+).*"
-						"\\2" _VOID_OUTPUT "${_SVN_WC_INFO}")
-				string( REGEX REPLACE "^(.*\n)?Last Changed Date: ([^\n]+).*"
-						"\\2" ${_DATE_VAR} "${_SVN_WC_INFO}")
-			endif( NOT ${Subversion_svn_info_result} EQUAL 0 )
-
-			# restore the previous LC_ALL
-			set( ENV{LC_ALL} ${_Subversion_SAVED_LC_ALL} )
-			
-		else( SUBVERSION_FOUND )
-			# check manually - and hope the syntax does not change ;)
-
-			file( STRINGS "${_DIRECTORY}/.svn/entries" _FILE_ENTRIES LIMIT_COUNT 15 )
-			list( REMOVE_AT _FILE_ENTRIES 0 ) # remove first entry - the number
-
-			 foreach( _STRING ${_FILE_ENTRIES} )
-				if( NOT DEFINED ${_REVISION_VAR} )
-					if( ${_STRING} GREATER 0 )
-						set( ${_REVISION_VAR} ${_STRING} )
-					endif( ${_STRING} GREATER 0 )
-				elseif( NOT DEFINED ${_REPOS_VAR} )
-					string( REGEX MATCH "/" _MATCHED ${_STRING} )
-					if( _MATCHED )
-						set( ${_REPOS_VAR} ${_STRING} )
-					endif( _MATCHED )
-				elseif( NOT DEFINED ${_DATE_VAR} )
-					string( REGEX MATCH "[0-9\\-]+T.+" _MATCHED ${_STRING} )
-					if( _MATCHED )
-						set( ${_DATE_VAR} ${_STRING} )
-						break()
-					endif( _MATCHED )
-				endif( NOT DEFINED ${_REVISION_VAR} )
-			 endforeach( _STRING ${_FILE_ENTRIES} )
-
-		endif( SUBVERSION_FOUND )
-
-	endif( EXISTS "${_DIRECTORY}/.svn/entries" )
-
-endmacro( vista_get_svn_info )
 
 # local macro, for use in this file only
 function( local_clean_old_config_references _PACKAGE_NAME _PACKAGE_TARGET_FILE _EXCLUDE_DIR )
@@ -1786,7 +1699,7 @@ macro( vista_create_info_file _PACKAGE_NAME _TARGET_DIR _INSTALL_DIR )
 	else()
 		set( INFO_STRING "${INFO_STRING}\nVersion:                 <unversioned>" )
 	endif( DEFINED ${_PACKAGE_NAME_UPPER}_VERSION_EXT )
-	vista_get_svn_Info( _SVN_REV _SVN_REPOS _SVN_DATE )
+	vista_get_svn_info( _SVN_REV _SVN_REPOS _SVN_DATE )
 	if( _SVN_REV )
 		set( INFO_STRING "${INFO_STRING}\nSVN revision:            ${_SVN_REV}" )
 		set( INFO_STRING "${INFO_STRING}\nSVN repositiory:         ${_SVN_REPOS}" )
@@ -1836,7 +1749,7 @@ macro( vista_create_info_file _PACKAGE_NAME _TARGET_DIR _INSTALL_DIR )
 	else( NOT VISTACOMMON_FILE_LOCATION )
 		set( INFO_STRING "${INFO_STRING}\n\tLocation:             ${VISTACOMMON_FILE_LOCATION}" )
 		get_filename_component( _CMAKECOMMON_DIR "${VISTACOMMON_FILE_LOCATION}" PATH )
-		vista_get_svn_Info( _SVN_REV _SVN_REPOS _SVN_DATE "${_CMAKECOMMON_DIR}" )
+		vista_get_svn_info( _SVN_REV _SVN_REPOS _SVN_DATE "${_CMAKECOMMON_DIR}" )
 		if( _SVN_REV )
 			set( INFO_STRING "${INFO_STRING}\n\tSVN revision:            ${_SVN_REV}" )
 			set( INFO_STRING "${INFO_STRING}\n\tSVN repositiory:         ${_SVN_REPOS}" )
