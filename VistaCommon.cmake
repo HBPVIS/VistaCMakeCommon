@@ -206,9 +206,11 @@ endfunction( local_clean_old_config_references _PACKAGE_NAME _PACKAGE_ROOT_DIR )
 
 # local macro, for use in this file only
 function( local_use_existing_config_libs _NAME _ROOT_DIR _CONFIG_FILE _LIBRARY_DIR_LIST )
+	get_filename_component( _ROOT_DIR ${_ROOT_DIR} REALPATH )
 	string( TOUPPER ${_NAME} _NAME_UPPER )
 	if( EXISTS "${_CONFIG_FILE}" )
 		include( ${_CONFIG_FILE} )
+		get_filename_component( ${_NAME_UPPER}_ROOT_DIR ${${_NAME_UPPER}_ROOT_DIR} REALPATH )
 		if( "${${_NAME_UPPER}_ROOT_DIR}" STREQUAL "${_ROOT_DIR}" )
 			if( ${_NAME_UPPER}_LIBRARY_DIRS )
 				list( APPEND ${_LIBRARY_DIR_LIST} "${${_NAME_UPPER}_LIBRARY_DIRS}" )
@@ -1226,11 +1228,12 @@ macro( vista_create_cmake_config_build _PACKAGE_NAME _CONFIG_PROTO_FILE _TARGET_
 					"${${_PACKAGE_NAME_UPPER}_BUILD_CONFIG_REFERENCE_DIR}-${VISTA_HWARCH}-build" )
 		endif( DEFINED ${_PACKAGE_NAME_UPPER}_VERSION_EXT )
 
-		# if any reference already exists, we aparse it and append its library dirs to the current one
+		# if any reference already exists, we parse it and append its library dirs to the current one
 		# this helps if several different build types are used in different cmake-build-dirs, but
 		local_use_existing_config_libs( ${_PACKAGE_NAME} "${_PACKAGE_ROOT_DIR}"
 									"${${_PACKAGE_NAME_UPPER}_BUILD_CONFIG_REFERENCE_DIR}/${_PACKAGE_NAME}Config.cmake"
 									_PACKAGE_LIBRARY_DIRS )
+	
 	endif( VISTA_COPY_BUILD_CONFIGS_REFS_TO_CMAKECOMMON )
 
 	# retrieve relative pathes for library/include dirs
