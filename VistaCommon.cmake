@@ -3,7 +3,7 @@
 # This file contains common settings and macros for setting up Vista projects
 
 # PACKAGE MACROS:
-# vista_add_external_msvc_project_of_package( PACKAGE_NAME [SOLUTION_FOLDER] [DEPENDENT (DENENDENT_TARGET)+ ] [ DEPENDS (DEPENDANT_TRAGET)+ ]  )
+# vista_add_external_msvc_project_of_packagevista_add_external_msvc_project_of_package( PACKAGE_NAME [SOLUTION_FOLDER] [DEPENDENT (DENENDENT_TARGET)+ ] [ DEPENDS (DEPENDANT_TRAGET)+ ]  )
 # vista_find_package( <package> [version] [EXACT] [QUIET] [[REQUIRED|COMPONENTS] [components...]] [NO_POLICY_SCOPE] [NO_MODULE] )
 # vista_use_package( <package> [version] [EXACT] [QUIET] [[REQUIRED|COMPONENTS] [components...]] [NO_POLICY_SCOPE] [NO_MODULE] [FIND_DEPENDENCIES] )
 # vista_configure_app( PACKAGE_NAME [OUT_NAME] )
@@ -255,13 +255,14 @@ endmacro( vista_enable_most_compiler_warnings )
 ###########################
 
 
-# vista_add_external_msvc_project_of_package( PACKAGE_NAME [SOLUTION_FOLDER] [DEPENDENT (DENENDENT_TARGET)+ ] [ DEPENDS (DEPENDANT_TRAGET)+ ]  )
+# vista_add_external_msvc_project_of_package( PACKAGE_NAME [WARNING_LEVEL] [SOLUTION_FOLDER] [DEPENDENT (DENENDENT_TARGET)+ ] [ DEPENDS (DEPENDANT_TRAGET)+ ]  )
 # Adds msvc projects that were exported by a package to the solution (Visual Studio only)
 # note: the targets will NOT be named by their original name, but
 # instead external_NAME, to prevent name clashes (e.g. with included libraries)
-# will only work if a project exists, and other wise fails silently
+# will only work if a project exists, and other wise fails silently (note: deployments, i.e. installed libs, have no projects and will hence always fail)
 # Parameters:
 #    - PACKAGE_NAME: name of the package (from vista_find|use_package) whose projects should become included
+#	 - WARNING_LEVEL (optional, default is WARNING): SILENT will silently ignore all warnings, WARNING will emit warning but continues cmake execution, ERROR emits warning and stops cmake execution
 #    - SOLUTION_FOLDER (optional): Visual Studio solution folder where the project(s) should be put
 #    - DEPENDENT (targets)* (optional): list of targets that should depend on the added projects
 #                            Note: for this to work, the macro has to be called AFTER defining the dependent targets
@@ -278,15 +279,35 @@ macro( vista_add_external_msvc_project_of_package _PACKAGE_NAME )
 		set( _FOLDER "" )
 		set( _DEPENDS_TARGETS "" )
 		set( _DEPENDENT_TARGETS "" )
+		set( _WARNING_LEVEL "WARNING" )
 		
 		set( _ARGUMENTS ${ARGV} )
-		if( "${ARGC}" GREATER 1 AND NOT "${ARGV1}" STREQUAL "DEPENDENT" AND NOT "${ARGV1}" STREQUAL "DEPENDS" )
-			set( _FOLDER "${ARGV1}" )
+		
+		# Check warning level _and_ remove it from the argument list if it exists.
+		set( _ARG_BUFFER_ "" )
+		list( GET _ARGUMENTS 1 _ARG_BUFFER )
+		
+		if( "${_ARG_BUFFER}" STREQUAL "SILENT" OR "${_ARG_BUFFER}" STREQUAL "WARNING" OR "${_ARG_BUFFER}" STREQUAL "ERROR" )
+			if( "${ARGV1}" STREQUAL "SILENT" )
+				set( _WARNING_LEVEL "SILENT" )
+			elseif( "${ARGV1}" STREQUAL "ERROR" )
+				set( _WARNING_LEVEL "SEND_ERROR" )
+			endif()
+			list( REMOVE_AT _ARGUMENTS 1 )
+		endif()
+		
+		# Check, if a solution folder was specified, extract it and remove it from the argument list (as well as the package name).
+		set( _ARG_BUFFER_ "" )
+		list( GET _ARGUMENTS 1 _ARG_BUFFER )
+				
+		if( "${ARGC}" GREATER 1 AND NOT "${_ARG_BUFFER}" STREQUAL "DEPENDENT" AND NOT "${_ARG_BUFFER}" STREQUAL "DEPENDS" )
+			set( _FOLDER "${_ARG_BUFFER}" )
 			list( REMOVE_AT _ARGUMENTS 0 1 )
 		else()
 			list( REMOVE_AT _ARGUMENTS 0 )
 		endif()
-		
+
+		# Extract als DEPENDS and DEPENDENT targets.
 		set( _MODE -1 )
 		foreach( _ARG ${_ARGUMENTS} )
 			if( "${_ARG}" STREQUAL "DEPENDS" )
@@ -308,6 +329,16 @@ macro( vista_add_external_msvc_project_of_package _PACKAGE_NAME )
 				message( WARNING "vista_add_external_msvc_project_of_package: unknown parameter \"${_ARG}\"" )
 			endif()
 		endforeach()
+		
+		if( "${${_PACKAGE_NAME_UPPER}_MSVC_PROJECT}" STREQUAL "" AND NOT "${_WARNING_LEVEL}" STREQUAL "SILENT" )
+			# Sorry for the mess below. But CMake requires it to write a string like this if you want to make it multi-line and formatted...
+			message( "${_WARNING_LEVEL}" 
+" vista_add_external_msvc_project_of_package - Project \"${_PACKAGE_NAME}\" not found. Check the following:
+   1. Check spelling of the project name, i.e. whether \"${_PACKAGE_NAME}\" is correct.
+   2. Check if the CMakeLists.txt includes an appropriate vista_add_package line, e.g. \"vista_use_package( ${_PACKAGE_NAME} )\".
+   3. Check that you are using the affected library in its \"build\" version and not the \"installed/deployed\" package." )
+		endif()
+		
 		
 		foreach( _ENTRY ${${_PACKAGE_NAME_UPPER}_MSVC_PROJECT} )
 			if( "${_ENTRY}" STREQUAL "PROJ" )
@@ -350,6 +381,8 @@ macro( vista_add_external_msvc_project_of_package _PACKAGE_NAME )
 				else()
 					message( "vista_add_external_msvc_project_of_package( ${_PACKAGE_NAME} ) - project ${_NAME} requests unknown dependency ${_ENTRY}" )
 				endif()
+			else()
+				message( STATUS "vista_add_external_msvc_project_of_package( ${_PACKAGE_NAME_UPPER} ) - dependencies could not be found" )
 			endif()
 		endforeach()
 	endif()
