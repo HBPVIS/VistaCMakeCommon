@@ -7,7 +7,7 @@ backupExtension = ".BAK"
 excludeDirs = [ "cvs", ".svn", "build", "built", "cmake" ]
 sourceExtensions = [ ".c", ".cpp", ".h" ]
 addSourceFilesListToSources = True
-defaultCoreLibsVersion = "PEANUTS"
+defaultCoreLibsVersion = "DARWIN"
 
 findCommented = re.compile( r'\s*#\s*.*' )
 findSetListRegEx = re.compile( r'set\(\s*(\S+)\s*\Z' )
