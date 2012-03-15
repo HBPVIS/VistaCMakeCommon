@@ -282,38 +282,25 @@ macro( vista_add_external_msvc_project_of_package _PACKAGE_NAME )
 		set( _WARNING_LEVEL "WARNING" )
 		
 		set( _ARGUMENTS ${ARGV} )
-		
-		# Check warning level _and_ remove it from the argument list if it exists.
-		set( _ARG_BUFFER_ "" )
-		list( GET _ARGUMENTS 1 _ARG_BUFFER )
-		
-		if( "${_ARG_BUFFER}" STREQUAL "SILENT" OR "${_ARG_BUFFER}" STREQUAL "WARNING" OR "${_ARG_BUFFER}" STREQUAL "ERROR" )
-			if( "${ARGV1}" STREQUAL "SILENT" )
-				set( _WARNING_LEVEL "SILENT" )
-			elseif( "${ARGV1}" STREQUAL "ERROR" )
-				set( _WARNING_LEVEL "SEND_ERROR" )
-			endif()
-			list( REMOVE_AT _ARGUMENTS 1 )
-		endif()
-		
-		# Check, if a solution folder was specified, extract it and remove it from the argument list (as well as the package name).
-		set( _ARG_BUFFER_ "" )
-		list( GET _ARGUMENTS 1 _ARG_BUFFER )
-				
-		if( "${ARGC}" GREATER 1 AND NOT "${_ARG_BUFFER}" STREQUAL "DEPENDENT" AND NOT "${_ARG_BUFFER}" STREQUAL "DEPENDS" )
-			set( _FOLDER "${_ARG_BUFFER}" )
-			list( REMOVE_AT _ARGUMENTS 0 1 )
-		else()
-			list( REMOVE_AT _ARGUMENTS 0 )
-		endif()
+		list( REMOVE_AT _ARGUMENTS 0 )
+
 
 		# Extract als DEPENDS and DEPENDENT targets.
-		set( _MODE -1 )
+		set( _MODE -1 ) # -1 = first, 0 = Depends, 1 = Dependent
 		foreach( _ARG ${_ARGUMENTS} )
 			if( "${_ARG}" STREQUAL "DEPENDS" )
 				set( _MODE 0 )
 			elseif( "${_ARG}" STREQUAL "DEPENDENT" )
 				set( _MODE 1 )
+			elseif( "${_ARG}" STREQUAL "SILENT" )
+				set( _WARNING_LEVEL "SILENT" )
+			elseif( "${_ARG}" STREQUAL "WARNING" )
+				set( _WARNING_LEVEL "WARNING" )
+			elseif( "${_ARG}" STREQUAL "ERROR" )
+				set( _WARNING_LEVEL "SEND_ERROR" )
+			elseif( _MODE STREQUAL -1 )
+				# its the first after the name -> Folder
+				set( _FOLDER "${_ARG}" )
 			elseif( _MODE STREQUAL 0 )
 				list( FIND VISTA_EXTERNALLY_ADDED_PROJECTS ${_ARG} _VAL )
 				if( _VAL GREATER -1 )
