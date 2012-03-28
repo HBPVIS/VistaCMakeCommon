@@ -812,21 +812,6 @@ macro( vista_configure_app _PACKAGE_NAME )
 		endif()
 	endif()
 	
-		
-	if( "${${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR}" STREQUAL "${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR}" )
-		# prevent copying to same location
-		set( ${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR )
-	endif()
-	
-	if( ${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR )		
-		add_custom_command( TARGET ${_PACKAGE_NAME}
-                    POST_BUILD
-                    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${_PACKAGE_NAME}>" "${${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR}"
-					COMMAND ${CMAKE_COMMAND} -E copy_if_different "${${_PACKAGE_NAME_UPPER}_SET_PATH_SCRIPT}" "${${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR}"
-					COMMENT "Copying executable"
-		)
-	endif()
-	
 	# we store the dependencies as required
 	set( ${_PACKAGE_NAME_UPPER}_DEPENDENCIES ${VISTA_TARGET_DEPENDENCIES} CACHE INTERNAL "" FORCE )
 	set( ${_PACKAGE_NAME_UPPER}_FULL_DEPENDENCIES ${VISTA_TARGET_FULL_DEPENDENCIES} CACHE INTERNAL "" FORCE )
@@ -900,7 +885,22 @@ macro( vista_configure_app _PACKAGE_NAME )
 		endif( WIN32 )
 	endif( VISTA_TARGET_LINK_DIRS )
 
+	# set up copying of executable after build
 	set( ${_PACKAGE_NAME_UPPER}_TARGET_MSVC_PROJECT "" CACHE INTERNAL "" FORCE )
+	
+		if( "${${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR}" STREQUAL "${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR}" )
+		# prevent copying to same location
+		set( ${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR )
+	endif()
+	
+	if( ${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR )		
+		add_custom_command( TARGET ${_PACKAGE_NAME}
+                    POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${_PACKAGE_NAME}>" "${${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR}"
+					COMMAND ${CMAKE_COMMAND} -E copy_if_different "${${_PACKAGE_NAME_UPPER}_SET_PATH_SCRIPT}" "${${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR}"
+					COMMENT "Copying executable"
+		)
+	endif()
 	
 	#if we're usign MSVC, we set up a *.vcproj.user file
 	if( MSVC )
