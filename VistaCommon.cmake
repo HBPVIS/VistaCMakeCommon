@@ -812,6 +812,21 @@ macro( vista_configure_app _PACKAGE_NAME )
 		endif()
 	endif()
 	
+		
+	if( "${${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR}" STREQUAL "${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR}" )
+		# prevent copying to same location
+		set( ${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR )
+	endif()
+	
+	if( ${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR )		
+		add_custom_command( TARGET ${_PACKAGE_NAME}
+                    POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${_PACKAGE_NAME}>" "${${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR}"
+					COMMAND ${CMAKE_COMMAND} -E copy_if_different "${${_PACKAGE_NAME_UPPER}_SET_PATH_SCRIPT}" "${${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR}"
+					COMMENT "Copying executable"
+		)
+	endif()
+	
 	# we store the dependencies as required
 	set( ${_PACKAGE_NAME_UPPER}_DEPENDENCIES ${VISTA_TARGET_DEPENDENCIES} CACHE INTERNAL "" FORCE )
 	set( ${_PACKAGE_NAME_UPPER}_FULL_DEPENDENCIES ${VISTA_TARGET_FULL_DEPENDENCIES} CACHE INTERNAL "" FORCE )
@@ -910,7 +925,11 @@ macro( vista_configure_app _PACKAGE_NAME )
 				set( _VERSION_STRING "10,00" )
 			endif( MSVC80 )
 
-			set( _WORK_DIR ${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR} )
+			if( ${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR )
+				set( _WORK_DIR "${${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR}" )
+			else()
+				set( _WORK_DIR "${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR}" )
+			endif()
 
 			set( _ENVIRONMENT "" )
 			if( _DYNAMIC_LIB_DIRS )
@@ -949,22 +968,8 @@ macro( vista_configure_app _PACKAGE_NAME )
 		else( VISTA_VCPROJUSER_PROTO_FILE )
 			message( WARNING "vista_configure_app( ${_PACKAGE_NAME} ) - could not find file VisualStudio.vcproj.user_proto" )
 		endif( VISTA_VCPROJUSER_PROTO_FILE )
-	endif( MSVC )
-	
-	
-	if( "${${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR}" STREQUAL "${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR}" )
-		# prevent copying to same location
-		set( ${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR )
-	endif()
-	
-	if( ${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR )		
-		add_custom_command( TARGET ${_PACKAGE_NAME}
-                    POST_BUILD
-                    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${_PACKAGE_NAME}>" "${${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR}"
-					COMMAND ${CMAKE_COMMAND} -E copy_if_different "${${_PACKAGE_NAME_UPPER}_SET_PATH_SCRIPT}" "${${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR}"
-					COMMENT "Copying executable"
-		)
-	endif()
+	endif( MSVC )	
+
 endmacro( vista_configure_app )
 
 # vista_configure_lib( _PACKAGE_NAME [OUT_NAME] )
