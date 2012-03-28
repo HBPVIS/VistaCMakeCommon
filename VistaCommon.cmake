@@ -745,22 +745,56 @@ macro( vista_use_package _PACKAGE_NAME )
 endmacro( vista_use_package _PACKAGE_NAME )
 
 
-# vista_configure_app( _PACKAGE_NAME [OUT_NAME] )
+# vista_configure_app( _PACKAGE_NAME [OUT_NAME] [DONT_COPY_EXECUTABLE | COPY_EXECUTABLE_TO TARGET_DIR] )
 # sets some general properties for the target to configure it as application
-#	sets default out_dir (i.e. where the executable will be built) to source directory
+#	sets default out_dir (i.e. where the executable will be built) to the /bin subdir in the binary tree
 #	sets the Application Name to _PACKAGE_NAME with "D"-PostFix under Debug
 #	if not overwritten, sets the outdir to the target's source directory
 #	creates a shell script that sets the path to find required libraries
 #	for MSVC, a *.vcproj.user file is created, setting Working Directory and Path Environment
+#   By default, the executable (together with the path script and an optional build info file)
+#   is created in the outdir, but to the source dir copied after a successful build.
+#   This behavior can be controlled by adding the parameter DONT_COPY_EXECUTABLE if the files should
+#   not be copied, or by COPY_EXECUTABLE_TO TARGET_DIR to specify an alternative copy destination
 macro( vista_configure_app _PACKAGE_NAME )
 	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
 
 	set( ${_PACKAGE_NAME_UPPER}_TARGET_TYPE "APP" )
 
 	set( ${_PACKAGE_NAME_UPPER}_OUTPUT_NAME ${_PACKAGE_NAME} CACHE INTERNAL "" FORCE )
+	
+	# parse arguments
+	set( ${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR ${CMAKE_CURRENT_SOURCE_DIR} )
 	if( ${ARGC} GREATER 1 )
-		set( ${_PACKAGE_NAME_UPPER}_OUTPUT_NAME ${ARGV1} CACHE INTERNAL "" FORCE )
+		if( "${ARGV1}" STREQUAL "DONT_COPY_EXECUTABLE" )
+			set( ${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR )
+		elseif( "${ARGV1}" STREQUAL "COPY_EXECUTABLE_TO" )
+			if( ${ARGC} GREATER 2 )
+				set( ${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR "${ARGV2}" )
+			endif()
+		else()
+		
+			set( ${_PACKAGE_NAME_UPPER}_OUTPUT_NAME ${ARGV1} CACHE INTERNAL "" FORCE )
+			
+			if( ${ARGC} GREATER 2 )
+				if( "${ARGV2}" STREQUAL "DONT_COPY_EXECUTABLE" )
+					set( ${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR )
+				elseif( "${ARGV2}" STREQUAL "COPY_EXECUTABLE_TO" )
+					if( ${ARGC} GREATER 3 )
+						set( ${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR "${ARGV3}" )
+					endif()
+				endif()
+			endif()
+			
+		endif()
 	endif( ${ARGC} GREATER 1 )
+	if( ${ARGV1} )
+		set( ${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR ${ARGV1} )
+	else()		
+		if( VISTA_COPY_EXECUTABLE_TO_SOURCE_DIR )
+			set( ${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR ${CMAKE_CURRENT_SOURCE_DIR} )
+		endif()
+	endif()
 
 	set_target_properties( ${_PACKAGE_NAME} PROPERTIES OUTPUT_NAME_DEBUG			"${${_PACKAGE_NAME_UPPER}_OUTPUT_NAME}${CMAKE_DEBUG_POSTFIX}" )
 	set_target_properties( ${_PACKAGE_NAME} PROPERTIES OUTPUT_NAME_RELEASE			"${${_PACKAGE_NAME_UPPER}_OUTPUT_NAME}" )
@@ -769,15 +803,15 @@ macro( vista_configure_app _PACKAGE_NAME )
 	set_target_properties( ${_PACKAGE_NAME} PROPERTIES OUTPUT_NAME					"${${_PACKAGE_NAME_UPPER}_OUTPUT_NAME}" )
 
 	if( NOT DEFINED ${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR )
-		vista_set_outdir( ${_PACKAGE_NAME} ${CMAKE_CURRENT_SOURCE_DIR} )
-	else( NOT DEFINED ${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR )
+		vista_set_outdir( ${_PACKAGE_NAME} "${CMAKE_CURRENT_BINARY_DIR}/bin" )
+	else()
 		if( ${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR_WITH_CONFIG_SUBDIRS )
 			vista_set_outdir( ${_PACKAGE_NAME} ${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR} USE_CONFIG_SUBDIRS )
-		else( ${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR_WITH_CONFIG_SUBDIRS )
+		else()
 			vista_set_outdir( ${_PACKAGE_NAME} ${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR} )
-		endif( ${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR_WITH_CONFIG_SUBDIRS )
-	endif( NOT DEFINED ${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR )
-
+		endif()
+	endif()
+	
 	# we store the dependencies as required
 	set( ${_PACKAGE_NAME_UPPER}_DEPENDENCIES ${VISTA_TARGET_DEPENDENCIES} CACHE INTERNAL "" FORCE )
 	set( ${_PACKAGE_NAME_UPPER}_FULL_DEPENDENCIES ${VISTA_TARGET_FULL_DEPENDENCIES} CACHE INTERNAL "" FORCE )
@@ -807,9 +841,10 @@ macro( vista_configure_app _PACKAGE_NAME )
 			endforeach( _ENTRY ${VISTA_${_PACKAGE_NAME}_ENVVAR} )
 						
 			if( VISTA_ENVIRONMENT_SCRIPT_FILE )
+				set( ${_PACKAGE_NAME_UPPER}_SET_PATH_SCRIPT "${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR}/set_path_for_${_PACKAGE_NAME}.bat" )
 				configure_file(
 						${VISTA_ENVIRONMENT_SCRIPT_FILE}
-						${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR}/set_path_for_${_PACKAGE_NAME}.bat
+						"${${_PACKAGE_NAME_UPPER}_SET_PATH_SCRIPT}"
 						@ONLY
 				)
 			endif( VISTA_ENVIRONMENT_SCRIPT_FILE )
@@ -840,15 +875,12 @@ macro( vista_configure_app _PACKAGE_NAME )
 			endforeach( _ENTRY ${VISTA_${_PACKAGE_NAME}_ENVVAR} )
 			
 			if( VISTA_ENVIRONMENT_SCRIPT_FILE )
+				set( ${_PACKAGE_NAME_UPPER}_SET_PATH_SCRIPT "${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR}/set_path_for_${_PACKAGE_NAME}.sh" )
 				configure_file(
 						"${VISTA_ENVIRONMENT_SCRIPT_FILE}"
-						"${CMAKE_CURRENT_BINARY_DIR}/set_path_for_${_PACKAGE_NAME}.sh"
+						"${${_PACKAGE_NAME_UPPER}_SET_PATH_SCRIPT}"
 						@ONLY
 				)
-				file( COPY "${CMAKE_CURRENT_BINARY_DIR}/set_path_for_${_PACKAGE_NAME}.sh"
-						DESTINATION "${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR}" 
-						FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE
-				) 
 			endif( VISTA_ENVIRONMENT_SCRIPT_FILE )
 		endif( WIN32 )
 	endif( VISTA_TARGET_LINK_DIRS )
@@ -918,6 +950,21 @@ macro( vista_configure_app _PACKAGE_NAME )
 			message( WARNING "vista_configure_app( ${_PACKAGE_NAME} ) - could not find file VisualStudio.vcproj.user_proto" )
 		endif( VISTA_VCPROJUSER_PROTO_FILE )
 	endif( MSVC )
+	
+	
+	if( "${${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR}" STREQUAL "${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR}" )
+		# prevent copying to same location
+		set( ${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR )
+	endif()
+	
+	if( ${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR )		
+		add_custom_command( TARGET ${_PACKAGE_NAME}
+                    POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${_PACKAGE_NAME}>" "${${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR}"
+					COMMAND ${CMAKE_COMMAND} -E copy_if_different "${${_PACKAGE_NAME_UPPER}_SET_PATH_SCRIPT}" "${${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR}"
+					COMMENT "Copying executable"
+		)
+	endif()
 endmacro( vista_configure_app )
 
 # vista_configure_lib( _PACKAGE_NAME [OUT_NAME] )
@@ -1859,6 +1906,14 @@ macro( vista_create_info_file _PACKAGE_NAME _TARGET_DIR _INSTALL_DIR )
 	if( NOT "${_INSTALL_DIR}" STREQUAL "" )
 		install( FILES "${INFO_FILENAME}" DESTINATION "${_INSTALL_DIR}" )
 	endif( NOT "${_INSTALL_DIR}" STREQUAL "" )
+	
+	if( ${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR )
+		add_custom_command( TARGET ${_PACKAGE_NAME}
+                    POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${INFO_FILENAME}" "${${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR}"
+					COMMENT "Copying info file"
+		)
+	endif()
 endmacro( vista_create_info_file )
 
 # vista_delete_info_file( PACKAGE_NAME TARGET_DIR )
