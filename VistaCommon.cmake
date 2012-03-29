@@ -210,7 +210,7 @@ function( local_use_existing_config_libs _NAME _ROOT_DIR _CONFIG_FILE _LIBRARY_D
 	string( TOUPPER ${_NAME} _NAME_UPPER )
 	if( EXISTS "${_CONFIG_FILE}" )
 		include( ${_CONFIG_FILE} )
-		get_filename_component( ${_NAME_UPPER}_ROOT_DIR ${${_NAME_UPPER}_ROOT_DIR} REALPATH )
+		get_filename_component( ${_NAME_UPPER}_ROOT_DIR "${${_NAME_UPPER}_ROOT_DIR}" REALPATH )
 		if( "${${_NAME_UPPER}_ROOT_DIR}" STREQUAL "${_ROOT_DIR}" )
 			if( ${_NAME_UPPER}_LIBRARY_DIRS )
 				list( APPEND ${_LIBRARY_DIR_LIST} "${${_NAME_UPPER}_LIBRARY_DIRS}" )
@@ -543,7 +543,7 @@ macro( vista_find_package _PACKAGE_NAME )
 			if( NOT ${_PACKAGE_NAME_UPPER}_FOUND AND ${_PACKAGE_NAME}_FOUND )
 				set( ${_PACKAGE_NAME_UPPER}_FOUND ${${_PACKAGE_NAME}_FOUND} )
 			endif()
-		else( _FIND_VMODULE_EXISTS )
+		else()
 			if( NOT ${PACKAGE_NAME_UPPER}_ADDITIONAL_CONFIG_DIRS )
 				# we look for additional directories to search for the config files
 				# we also search for CoreLibs directories manually
@@ -568,9 +568,17 @@ macro( vista_find_package _PACKAGE_NAME )
 				endif( ${PACKAGE_NAME_UPPER}_ADDITIONAL_CONFIG_DIRS )
 			endif( NOT ${PACKAGE_NAME_UPPER}_ADDITIONAL_CONFIG_DIRS )
 
+			set( ${_PACKAGE_NAME}_ACTUAL_DIR )
+			
 			find_package( ${_PACKAGE_NAME} ${_PACKAGE_VERSION} ${_FIND_PACKAGE_ARGS}
 							PATHS ${${PACKAGE_NAME_UPPER}_ADDITIONAL_CONFIG_DIRS} ${VISTA_PACKAGE_SEARCH_PATHS} )
-		endif( _FIND_VMODULE_EXISTS )
+							
+			# in case we dound a reference file (e.g. in VistaCMakeCommon/share), the Package_DIR would point
+			# to the reference. Instead, we want it to point to the actual file directory
+			if( ${_PACKAGE_NAME}_ACTUAL_DIR )
+				set( ${_PACKAGE_NAME}_DIR "${${_PACKAGE_NAME}_ACTUAL_DIR}" CACHE PATH "The directory containing a CMake configuration file for $_PACKAGE_NAME}" FORCE )
+			endif()
+		endif()
 
 	endif( _DO_FIND )
 
