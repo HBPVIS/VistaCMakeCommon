@@ -345,7 +345,7 @@ macro( vista_find_package_dirs _PACKAGE_NAME _EXAMPLE_FILE )
 		file( TO_CMAKE_PATH ${_UNVERSIONED} "${_PACKAGE_NAME_UPPER}_CANDIDATE_UNVERSIONED" )
 	endif( _UNVERSIONED )
 
-	#check unversioned pathes
+	#check versioned pathes
 	foreach( _PATH ${_VERSIONED_PATHES} )
 		file( TO_CMAKE_PATH "${_PATH}" _PATH )
 		# determine version
@@ -364,8 +364,6 @@ macro( vista_find_package_dirs _PACKAGE_NAME _EXAMPLE_FILE )
 						break()
 					endif( EXISTS "${_PATH}/${_HWARCH}/${_EXAMPLE_FILE}" )
 				endforeach( _HWARCH ${VISTA_COMPATIBLE_HWARCH} )
-			elseif( EXISTS "${_PATH}/${_EXAMPLE_FILE}" )
-
 			endif( EXISTS "${_PATH}/${_EXAMPLE_FILE}" )
 		else()
 			message( WARNING "vista_find_package_dirs cant extract version from \"${_PATH}\" - skipping" )

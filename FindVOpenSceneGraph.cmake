@@ -4,7 +4,7 @@ include( FindPackageHandleStandardArgs )
 include( VistaFindUtils )
 
 #if( NOT VOPENSCENEGRAPH_FOUND )
-	vista_find_package_root( OpenSceneGraph "include/osg/camera" )
+	vista_find_package_root( OpenSceneGraph "include/osg/Camera" )
 	
 	set( ENV{OSG_ROOT} "${OPENSCENEGRAPH_ROOT_DIR}" )
 
@@ -30,4 +30,4 @@ include( VistaFindUtils )
 
 #endif( NOT VOPENSCENEGRAPH_FOUND )
 
-find_package_handle_standard_args( VOpenSceneGraph "OpenSceneGraph could not be found" OPENSG_FOUND )
+find_package_handle_standard_args( VOpenSceneGraph "OpenSceneGraph could not be found" OPENSCENEGRAPH_FOUND )
