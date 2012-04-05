@@ -206,7 +206,7 @@ endfunction( local_clean_old_config_references _PACKAGE_NAME _PACKAGE_ROOT_DIR )
 
 # local macro, for use in this file only
 function( local_use_existing_config_libs _NAME _ROOT_DIR _CONFIG_FILE _LIBRARY_DIR_LIST )
-	get_filename_component( _ROOT_DIR ${_ROOT_DIR} REALPATH )
+	get_filename_component( _ROOT_DIR "${_ROOT_DIR}" REALPATH )
 	string( TOUPPER ${_NAME} _NAME_UPPER )
 	if( EXISTS "${_CONFIG_FILE}" )
 		include( ${_CONFIG_FILE} )
