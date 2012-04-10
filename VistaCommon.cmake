@@ -382,7 +382,7 @@ endmacro( vista_add_external_msvc_project_of_package )
 # - if no module is found, the config files are searched in additional subdirectories
 macro( vista_find_package _PACKAGE_NAME )
 	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
-	
+
 	# parse arguments
 	set( _FIND_PACKAGE_ARGS )
 	set( _FIND_DEPENDENCIES FALSE )
@@ -582,6 +582,7 @@ macro( vista_find_package _PACKAGE_NAME )
 
 	endif( _DO_FIND )
 
+	set( _MESSAGE_IF_DO_FIND )
 endmacro( vista_find_package )
 
 
@@ -655,7 +656,7 @@ macro( vista_use_package _PACKAGE_NAME )
 
 		# set required variables if package was found AND it wasn't sufficiently included before (in which case _DO_FIND is FALSE )
 		if( ${_PACKAGE_NAME_UPPER}_FOUND AND ( _DO_FIND OR NOT VISTA_USE_${_PACKAGE_NAME_UPPER} ) )
-					# check if HWARCH matches
+			# check if HWARCH matches
 			if( ${_PACKAGE_NAME_UPPER}_HWARCH AND NOT ${${_PACKAGE_NAME_UPPER}_HWARCH} STREQUAL ${VISTA_HWARCH} )
 				message( WARNING "vista_use_package( ${_PACKAGE_NAME} ) - Package was built as ${${_PACKAGE_NAME_UPPER}_HWARCH}, but is used with ${VISTA_HWARCH}" )
 			endif( ${_PACKAGE_NAME_UPPER}_HWARCH AND NOT ${${_PACKAGE_NAME_UPPER}_HWARCH} STREQUAL ${VISTA_HWARCH} )
