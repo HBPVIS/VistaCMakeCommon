@@ -1,0 +1,13 @@
+
+.DEFAULT all:
+	( cd RELEASEDIR &&   $(MAKE) $@ ) || exit
+	( cd DEBUGDIR && $(MAKE) $@ ) || exit
+
+clean:
+	( cd RELEASEDIR &&   $(MAKE) $@ ) || exit
+	( cd DEBUGDIR && $(MAKE) $@ ) || exit
+
+
+
+
+
