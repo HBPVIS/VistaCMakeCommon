@@ -64,8 +64,10 @@ if [ ! "$GENERAL_BUILD_DIR" == "" ]; then
 	mkdir $GENERAL_BUILD_DIR
 	cd $GENERAL_BUILD_DIR
 	TO_SOURCE=../..
+	SED_TO_SOURCE=..\\/..
 else
 	TO_SOURCE=..
+	SED_TO_SOURCE=..
 fi
 
 if [ ! -d $RELEASE_BUILD_DIR ]; then
@@ -102,6 +104,6 @@ mv LinuxBuildStructureRerunCMake RerunCMake.sh.tmp1
 sed "s/RELEASEDIR/$RELEASE_BUILD_DIR/g" RerunCMake.sh.tmp1 > RerunCMake.sh.tmp2
 sed "s/DEBUGDIR/$DEBUG_BUILD_DIR/g" RerunCMake.sh.tmp2 > RerunCMake.sh.tmp3
 sed "s/CMAKE_CONFIG_BINARY/$CMAKE_BINARY/g" RerunCMake.sh.tmp3 > RerunCMake.sh.tmp4
-sed "s/TO_SOURCE_DIR/$TO_SOURCE/g" RerunCMake.sh.tmp4 > RerunCMake.sh
+sed "s/TO_SOURCE_DIR/$SED_TO_SOURCE/g" RerunCMake.sh.tmp4 > RerunCMake.sh
 rm RerunCMake.sh.tmp*
 chmod ug+x RerunCMake.sh
