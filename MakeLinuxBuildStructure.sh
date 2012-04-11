@@ -16,7 +16,7 @@ function usage()
     echo "   -debugdir DIR                  - name of the debug subdirectory"
 	echo "                                    default: debug"
 	echo "   -topdir DIR                    - toplevel subdir for build structure"
-	echo "                                    default: debug"
+	echo "                                    default: build - use \"\" for empty dir"
     echo ""
 }
 
@@ -35,6 +35,18 @@ while [ "$1" != "" ]; do
             usage
 			exit
             ;;
+		-releasedir )
+            RELEASE_BUILD_DIR=$2
+			shift
+            ;;
+		-debugdir )
+            DEBUG_BUILD_DIR=$2
+			shift
+            ;;
+		-topdir )
+            GENERAL_BUILD_DIR=$2
+			shift
+            ;;
         *)
             echo Unexpected parameter $1
 			usage
@@ -45,11 +57,15 @@ while [ "$1" != "" ]; do
 done
 
 if [ ! "$GENERAL_BUILD_DIR" == "" ]; then
+	echo GENERAL_BUILD_DIR=$GENERAL_BUILD_DIR
 	if [ ! -d $RELEASE_BUILD_DIR ]; then
 		mkdir $RELEASE_BUILD_DIR
 	fi
 	mkdir $GENERAL_BUILD_DIR
 	cd $GENERAL_BUILD_DIR
+	TO_SOURCE=../..
+else
+	TO_SOURCE=..
 fi
 
 if [ ! -d $RELEASE_BUILD_DIR ]; then
@@ -61,7 +77,7 @@ fi
 
 cd $RELEASE_BUILD_DIR
 
-cmake -DCMAKE_BUILD_TYPE=Release ../..
+cmake -DCMAKE_BUILD_TYPE=Release $TO_SOURCE
 
 cd ..
 
@@ -71,7 +87,7 @@ sed "s/\/$RELEASE_BUILD_DIR/\/$DEBUG_BUILD_DIR/g" $RELEASE_BUILD_DIR/CMakeCache.
 cd $DEBUG_BUILD_DIR
 
 
-cmake -DCMAKE_BUILD_TYPE=Debug ../..
+cmake -DCMAKE_BUILD_TYPE=Debug $TO_SOURCE
 
 cd ..
 
@@ -85,6 +101,7 @@ cp ${VISTA_CMAKE_COMMON}/LinuxBuildStructureRerunCMake .
 mv LinuxBuildStructureRerunCMake RerunCMake.sh.tmp1
 sed "s/RELEASEDIR/$RELEASE_BUILD_DIR/g" RerunCMake.sh.tmp1 > RerunCMake.sh.tmp2
 sed "s/DEBUGDIR/$DEBUG_BUILD_DIR/g" RerunCMake.sh.tmp2 > RerunCMake.sh.tmp3
-sed "s/CMAKE_CONFIG_BINARY/$CMAKE_BINARY/g" RerunCMake.sh.tmp3 > RerunCMake.sh
+sed "s/CMAKE_CONFIG_BINARY/$CMAKE_BINARY/g" RerunCMake.sh.tmp3 > RerunCMake.sh.tmp4
+sed "s/TO_SOURCE_DIR/$TO_SOURCE/g" RerunCMake.sh.tmp4 > RerunCMake.sh
 rm RerunCMake.sh.tmp*
 chmod ug+x RerunCMake.sh

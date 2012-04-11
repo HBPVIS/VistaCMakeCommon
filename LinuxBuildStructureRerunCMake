@@ -16,7 +16,7 @@ done
 
 cd RELEASEDIR
 
-$CMAKE_BINARY $CMAKE_PARAMS ../..
+$CMAKE_BINARY $CMAKE_PARAMS TO_SOURCE_DIR
 
 cd ..
 
@@ -25,6 +25,6 @@ sed "s/\/RELEASEDIR/\/DEBUGDIR/g" RELEASEDIR/CMakeCache.txt > DEBUGDIR/CMakeCach
 
 cd DEBUGDIR
 
-cmake -DCMAKE_BUILD_TYPE=Debug ../..
+cmake -DCMAKE_BUILD_TYPE=Debug TO_SOURCE_DIR
 
 cd ..
