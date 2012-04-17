@@ -812,13 +812,13 @@ macro( vista_configure_app _PACKAGE_NAME )
 	set( ${_PACKAGE_NAME_UPPER}_OUTPUT_NAME ${_PACKAGE_NAME} CACHE INTERNAL "" FORCE )
 	
 	# parse arguments
-	set( ${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR ${CMAKE_CURRENT_SOURCE_DIR} )
+	set( ${_PACKAGE_NAME_UPPER}_COPY_EXEC_DIR ${CMAKE_CURRENT_SOURCE_DIR} )
 	set( _OVERRIDE_WORKING_DIR )
 	set( _PARSE_MODE 0 ) # 0: first entry 1: awaiting command 2: next is TargetDir 3: next is WorkingDir
 	
 	foreach( _ARG ${ARGN} )
 		if( _ARG STREQUAL "DONT_COPY_EXECUTABLE" )
-			set( ${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR )
+			set( ${_PACKAGE_NAME_UPPER}_COPY_EXEC_DIR )
 			set( _PARSE_MODE 1 )
 		elseif( _ARG STREQUAL "COPY_EXECUTABLE_TO" )
 			set( _PARSE_MODE 2 )
@@ -828,7 +828,7 @@ macro( vista_configure_app _PACKAGE_NAME )
 			if( _PARSE_MODE EQUAL 0 )
 				set( ${_PACKAGE_NAME_UPPER}_OUTPUT_NAME ${_ARG} CACHE INTERNAL "" FORCE )
 			elseif( _PARSE_MODE EQUAL 2 )
-				set( ${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR "${_ARG}" )
+				set( ${_PACKAGE_NAME_UPPER}_COPY_EXEC_DIR "${_ARG}" )
 			elseif( _PARSE_MODE EQUAL 3 )
 				set( _OVERRIDE_WORKING_DIR "${_ARG}" )
 			else()
@@ -929,23 +929,22 @@ macro( vista_configure_app _PACKAGE_NAME )
 	# set up copying of executable after build
 	set( ${_PACKAGE_NAME_UPPER}_TARGET_MSVC_PROJECT "" CACHE INTERNAL "" FORCE )
 	
-		if( "${${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR}" STREQUAL "${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR}" )
+		if( "${${_PACKAGE_NAME_UPPER}_COPY_EXEC_DIR}" STREQUAL "${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR}" )
 		# prevent copying to same location
-		set( ${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR )
+		set( ${_PACKAGE_NAME_UPPER}_COPY_EXEC_DIR )
 	endif()
 	
-	if( ${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR )
+	if( ${_PACKAGE_NAME_UPPER}_COPY_EXEC_DIR )
 		add_custom_command(	TARGET ${_PACKAGE_NAME}
 					POST_BUILD
-					COMMAND ${CMAKE_COMMAND}
-					ARGS -E make_directory "${${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR}"
+					COMMAND ${CMAKE_COMMAND} ARGS -E make_directory "${${_PACKAGE_NAME_UPPER}_COPY_EXEC_DIR}"
 					COMMENT "Creating binary target directory"
 		)
-	
+
 		add_custom_command( TARGET ${_PACKAGE_NAME}
                     POST_BUILD
-                    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${_PACKAGE_NAME}>" "${${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR}"
-					COMMAND ${CMAKE_COMMAND} -E copy_if_different "${${_PACKAGE_NAME_UPPER}_SET_PATH_SCRIPT}" "${${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR}"
+                    COMMAND ${CMAKE_COMMAND} ARGS -E copy "$<TARGET_FILE:${_PACKAGE_NAME}>" "${${_PACKAGE_NAME_UPPER}_COPY_EXEC_DIR}"
+					COMMAND ${CMAKE_COMMAND} ARGS -E copy_if_different "${${_PACKAGE_NAME_UPPER}_SET_PATH_SCRIPT}" "${${_PACKAGE_NAME_UPPER}_COPY_EXEC_DIR}"
 					COMMENT "Copying binary to target directory"
 		)
 	endif()
@@ -975,8 +974,8 @@ macro( vista_configure_app _PACKAGE_NAME )
 
 			if( _OVERRIDE_WORKING_DIR )
 				set( _WORK_DIR "${_OVERRIDE_WORKING_DIR}" )
-			elseif( ${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR )
-				set( _WORK_DIR "${${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR}" )
+			elseif( ${_PACKAGE_NAME_UPPER}_COPY_EXEC_DIR )
+				set( _WORK_DIR "${${_PACKAGE_NAME_UPPER}_COPY_EXEC_DIR}" )
 			else()
 				set( _WORK_DIR "${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR}" )
 			endif()
@@ -1962,10 +1961,10 @@ macro( vista_create_info_file _PACKAGE_NAME _TARGET_DIR _INSTALL_DIR )
 		install( FILES "${INFO_FILENAME}" DESTINATION "${_INSTALL_DIR}" )
 	endif( NOT "${_INSTALL_DIR}" STREQUAL "" )
 	
-	if( ${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR )
+	if( ${_PACKAGE_NAME_UPPER}_COPY_EXEC_DIR )
 		add_custom_command( TARGET ${_PACKAGE_NAME}
                     POST_BUILD
-                    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${INFO_FILENAME}" "${${_PACKAG_NAME_UPPER}_COPY_EXEC_DIR}"
+                    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${INFO_FILENAME}" "${${_PACKAGE_NAME_UPPER}_COPY_EXEC_DIR}"
 					COMMENT "Copying info file"
 		)
 	endif()
