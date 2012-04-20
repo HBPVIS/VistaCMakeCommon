@@ -935,18 +935,22 @@ macro( vista_configure_app _PACKAGE_NAME )
 	endif()
 	
 	if( ${_PACKAGE_NAME_UPPER}_COPY_EXEC_DIR )
-		add_custom_command(	TARGET ${_PACKAGE_NAME}
-					POST_BUILD
-					COMMAND ${CMAKE_COMMAND} ARGS -E make_directory "${${_PACKAGE_NAME_UPPER}_COPY_EXEC_DIR}"
-					COMMENT "Creating binary target directory"
-		)
+		if( CMAKE_VERSION VERSION_LESS 2.8.5 )
+			message( WARNING "vista_configure_app( ${_PACKAGE_NAME} ) - executable copying is only supported in cmake 2.8.5+ - use DONT_COPY_EXECUTABLE option or update cmake" )
+		else()
+			add_custom_command(	TARGET ${_PACKAGE_NAME}
+						POST_BUILD
+						COMMAND ${CMAKE_COMMAND} ARGS -E make_directory "${${_PACKAGE_NAME_UPPER}_COPY_EXEC_DIR}"
+						COMMENT "Creating binary target directory"
+			)
 
-		add_custom_command( TARGET ${_PACKAGE_NAME}
-                    POST_BUILD
-                    COMMAND ${CMAKE_COMMAND} ARGS -E copy "$<TARGET_FILE:${_PACKAGE_NAME}>" "${${_PACKAGE_NAME_UPPER}_COPY_EXEC_DIR}"
-					COMMAND ${CMAKE_COMMAND} ARGS -E copy_if_different "${${_PACKAGE_NAME_UPPER}_SET_PATH_SCRIPT}" "${${_PACKAGE_NAME_UPPER}_COPY_EXEC_DIR}"
-					COMMENT "Copying binary to target directory"
-		)
+			add_custom_command( TARGET ${_PACKAGE_NAME}
+						POST_BUILD
+						COMMAND ${CMAKE_COMMAND} ARGS -E copy "$<TARGET_FILE:${_PACKAGE_NAME}>" "${${_PACKAGE_NAME_UPPER}_COPY_EXEC_DIR}"
+						COMMAND ${CMAKE_COMMAND} ARGS -E copy_if_different "${${_PACKAGE_NAME_UPPER}_SET_PATH_SCRIPT}" "${${_PACKAGE_NAME_UPPER}_COPY_EXEC_DIR}"
+						COMMENT "Copying binary to target directory"
+			)
+		endif()
 	endif()
 	
 	#if we're usign MSVC, we set up a *.vcproj.user file
