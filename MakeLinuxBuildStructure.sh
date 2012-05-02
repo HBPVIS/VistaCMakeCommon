@@ -25,6 +25,7 @@ GENERAL_BUILD_DIR=build_LINUX.X86_64
 DEBUG_BUILD_DIR=debug
 RELEASE_BUILD_DIR=release
 CMAKE_BINARY=ccmake
+ABSOLUTE_SOURCE_DIR=`pwd`
 
 while [ "$1" != "" ]; do
 	case $1 in
@@ -56,19 +57,21 @@ while [ "$1" != "" ]; do
 	shift
 done
 
+ABSOLUTE_RELEASE_DIR=${ABSOLUTE_SOURCE_DIR}
+ABSOLUTE_DEBUG_DIR=${ABSOLUTE_SOURCE_DIR}
+
 if [ ! "$GENERAL_BUILD_DIR" == "" ]; then
 	echo GENERAL_BUILD_DIR=$GENERAL_BUILD_DIR
-	if [ ! -d $RELEASE_BUILD_DIR ]; then
-		mkdir $RELEASE_BUILD_DIR
+	if [ ! -d $GENERAL_BUILD_DIR ]; then
+		mkdir $GENERAL_BUILD_DIR
 	fi
-	mkdir $GENERAL_BUILD_DIR
 	cd $GENERAL_BUILD_DIR
-	TO_SOURCE=../..
-	SED_TO_SOURCE=..\\/..
-else
-	TO_SOURCE=..
-	SED_TO_SOURCE=..
+	ABSOLUTE_RELEASE_DIR=$ABSOLUTE_RELEASE_DIR/$GENERAL_BUILD_DIR
+	ABSOLUTE_DEBUG_DIR=$ABSOLUTE_DEBUG_DIR/$GENERAL_BUILD_DIR
 fi
+
+ABSOLUTE_RELEASE_DIR=$ABSOLUTE_RELEASE_DIR/$RELEASE_BUILD_DIR
+ABSOLUTE_DEBUG_DIR=$ABSOLUTE_DEBUG_DIR/$DEBUG_BUILD_DIR
 
 if [ ! -d $RELEASE_BUILD_DIR ]; then
 	mkdir $RELEASE_BUILD_DIR
@@ -77,33 +80,30 @@ if [ ! -d $DEBUG_BUILD_DIR ]; then
 	mkdir $DEBUG_BUILD_DIR
 fi
 
-cd $RELEASE_BUILD_DIR
+cd $ABSOLUTE_RELEASE_DIR
 
-cmake -DCMAKE_BUILD_TYPE=Release $TO_SOURCE
+cmake -DCMAKE_BUILD_TYPE=Release $ABSOLUTE_SOURCE_DIR
 
-cd ..
+cd $ABSOLUTE_DEBUG_DIR
 
-cp -R $RELEASE_BUILD_DIR/CMakeFiles $DEBUG_BUILD_DIR
-sed "s/\/$RELEASE_BUILD_DIR/\/$DEBUG_BUILD_DIR/g" $RELEASE_BUILD_DIR/CMakeCache.txt > $DEBUG_BUILD_DIR/CMakeCache.txt
+cp -R $ABSOLUTE_RELEASE_DIR/CMakeFiles $ABSOLUTE_DEBUG_DIR
+sed "s/\/$ABSOLUTE_RELEASE_DIR/\/$ABSOLUTE_DEBUG_DIR/g" $ABSOLUTE_RELEASE_DIR/CMakeCache.txt > $ABSOLUTE_DEBUG_DIR/CMakeCache.txt
 
-cd $DEBUG_BUILD_DIR
-
-
-cmake -DCMAKE_BUILD_TYPE=Debug $TO_SOURCE
+cmake -DCMAKE_BUILD_TYPE=Debug $ABSOLUTE_SOURCE_DIR
 
 cd ..
 
 cp ${VISTA_CMAKE_COMMON}/LinuxBuildStructureMakefile .
 mv LinuxBuildStructureMakefile Makefile.tmp1
-sed "s/RELEASEDIR/$RELEASE_BUILD_DIR/g" Makefile.tmp1 > Makefile.tmp2
-sed "s/DEBUGDIR/$DEBUG_BUILD_DIR/g" Makefile.tmp2 > Makefile
+sed "s|RELEASEDIR|$ABSOLUTE_RELEASE_DIR|g" Makefile.tmp1 > Makefile.tmp2
+sed "s|DEBUGDIR|$ABSOLUTE_DEBUG_DIR|g" Makefile.tmp2 > Makefile
 rm Makefile.tmp*
 
 cp ${VISTA_CMAKE_COMMON}/LinuxBuildStructureRerunCMake .
 mv LinuxBuildStructureRerunCMake RerunCMake.sh.tmp1
-sed "s/RELEASEDIR/$RELEASE_BUILD_DIR/g" RerunCMake.sh.tmp1 > RerunCMake.sh.tmp2
-sed "s/DEBUGDIR/$DEBUG_BUILD_DIR/g" RerunCMake.sh.tmp2 > RerunCMake.sh.tmp3
-sed "s/CMAKE_CONFIG_BINARY/$CMAKE_BINARY/g" RerunCMake.sh.tmp3 > RerunCMake.sh.tmp4
-sed "s/TO_SOURCE_DIR/$SED_TO_SOURCE/g" RerunCMake.sh.tmp4 > RerunCMake.sh
+sed "s|RELEASEDIR|$ABSOLUTE_RELEASE_DIR|g" RerunCMake.sh.tmp1 > RerunCMake.sh.tmp2
+sed "s|DEBUGDIR|$ABSOLUTE_DEBUG_DIR|g" RerunCMake.sh.tmp2 > RerunCMake.sh.tmp3
+sed "s|CMAKE_CONFIG_BINARY|$CMAKE_BINARY|g" RerunCMake.sh.tmp3 > RerunCMake.sh.tmp4
+sed "s|TO_SOURCE_DIR|$ABSOLUTE_SOURCE_DIR|g" RerunCMake.sh.tmp4 > RerunCMake.sh
 rm RerunCMake.sh.tmp*
 chmod ug+x RerunCMake.sh
