@@ -8,15 +8,14 @@ if( NOT VZMQ_FOUND )
 	vista_find_package_root( ZMQ include/zmq.h NAMES ZeroMQ zeromq Zeromq)
 
 	if( ZMQ_ROOT_DIR )
-		find_library( ZMQ_LIBRARIES NAMES zmq ZMQ libzmq
-					PATHS ${ZMQ_ROOT_DIR}/lib
-					CACHE "ZMQ library" )
-		mark_as_advanced( ZMQ_LIBRARIES )
+		vista_find_library_uncached( NAMES zmq ZMQ libzmq
+									PATHS "${ZMQ_ROOT_DIR}/lib"
+									CACHE "ZMQ library" )
 
 		set( ZMQ_INCLUDE_DIRS ${ZMQ_ROOT_DIR}/include )
 		set( ZMQ_LIBRARY_DIRS ${ZMQ_ROOT_DIR}/lib )
-		get_filename_component( ZMQ_LIBRARY_DIRS ${ZMQ_LIBRARIES} PATH )
-
+		get_filename_component( ZMQ_LIBRARY_DIRS "${VISTA_UNCACHED_LIBRARY}" PATH )
+		get_filename_component( ZMQ_LIBRARIES "${VISTA_UNCACHED_LIBRARY}" NAME )
 	endif( ZMQ_ROOT_DIR )
 
 endif( NOT VZMQ_FOUND )
