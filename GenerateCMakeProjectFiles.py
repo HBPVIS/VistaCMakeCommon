@@ -1,3 +1,4 @@
+#!/usr/bin/python 
 # $Id$
 
 import os, sys, re, string
