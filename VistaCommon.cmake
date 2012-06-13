@@ -1258,13 +1258,18 @@ endmacro( vista_install_files_by_extension )
 # searches for ALL .dll's or .so's in all link directories, and installs them
 # to the specified subdir. Only dlls that already exist at configure time will be installed!
 # WARNING use with great care! this can potentially copy a whole lot of dlls if
-# one of the lib's link dirs contains other dll's, too (e.g. /usr/lib)
-macro( vista_install_all_dlls _INSTALL_SUBDIR )		
+# one of the lib's link dirs contains other dll's, too
+# However, this script skips all .so's in /usr/lib* (and subfolders) and /lib* (and subfolders)
+macro( vista_install_all_dlls _INSTALL_SUBDIR )
 	foreach( _DIR ${VISTA_TARGET_LINK_DIRS} ${VISTACORELIBS_DRIVER_PLUGIN_DIRS} )
 		if( WIN32 )
 			vista_install_files_by_extension( ${_DIR} ${_INSTALL_SUBDIR} NON_RECURSIVE "dll" )
-		elseif( LINUX )
-			vista_install_files_by_extension( ${_DIR} ${_INSTALL_SUBDIR} NON_RECURSIVE "so" )
+		elseif( UNIX )
+			string( REGEX MATCH "^/usr/lib.*" _USR_LIB_MATCHED "${_DIR}" )
+			string( REGEX MATCH "^/lib.*" _LIB_MATCHED "${_DIR}" )
+			if( NOT _USR_LIB_MATCHED AND NOT _LIB_MATCHED )
+				vista_install_files_by_extension( ${_DIR} ${_INSTALL_SUBDIR} NON_RECURSIVE "so" )
+			endif()
 		endif( WIN32 )
 	endforeach( _DIR ${VISTA_TARGET_LINK_DIRS} ${VISTACORELIBS_DRIVER_PLUGIN_DIRS} )
 endmacro( vista_install_all_dlls )

@@ -390,7 +390,7 @@ macro( vista_get_version_from_path _PATH _NAME_LIST _VERSION_VAR )
 	endforeach( _NAME ${${_NAME_LIST}} )
 endmacro( vista_get_version_from_path )
 
-# vista_find_package_root( PACKAGE EXAMPLE_FILE [DONT_ALLOW_UNVERSIONED] [QUIET] [NAMES name1 name2 ...] [PATHS path1 path2] [ADVANCED] [NO_CACHE] )
+# vista_find_package_root( PACKAGE EXAMPLE_FILE [DONT_ALLOW_UNVERSIONED] [PREFER_UNVERSIONED] [QUIET] [NAMES name1 name2 ...] [PATHS path1 path2] [ADVANCED] [NO_CACHE] )
 # finds the package root fr PACKAGE, and stores it in the variable <PACKAGE>_ROOT_DIR
 # Should only be called from the context of a Find<XYZ>.cmake file - it automatically checks if
 # versions are requested, and if so, looks for an appropriately versioned dir, otherwise, it
@@ -401,6 +401,8 @@ endmacro( vista_get_version_from_path )
 # make it advanced or uncached
 # if QUIET is specified, no info messages will be printed
 # if DONT_ALLOW_UNVERSIONED is specified, no unversioned path is accepted when a versioned one is requested
+# if PREFER_UNVRSIONED is set and no version is requested, an unversioned package is used - otherwise by default
+# the highest version is chosen
 # the NAMES list provides alternative names to be searched (equivalently to vista_find_package_dirs)
 # the PATHS list provides additional (absolute) base pathes to search (equivalently to vista_find_package_dirs)
 macro( vista_find_package_root _PACKAGE_NAME _EXAMPLE_FILE )
@@ -431,6 +433,7 @@ macro( vista_find_package_root _PACKAGE_NAME _EXAMPLE_FILE )
 					set( _NEXT_IS_FOLDER TRUE )
 				elseif( _NEXT_IS_FOLDER )
 					if( ${_ARG} STREQUAL "DONT_ALLOW_UNVERSIONED"
+						OR ${_ARG} STREQUAL "PREFER_UNVERSIONED"
 						OR ${_ARG} STREQUAL "QUIET"
 						OR ${_ARG} STREQUAL "ADVANCED"
 						OR ${_ARG} STREQUAL "NO_CACHE" )
@@ -458,6 +461,7 @@ macro( vista_find_package_root _PACKAGE_NAME _EXAMPLE_FILE )
 	if( NOT ${_PACKAGE_NAME_UPPER}_ROOT_DIR )
 		# parse arguments
 		set( _DONT_ALLOW_UNVERSIONED FALSE )
+		set( _PREFER_UNVERSIONED FALSE )
 		set( _QUIET FALSE )
 		set( _ADVANCED FALSE )
 		set( _NO_CACHE FALSE )
@@ -478,6 +482,10 @@ macro( vista_find_package_root _PACKAGE_NAME _EXAMPLE_FILE )
 		list( FIND _ARGS "DONT_ALLOW_UNVERSIONED" _FOUND )
 		if( _FOUND GREATER -1 )
 			set( _DONT_ALLOW_UNVERSIONED TRUE )
+		endif( _FOUND GREATER -1 )
+		list( FIND _ARGS "PREFER_UNVERSIONED" _FOUND )
+		if( _FOUND GREATER -1 )
+			set( _PREFER_UNVERSIONED TRUE )
 		endif( _FOUND GREATER -1 )
 
 		list( REMOVE_ITEM _ARGS "NO_CACHE" "QUIET" "ADVANCED" "DONT_ALLOW_UNVERSIONED" )
@@ -547,11 +555,12 @@ macro( vista_find_package_root _PACKAGE_NAME _EXAMPLE_FILE )
 				endif( _VERSION_EXACT )
 			endif( NOT _FOUND_DIR )
 
-		else( _REQUESTED_VERSION )
-			if( ${_PACKAGE_NAME_UPPER}_CANDIDATE_UNVERSIONED )
+		else() # no version requested
+			if( ${_PACKAGE_NAME_UPPER}_CANDIDATE_UNVERSIONED AND ( _PREFER_UNVERSIONED OR NOT ${_PACKAGE_NAME_UPPER}_CANDIDATE_UNVERSIONED ) )
 				set( _FOUND_DIR ${${_PACKAGE_NAME_UPPER}_CANDIDATE_UNVERSIONED} )
 				set( _FOUND_VERSION )
-			else( ${_PACKAGE_NAME_UPPER}_CANDIDATE_UNVERSIONED )
+				message( "unversioned" )
+			elseif( ${_PACKAGE_NAME_UPPER}_CANDIDATE_DIRSe )
 				set( _BEST_DIFF  )
 
 				# find highest version
@@ -566,15 +575,9 @@ macro( vista_find_package_root _PACKAGE_NAME _EXAMPLE_FILE )
 						list( GET ${_PACKAGE_NAME_UPPER}_CANDIDATE_DIRS ${_INDEX} _FOUND_DIR )
 						set( _FOUND_VERSION ${_DIR_VERSION} )
 					endif( NOT _BEST_DIFF OR _DIR_VERSION VERSION_GREATER _BEST_DIFF )
-				endforeach( _INDEX RANGE ${_COUNT} )
-
-				if( _FOUND_DIR AND NOT _QUIET )
-					message( STATUS "Unversioned package root for ${_PACKAGE_NAME} "
-									"could not be found - instead using root with highest "
-									"version ${_FOUND_VERSION}" )
-				endif( _FOUND_DIR AND NOT _QUIET )
-			endif( ${_PACKAGE_NAME_UPPER}_CANDIDATE_UNVERSIONED )
-		endif( _REQUESTED_VERSION )
+				endforeach( _INDEX RANGE ${_COUNT} )		
+			endif()
+		endif()
 
 		if( _NO_CACHE )
 			set( ${_PACKAGE_NAME_UPPER}_ROOT_DIR ${_FOUND_DIR} )

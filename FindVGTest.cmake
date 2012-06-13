@@ -4,7 +4,7 @@ include( FindPackageHandleStandardArgs )
 include( VistaFindUtils )
 
 if( NOT VGTEST_FOUND )
-	vista_find_package_root( GTest include/gtest/gtest.h NAMES gtest GTEST )
+	vista_find_package_root( GTest include/gtest/gtest.h NAMES GTest gtest GTEST )
 	set( GTEST_ROOT ${GTEST_ROOT_DIR} )
 
 	vista_find_original_package( VGTest )
