@@ -560,7 +560,7 @@ macro( vista_find_package_root _PACKAGE_NAME _EXAMPLE_FILE )
 				set( _FOUND_DIR ${${_PACKAGE_NAME_UPPER}_CANDIDATE_UNVERSIONED} )
 				set( _FOUND_VERSION )
 				message( "unversioned" )
-			elseif( ${_PACKAGE_NAME_UPPER}_CANDIDATE_DIRSe )
+			elseif( ${_PACKAGE_NAME_UPPER}_CANDIDATE_DIRS )
 				set( _BEST_DIFF  )
 
 				# find highest version
