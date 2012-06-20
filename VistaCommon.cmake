@@ -27,6 +27,7 @@
 # vista_create_default_info_file( PACKAGE_NAME )
 # vista_create_doxygen_target( DOXYFILE [WORKING_DIR] )
 # vista_create_uninstall_target( [ON|OFF] )
+# vista_set_install_permissions( OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ WORLD_WRITE WORLD_EXECUTE )
 
 # UTILITY MACROS:
 # require_vistacommon_version( SVN_REVISION )
@@ -1186,19 +1187,23 @@ macro( vista_install _PACKAGE_NAME )
 	if( ${_PACKAGE_NAME_UPPER}_TARGET_TYPE STREQUAL "APP" )
 		install( TARGETS ${_PACKAGE_NAME}
 			RUNTIME DESTINATION ${${_PACKAGE_NAME_UPPER}_BIN_INSTALLDIR}
+			PERMISSIONS ${VISTA_INSTALL_PERMISSIONS_EXEC}
 		)
 		#if( WIN32 )
 		#	install( FILES "${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR}/set_path_for_${_PACKAGE_NAME}.bat"
-		#				DESTINATION ${${_PACKAGE_NAME_UPPER}_BIN_INSTALLDIR} )
+		#				DESTINATION ${${_PACKAGE_NAME_UPPER}_BIN_INSTALLDIR}
+		#				PERMISSIONS ${VISTA_INSTALL_PERMISSIONS_EXEC} )
 		#else( WIN32 )
 		#	install( FILES "${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR}/set_path_for_${_PACKAGE_NAME}.sh"
-		#				DESTINATION ${${_PACKAGE_NAME_UPPER}_BIN_INSTALLDIR} )
+		#				DESTINATION ${${_PACKAGE_NAME_UPPER}_BIN_INSTALLDIR}
+		#				PERMISSIONS ${VISTA_INSTALL_PERMISSIONS_EXEC} )
 		#endif( WIN32 )
 	else( ${_PACKAGE_NAME_UPPER}_TARGET_TYPE STREQUAL "APP" )
 		install( TARGETS ${_PACKAGE_NAME}
 			LIBRARY DESTINATION ${${_PACKAGE_NAME_UPPER}_LIB_INSTALLDIR}
 			ARCHIVE DESTINATION ${${_PACKAGE_NAME_UPPER}_LIB_INSTALLDIR}
 			RUNTIME DESTINATION ${${_PACKAGE_NAME_UPPER}_LIB_INSTALLDIR}
+			PERMISSIONS ${VISTA_INSTALL_PERMISSIONS_NONEXEC}
 		)
 		get_target_property( _SOURCE_FILES ${_PACKAGE_NAME} SOURCES )
 		set( _HEADER_FILES )
@@ -1213,7 +1218,8 @@ macro( vista_install _PACKAGE_NAME )
 				string( REPLACE "Source" "" _PATH "${_PATH}" )
 				string( REPLACE "include" "" _PATH "${_PATH}" )
 				string( REPLACE "Include" "" _PATH "${_PATH}" )
-				install( FILES 	${_FILE} DESTINATION "${${_PACKAGE_NAME_UPPER}_INC_INSTALLDIR}/${_PATH}"	)
+				install( FILES 	${_FILE} DESTINATION "${${_PACKAGE_NAME_UPPER}_INC_INSTALLDIR}/${_PATH}"
+						PERMISSIONS ${VISTA_INSTALL_PERMISSIONS_NONEXEC} )
 			endif( "${_EXTENSION}" STREQUAL ".h" )
 		endforeach( _FILE _SOURCE_FILES )
 
@@ -1224,12 +1230,13 @@ macro( vista_install _PACKAGE_NAME )
 				PATTERN "build" EXCLUDE
 				PATTERN ".svn" EXCLUDE
 				PATTERN "CMakeFiles" EXCLUDE
+				PERMISSIONS ${VISTA_INSTALL_PERMISSIONS_NONEXEC}
 			)
 		endif( MSVC )
 	endif( ${_PACKAGE_NAME_UPPER}_TARGET_TYPE STREQUAL "APP" )
 endmacro()
 
-# vista_install_files_by_extension( SEARCH_ROOT INSTALL_SUBDIR [NON_RECURSIVE] EXTENSION1 [EXTENSION2 ...] )
+# vista_install_files_by_extension( SEARCH_ROOT INSTALL_SUBDIR [NON_RECURSIVE] [EXECUTABLE] EXTENSION1 [EXTENSION2 ...] )
 # searches in SEARCH_ROOT dor all files matching any of the provided extensions, and
 # installs them to the specified Subdir
 # if NON_RECURSIVE is specified as first parameter after INSTALL_SUBDIR,only the top-level
@@ -1238,20 +1245,39 @@ endmacro()
 # matching the pattern, you have to configure cmake again to add it to the list of files to
 # install
 macro( vista_install_files_by_extension _SEARCH_ROOT _INSTALL_SUBDIR )
-	set( _EXTENSIONS ${ARGV} )
+	set( _EXTENSIONS ${ARGN} )
+	set( _RECURSIVE TRUE )
+	set( _PERMISSIONS ${VISTA_INSTALL_PERMISSIONS_NONEXEC} )
+	
 	if( "${ARGV2}" STREQUAL "NON_RECURSIVE" )
-		list( REMOVE_AT _EXTENSIONS 0 1 2 )
-		foreach( _EXT ${_EXTENSIONS} )
-			file( GLOB _FOUND_FILES "${_SEARCH_ROOT}/*.${_EXT}" )
-			install( FILES ${_FOUND_FILES} DESTINATION ${CMAKE_INSTALL_PREFIX}/${_INSTALL_SUBDIR} )
-		endforeach( _EXT ${_EXTENSIONS} )
-	else( "${ARGV2}" STREQUAL "NON_RECURSIVE" )
-		list( REMOVE_AT _EXTENSIONS 0 1 )
+		set( _RECURSIVE FALSE )
+		list( REMOVE_AT _EXTENSIONS 0 )
+		if( "${ARGV3}" STREQUAL "EXECUTABLE" )
+			set( _PERMISSIONS ${VISTA_INSTALL_PERMISSIONS_EXEC} )
+			list( REMOVE_AT _EXTENSIONS 0 )
+		endif()
+	elseif( "${ARGV2}" STREQUAL "EXECUTABLE" )
+		set( _PERMISSIONS ${VISTA_INSTALL_PERMISSIONS_EXEC} )
+		list( REMOVE_AT _EXTENSIONS 0 )
+		if( "${ARGV3}" STREQUAL "NON_RECURSIVE" )
+			set( _RECURSIVE FALSE )
+			list( REMOVE_AT _EXTENSIONS 0 )
+		endif()
+	endif()		
+		
+	if( _RECURSIVE )
 		foreach( _EXT ${_EXTENSIONS} )
 			file( GLOB_RECURSE _FOUND_FILES "${_SEARCH_ROOT}/*.${_EXT}" "${_SEARCH_ROOT}/**/*.${_EXT}" )			
-			install( FILES ${_FOUND_FILES} DESTINATION ${CMAKE_INSTALL_PREFIX}/${_INSTALL_SUBDIR} )
+			install( FILES ${_FOUND_FILES} DESTINATION "${CMAKE_INSTALL_PREFIX}/${_INSTALL_SUBDIR}" 
+						PERMISSIONS ${_PERMISSIONS} )
+		endforeach( _EXT ${_EXTENSIONS} )		
+	else()
+		foreach( _EXT ${_EXTENSIONS} )
+			file( GLOB _FOUND_FILES "${_SEARCH_ROOT}/*.${_EXT}" )
+			install( FILES ${_FOUND_FILES} DESTINATION "${CMAKE_INSTALL_PREFIX}/${_INSTALL_SUBDIR}"
+						 PERMISSIONS ${_PERMISSIONS} )
 		endforeach( _EXT ${_EXTENSIONS} )
-	endif( "${ARGV2}" STREQUAL "NON_RECURSIVE" )
+	endif()
 endmacro( vista_install_files_by_extension )
 
 # vista_install_files_by_extension( INSTALL_SUBDIR )
@@ -1269,6 +1295,7 @@ macro( vista_install_all_dlls _INSTALL_SUBDIR )
 			string( REGEX MATCH "^/lib.*" _LIB_MATCHED "${_DIR}" )
 			if( NOT _USR_LIB_MATCHED AND NOT _LIB_MATCHED )
 				vista_install_files_by_extension( ${_DIR} ${_INSTALL_SUBDIR} NON_RECURSIVE "so" )
+				vista_install_files_by_extension( ${_DIR} ${_INSTALL_SUBDIR} NON_RECURSIVE "so.[0-9]*" )
 			endif()
 		endif( WIN32 )
 	endforeach( _DIR ${VISTA_TARGET_LINK_DIRS} ${VISTACORELIBS_DRIVER_PLUGIN_DIRS} )
@@ -1505,7 +1532,8 @@ macro( vista_create_cmake_config_install _PACKAGE_NAME _CONFIG_PROTO_FILE _TARGE
 	set( _TEMPORARY_FILENAME "${CMAKE_BINARY_DIR}/toinstall/${_PACKAGE_NAME}Config.cmake" )
 	# configure the actual file to a local folder, and add it for install
 	configure_file(	"${_CONFIG_PROTO_FILE}" "${_TEMPORARY_FILENAME}" @ONLY )
-	install( FILES "${_TEMPORARY_FILENAME}" DESTINATION "${${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_DIR}" )
+	install( FILES "${_TEMPORARY_FILENAME}" DESTINATION "${${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_DIR}"
+				PERMISSIONS ${VISTA_INSTALL_PERMISSIONS_NONEXEC} )
 
 
 
@@ -1533,7 +1561,9 @@ macro( vista_create_cmake_config_install _PACKAGE_NAME _CONFIG_PROTO_FILE _TARGE
 			# configure the reference file
 			set( _TEMPORARY_REF_FILENAME "${CMAKE_BINARY_DIR}/toinstall/references/${_PACKAGE_NAME}Config.cmake" )
 			configure_file(	"${VISTA_REFERENCE_CONFIG_PROTO_FILE}" "${_TARGET_REF_FILENAME}" @ONLY )
-			install( FILES "${_TARGET_REF_FILENAME}" DESTINATION "${${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_REFERENCE_DIR}" )
+			install( FILES "${_TARGET_REF_FILENAME}" 
+					DESTINATION "${${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_REFERENCE_DIR}"
+					PERMISSIONS ${VISTA_INSTALL_PERMISSIONS_NONEXEC} )
 		endif( VISTA_REFERENCE_CONFIG_PROTO_FILE )
 	else( VISTA_COPY_INSTALL_CONFIGS_REFS_TO_CMAKECOMMON )
 		# since prior configure runs may have already added it (before the cache was turned off), we
@@ -1583,13 +1613,15 @@ macro( vista_create_version_config _PACKAGE_NAME _VERSION_PROTO_FILE )
 			set( _TEMPORARY_FILENAME "${CMAKE_BINARY_DIR}/toinstall/${_PACKAGE_NAME}ConfigVersion.cmake" )
 			set( _INSTALL_DIR  "${${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_DIR}" )
 			configure_file( "${_VERSION_PROTO_FILE}" "${_TEMPORARY_FILENAME}" @ONLY )
-			install( FILES "${_TEMPORARY_FILENAME}" DESTINATION "${_INSTALL_DIR}" )
+			install( FILES "${_TEMPORARY_FILENAME}" DESTINATION "${_INSTALL_DIR}" PERMISSIONS ${VISTA_INSTALL_PERMISSIONS_NONEXEC} )
 
 			if( VISTA_COPY_INSTALL_CONFIGS_REFS_TO_CMAKECOMMON )
 				set( _REFERENCED_FILE "${_INSTALL_DIR}/${_PACKAGE_NAME}ConfigVersion.cmake" )
 				set( _REFERENCE_TEMPORARY_FILENAME "${CMAKE_BINARY_DIR}/toinstall/references/${_PACKAGE_NAME}ConfigVersion.cmake" )
 				configure_file( "${VISTA_REFERENCE_CONFIG_PROTO_FILE}" "${_REFERENCE_TEMPORARY_FILENAME}" @ONLY )
-				install( FILES "${_REFERENCE_TEMPORARY_FILENAME}" DESTINATION "${${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_REFERENCE_DIR}" )
+				install( FILES "${_REFERENCE_TEMPORARY_FILENAME}"
+						DESTINATION "${${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_REFERENCE_DIR}"
+						PERMISSIONS ${VISTA_INSTALL_PERMISSIONS_NONEXEC} )
 			endif( VISTA_COPY_INSTALL_CONFIGS_REFS_TO_CMAKECOMMON )
 		endif( ${_PACKAGE_NAME_UPPER}_INSTALL_CONFIG_DIR )
 
@@ -1967,7 +1999,8 @@ macro( vista_create_info_file _PACKAGE_NAME _TARGET_DIR _INSTALL_DIR )
 
 	file( WRITE "${INFO_FILENAME}" "${INFO_STRING}" )
 	if( NOT "${_INSTALL_DIR}" STREQUAL "" )
-		install( FILES "${INFO_FILENAME}" DESTINATION "${_INSTALL_DIR}" )
+		install( FILES "${INFO_FILENAME}" DESTINATION "${_INSTALL_DIR}"
+					PERMISSIONS ${VISTA_INSTALL_PERMISSIONS_NONEXEC} )
 	endif( NOT "${_INSTALL_DIR}" STREQUAL "" )
 	
 	if( ${_PACKAGE_NAME_UPPER}_COPY_EXEC_DIR )
@@ -2068,6 +2101,16 @@ macro( vista_create_uninstall_target )
 	endif( VISTA_ALLOW_UNINSTALL )
 endmacro( vista_create_uninstall_target )
 
+# vista_set_install_permissions( [OWNER_READ] [OWNER_WRITE] [OWNER_EXECUTE] [GROUP_READ] [GROUP_WRITE] [GROUP_EXECUTE] [WORLD_READ] [WORLD_WRITE] [WORLD_EXECUTE] [SETUID] [SETGID] )
+# sets the default permissions for installed files (using VistaCMakeCommon-commands, still needs to be set
+# manually for manually called install() )
+# defines two variables VISTA_INSTALL_PERMISSIONS_EXEC and VISTA_INSTALL_PERMISSIONS_NONEXEC, where
+# the latter conforms to the passed permission parameters minus the executable options
+macro( vista_set_install_permissions )
+	set( VISTA_INSTALL_PERMISSIONS_NONEXEC ${ARGN} )
+	set( VISTA_INSTALL_PERMISSIONS_EXEC ${ARGN} )
+	list( REMOVE_ITEM VISTA_INSTALL_PERMISSIONS_NONEXEC OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE ) 
+endmacro()
 
 
 
@@ -2183,6 +2226,8 @@ endif()
 set( VISTACOMMON_FILE_LOCATION "VISTACOMMON_FILE_LOCATION-NOTFOUND" CACHE INTERNAL "" FORCE )
 find_file( VISTACOMMON_FILE_LOCATION "VistaCommon.cmake" PATHS ${CMAKE_MODULE_PATH} $ENV{CMAKE_MODULE_PATH} NO_DEFAULT_PATH )
 set( VISTACOMMON_FILE_LOCATION ${VISTACOMMON_FILE_LOCATION} CACHE INTERNAL "" FORCE )
+
+vista_set_install_permissions( OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_WRITE GROUP_EXECUTE )
 
 set( CMAKE_SUPPRESS_REGENERATION "${CMAKE_SUPPRESS_REGENERATION}" CACHE BOOL "If activated, the cmake files will not be checked and regenerated automatically before each build" )
 
