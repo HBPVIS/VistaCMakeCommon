@@ -35,10 +35,10 @@ else()
 			#check if it is NUMBER+ - anything equal or bigger to number
 			string( REGEX MATCH "([0-9]+)\\+$" _STRING_IS_MIN ${INPUT_SUBVERSION} )
 			if( _STRING_IS_MIN )
-				if( NOT ( ${OWN_SUBVERSION} EQUAL CMAKE_MATCH_0 ) OR ( ${OWN_SUBVERSION} GREATER CMAKE_MATCH_0 ) )
+				if( ${OWN_SUBVERSION} LESS CMAKE_MATCH_1 )
 					set( PACKAGE_VERSION_EXACT FALSE )
 					set( PACKAGE_VERSION_COMPATIBLE FALSE )
-				endif( NOT ( ${OWN_SUBVERSION} EQUAL CMAKE_MATCH_0 ) OR ( ${OWN_SUBVERSION} GREATER CMAKE_MATCH_0 ) )
+				endif( ${OWN_SUBVERSION} LESS CMAKE_MATCH_1 )
 			else( _STRING_IS_MIN )
 
 				#check if it is NUMBER-NUMBER - an explicit range
