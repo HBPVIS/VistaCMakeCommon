@@ -310,14 +310,16 @@ macro( vista_find_package_dirs _PACKAGE_NAME _EXAMPLE_FILE )
 		foreach( _FOLDER ${_PACKAGE_FOLDER_NAMES} )			
 			# look for pathes with a version
 			file( GLOB _TMP_PATHES "${_PATH}/${_FOLDER}/${_FOLDER}-*/" )
+			#message( "GLOB( ${_PATH}/${_FOLDER}/${_FOLDER}-*/ ) = ${_TMP_PATHES} " )
 			list( APPEND _VERSIONED_PATHES ${_TMP_PATHES} )
 			file( GLOB _TMP_PATHES "${_PATH}/${_FOLDER}-*" )
+			#message( "GLOB( ${_PATH}/${_FOLDER}-* ) = ${_TMP_PATHES} " )
 			list( APPEND _VERSIONED_PATHES ${_TMP_PATHES} )
 
 			# look for unversioned pathes
 			if( NOT _UNVERSIONED )
 				foreach( _HWARCH ${VISTA_COMPATIBLE_HWARCH} )
-					if( EXISTS "${_PATH}/${_FOLDER}/${_HWARCH}/${_EXAMPLE_FILE}" )
+					if( EXISTS "${_PATH}/${_FOLDER}/${_HWARCH}/${_EXAMPLE_FILE}" )						
 						# ../NAME/NAME/HWARCH
 						set( _UNVERSIONED "${_PATH}/${_FOLDER}/${_HWARCH}" )
 						break()
@@ -492,6 +494,9 @@ macro( vista_find_package_root _PACKAGE_NAME _EXAMPLE_FILE )
 
 		#find package dirs
 		vista_find_package_dirs( ${_ARGS} )
+		
+		#message( "${_PACKAGE_NAME_UPPER}_CANDIDATE_DIRS = ${${_PACKAGE_NAME_UPPER}_CANDIDATE_DIRS}" )
+		#message( "${_PACKAGE_NAME_UPPER}_CANDIDATE_UNVERSIONED = ${${_PACKAGE_NAME_UPPER}_CANDIDATE_UNVERSIONED}" )
 
 		set( _FOUND_DIR "${_PACKAGE_NAME_UPPER}_ROOT_DIR-NOTFOUND" )
 		set( _FOUND_VERSION "" )
@@ -609,6 +614,15 @@ macro( vista_find_library_uncached )
 	set( VISTA_UNCACHED_LIB_SEARCH_VARIABLE "DIR-NOTFOUND" CACHE INTERNAL "" FORCE )
 	find_library( VISTA_UNCACHED_LIB_SEARCH_VARIABLE ${ARGV} )
 	set( VISTA_UNCACHED_LIBRARY ${VISTA_UNCACHED_LIB_SEARCH_VARIABLE} )
+	set( VISTA_UNCACHED_LIB_SEARCH_VARIABLE "DIR-NOTFOUND" CACHE INTERNAL "" FORCE )
+endmacro()
+
+# vista_find_library_uncached( ...find_library_parameters... )
+# same syntax as find_library, but does not store variable in cache 
+macro( vista_find_library_uncached_var _OUT_VAR )
+	set( VISTA_UNCACHED_LIB_SEARCH_VARIABLE "DIR-NOTFOUND" CACHE INTERNAL "" FORCE )
+	find_library( VISTA_UNCACHED_LIB_SEARCH_VARIABLE ${ARGN} )
+	set( ${_OUT_VAR} ${VISTA_UNCACHED_LIB_SEARCH_VARIABLE} )
 	set( VISTA_UNCACHED_LIB_SEARCH_VARIABLE "DIR-NOTFOUND" CACHE INTERNAL "" FORCE )
 endmacro()
 
