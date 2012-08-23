@@ -571,32 +571,40 @@ macro( vista_find_package _PACKAGE_NAME )
 
 			set( ${_PACKAGE_NAME}_ACTUAL_DIR )
 			
-			if( PACKAGE_FIND_VERSION_EXT AND NOT _QUIET )
+			#if( PACKAGE_FIND_VERSION_EXT AND NOT _QUIET )
+			if( NOT _QUIET )
 				string( REPLACE "REQUIRED" "COMPONENTS" _CLEANED_FIND_PACKAGE_ARGS "${_FIND_PACKAGE_ARGS}" )
 				find_package( ${_PACKAGE_NAME} ${_PACKAGE_VERSION} ${_CLEANED_FIND_PACKAGE_ARGS}
 							PATHS ${${PACKAGE_NAME_UPPER}_ADDITIONAL_CONFIG_DIRS} ${VISTA_PACKAGE_SEARCH_PATHS} QUIET )
 				if( NOT ${_PACKAGE_NAME}_FOUND )
-
+					set( _VERSION_NAME ${_PACKAGE_VERSION} )
+					if( PACKAGE_FIND_VERSION_EXT )
+						set( _VERSION_NAME ${PACKAGE_FIND_VERSION_EXT} )
+					endif()
 					if(${_PACKAGE_NAME}_CONSIDERED_CONFIGS)
-						set( _MESSAGE "  Could not find a configuration file for package \"${_PACKAGE_NAME}\" that is"
-									"\n  compatible with requested version \"${PACKAGE_FIND_VERSION_EXT}\" (Architecture: ${VISTA_HWARCH})"
-									"\n  \n  The following configuration files were considered but not accepted:" )
+						set( _MESSAGE              "  Could not find a configuration file for package \"${_PACKAGE_NAME}\" that is" )
+						set( _MESSAGE "${_MESSAGE}\n  compatible with requested version \"${_VERSION_NAME}\" (Architecture: ${VISTA_HWARCH})" )
+						set( _MESSAGE "${_MESSAGE}\n   The following configuration files were considered but not accepted:" )
 						list( LENGTH ${_PACKAGE_NAME}_CONSIDERED_CONFIGS _CONFIG_COUNT )
 						math( EXPR _CONFIG_COUNT "${_CONFIG_COUNT} - 1")
 						foreach( _CONFIG_INDEX RANGE ${_CONFIG_COUNT} )
 							list( GET ${_PACKAGE_NAME}_CONSIDERED_CONFIGS ${_CONFIG_INDEX} _FILENAME )
 							list( GET ${_PACKAGE_NAME}_CONSIDERED_VERSIONS ${_CONFIG_INDEX} _VERSION )
-							set( _MESSAGE  "${_MESSAGE}"
-										"\n     ${_FILENAME}"
-										"\n          version: ${_VERSION}" )
-						endforeach()					  
+							set( _MESSAGE  "${_MESSAGE}\n     ${_FILENAME}" )
+							if( NOT "${_VERSION}" STREQUAL "" AND NOT "${_VERSION}" STREQUAL "unknown" )
+								set( _MESSAGE  "${_MESSAGE}\n     ${_VERSION}" )
+							endif()
+						endforeach()
+						if( NOT _VERSION_NAME )
+							set( _MESSAGE "${_MESSAGE}\n  Probably, no build with matching architecture \"${VISTA_HWARCH}\" was found" )
+						endif()
 					else()
 						string( TOLOWER ${_PACKAGE_NAME} _PACKAGE_NAME_LOWER )
-						set( _MESSAGE "  Could not find a configuration file for package \"${_PACKAGE_NAME}\"."
-									"\n  Set ${_PACKAGE_NAME}_DIR to the directory containing a CMake configuration"
-									"\n  file for ${_PACKAGE_NAME}. The file will have one of the following names"
-									"\n        ${_PACKAGE_NAME}Config.cmake"
-									"\n        ${_PACKAGE_NAME_LOWER}-config.cmake" )
+						set( _MESSAGE              "  Could not find a configuration file for package \"${_PACKAGE_NAME}\"." )
+						set( _MESSAGE "${_MESSAGE}\n  Set ${_PACKAGE_NAME}_DIR to the directory containing a CMake configuration" )
+						set( _MESSAGE "${_MESSAGE}\n  file for ${_PACKAGE_NAME}. The file will have one of the following names" )
+						set( _MESSAGE "${_MESSAGE}\n        ${_PACKAGE_NAME}Config.cmake" )
+						set( _MESSAGE "${_MESSAGE}\n        ${_PACKAGE_NAME_LOWER}-config.cmake" )
 
 					endif()		
 
