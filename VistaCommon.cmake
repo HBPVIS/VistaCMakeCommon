@@ -2188,7 +2188,7 @@ if( WIN32 )
 	if( MSVC )
 		vista_set_defaultvalue( CMAKE_CONFIGURATION_TYPES "Release;Debug" CACHE STRING "CMake configuration types" FORCE )
 		# msvc disable some warnings
-		set( VISTA_DISABLE_GENERIC_MSVC_WARNINGS ON CACHE BOOL "If true, generic warnings (4251, 4275, 4503, CRT_SECURE_NO_WARNINGS) will be set for Visual Studio" )
+		set( VISTA_DISABLE_GENERIC_MSVC_WARNINGS ON CACHE BOOL "If true, generic warnings (4251, 4275, 4503, CRT_SECURE_NO_WARNINGS) will be disabled for Visual Studio" )
 		if( VISTA_DISABLE_GENERIC_MSVC_WARNINGS )
 			add_definitions( /D_CRT_SECURE_NO_WARNINGS /wd4251 /wd4275 /wd4503 )
 		endif( VISTA_DISABLE_GENERIC_MSVC_WARNINGS )
