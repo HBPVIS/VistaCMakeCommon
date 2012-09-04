@@ -868,7 +868,7 @@ macro( vista_configure_app _PACKAGE_NAME )
 	
 	set( _DYNAMIC_LIB_DIRS ${VISTA_TARGET_LINK_DIRS} ${VISTA_${_PACKAGE_NAME}_ADDITIONAL_PATHENTRIES} ${VISTA_ADDITIONAL_PATHENTRIES} )
 	# create a script that sets the path
-	if( VISTA_TARGET_LINK_DIRS )
+	if( _DYNAMIC_LIB_DIRS OR VISTA_ENVVARS OR VISTA_${_PACKAGE_NAME}_ENVVARS )
 		if( WIN32 )
 			find_file( VISTA_ENVIRONMENT_SCRIPT_FILE "set_path.bat_proto" ${CMAKE_MODULE_PATH} )
 			mark_as_advanced( VISTA_ENVIRONMENT_SCRIPT_FILE )
@@ -933,7 +933,7 @@ macro( vista_configure_app _PACKAGE_NAME )
 				)
 			endif( VISTA_ENVIRONMENT_SCRIPT_FILE )
 		endif( WIN32 )
-	endif( VISTA_TARGET_LINK_DIRS )
+	endif()
 
 	# set up copying of executable after build
 	set( ${_PACKAGE_NAME_UPPER}_TARGET_MSVC_PROJECT "" CACHE INTERNAL "" FORCE )
@@ -948,17 +948,17 @@ macro( vista_configure_app _PACKAGE_NAME )
 			message( WARNING "vista_configure_app( ${_PACKAGE_NAME} ) - executable copying is only supported in cmake 2.8.5+ - use DONT_COPY_EXECUTABLE option or update cmake" )
 		else()
 			add_custom_command(	TARGET ${_PACKAGE_NAME}
-						POST_BUILD
-						COMMAND ${CMAKE_COMMAND} ARGS -E make_directory "${${_PACKAGE_NAME_UPPER}_COPY_EXEC_DIR}"
-						COMMENT "Creating binary target directory"
-			)
+								POST_BUILD
+								COMMAND ${CMAKE_COMMAND} ARGS -E make_directory "${${_PACKAGE_NAME_UPPER}_COPY_EXEC_DIR}"
+								COMMAND ${CMAKE_COMMAND} ARGS -E copy "$<TARGET_FILE:${_PACKAGE_NAME}>" "${${_PACKAGE_NAME_UPPER}_COPY_EXEC_DIR}"
+								COMMENT "Post-build copying of files" )
 
-			add_custom_command( TARGET ${_PACKAGE_NAME}
-						POST_BUILD
-						COMMAND ${CMAKE_COMMAND} ARGS -E copy "$<TARGET_FILE:${_PACKAGE_NAME}>" "${${_PACKAGE_NAME_UPPER}_COPY_EXEC_DIR}"
-						COMMAND ${CMAKE_COMMAND} ARGS -E copy_if_different "${${_PACKAGE_NAME_UPPER}_SET_PATH_SCRIPT}" "${${_PACKAGE_NAME_UPPER}_COPY_EXEC_DIR}"
-						COMMENT "Copying binary to target directory"
-			)
+			if( ${_PACKAGE_NAME_UPPER}_SET_PATH_SCRIPT )
+				add_custom_command( TARGET ${_PACKAGE_NAME}
+									POST_BUILD
+									COMMAND ${CMAKE_COMMAND} ARGS -E copy_if_different "${${_PACKAGE_NAME_UPPER}_SET_PATH_SCRIPT}" "${${_PACKAGE_NAME_UPPER}_COPY_EXEC_DIR}"
+									COMMENT "Post-build copying of files" )
+			endif()			
 		endif()
 	endif()
 	
