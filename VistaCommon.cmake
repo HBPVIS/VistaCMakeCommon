@@ -97,25 +97,44 @@ macro( vista_set_defaultvalue _VAR_NAME )
 	endif()
 endmacro( vista_set_defaultvalue )
 
-# vista_add_files_to_sources( TARGET_LIST ROOT_DIR [SOURCE_GROUP group_name] EXTENSION1 [EXTENSION2 ...] )
+# vista_add_files_to_sources( TARGET_LIST ROOT_DIR [NON_RECURSIVE] [SOURCE_GROUP group_name] EXTENSION1 [EXTENSION2 ...] )
 # searches files with any of the passed extensions in the specified root_dir. These files are added to the
 # passed list. If the source_group option is given, the files are also added to the specified source group.
+# The root folder will be searched recursively unless the NON_RECURSIVE option is given
 # IMPORTANT NOTE: due to cmake's string replacement hicka-di-hoo, if you want to use subfolders in your sourcegroups,
 # you'll have to use 4(!) backslashes as separator (e.g. "folder\\\\subfolder")
 macro( vista_add_files_to_sources _TARGET_LIST _SEARCH_ROOT )
-	set( _EXTENSIONS ${ARGV} )
-
-	if( ${ARGV2} STREQUAL "SOURCE_GROUP" )
+	set( _RECURSIVE TRUE )	
+	set( _EXTENSIONS ${ARGN} )
+	set( _SOURCE_GROUP )
+	
+	if( "${ARGV2}" STREQUAL "NON_RECURSIVE" )
+		set( _RECURSIVE FALSE )
+		if( ${ARGV3} STREQUAL "SOURCE_GROUP" )
+			set( _SOURCE_GROUP ${ARGV4} )
+			list( REMOVE_AT _EXTENSIONS 0 1 2 )
+		else()
+			list( REMOVE_AT _EXTENSIONS 0 )
+		endif()
+		
+	elseif( ${ARGV2} STREQUAL "SOURCE_GROUP" )
 		set( _SOURCE_GROUP ${ARGV3} )
-		list( REMOVE_AT _EXTENSIONS 0 1 2 3 )
-	else()
-		set( _SOURCE_GROUP )
-		list( REMOVE_AT _EXTENSIONS 0 1 )
-	endif( ${ARGV2} STREQUAL "SOURCE_GROUP" )
-
+		if( ${ARGV4} STREQUAL "NON_RECURSIVE" )
+			set( _RECURSIVE FALSE )
+			list( REMOVE_AT _EXTENSIONS 0 1 2 )
+		else()
+			list( REMOVE_AT _EXTENSIONS 0 1 )
+		endif()		
+		
+	endif()
+	
 	set( _FOUND_FILES )
 	foreach( _EXT ${_EXTENSIONS} )
-		file( GLOB_RECURSE _FOUND_FILES "${_SEARCH_ROOT}/*.${_EXT}" "${_SEARCH_ROOT}/**/*.${_EXT}" )
+		if( _RECURSIVE )
+			file( GLOB_RECURSE _FOUND_FILES "${_SEARCH_ROOT}/*.${_EXT}" "${_SEARCH_ROOT}/**/*.${_EXT}" )
+		else()
+			file( GLOB _FOUND_FILES "${_SEARCH_ROOT}/*.${_EXT}" )
+		endif()
 		list( APPEND ${_TARGET_LIST} ${_FOUND_FILES} )
 		if( _SOURCE_GROUP )
 			source_group( ${_SOURCE_GROUP} FILES ${_FOUND_FILES} )
