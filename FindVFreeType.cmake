@@ -3,7 +3,7 @@
 include( FindPackageHandleStandardArgs )
 include( VistaFindUtils )
 
-if( NOT VFREETYPE2_FOUND )
+if( NOT VFREETYPE_FOUND )
 
 	vista_find_package_root( FREETYPE include/freetype/freetype.h )
 
@@ -19,7 +19,7 @@ if( NOT VFREETYPE2_FOUND )
 
 	endif( FREETYPE_ROOT_DIR )
 
-endif( NOT VFREETYPE2_FOUND )
+endif( NOT VFREETYPE_FOUND )
 
 find_package_handle_standard_args( VFREETYPE "FFREETYPE could not be found" FREETYPE_ROOT_DIR )
 
