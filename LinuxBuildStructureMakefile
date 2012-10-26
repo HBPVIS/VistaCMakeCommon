@@ -24,7 +24,7 @@ debug:
 		cd ${DEBUG_DIR} \
 		&& echo -e "\n${COLOR_BUILD}##### Building DEBUG   #####${COLOR_RESET}"  \
 		&& $(MAKE) \
-		&& echo -e "${COLOR_SUCCEED}##### Successfulyl built DEBUG   #####${COLOR_RESET}"  \
+		&& echo -e "${COLOR_SUCCEED}##### Successfully built DEBUG   #####${COLOR_RESET}"  \
 	) || ( echo -e "${COLOR_FAILED}##### Failed building DEBUG   #####${COLOR_RESET}" && exit )
 .PHONY : debug
 
@@ -53,7 +53,7 @@ clean:
 		cd ${DEBUG_DIR} \
 		&& echo -e "\n${COLOR_BUILD}##### Building DEBUG   #####${COLOR_RESET}"  \
 		&& $(MAKE) $@ \
-		&& echo -e "${COLOR_SUCCEED}##### Successfulyl built DEBUG   #####${COLOR_RESET}"  \
+		&& echo -e "${COLOR_SUCCEED}##### Successfully built DEBUG   #####${COLOR_RESET}"  \
 	) || ( echo -e "${COLOR_FAILED}##### Failed building DEBUG   #####${COLOR_RESET}" && exit )
 NOTPARALLEL : default
 
