@@ -3,9 +3,10 @@
 # This file contains common settings and macros for setting up Vista projects
 
 # PACKAGE MACROS:
-# vista_add_external_msvc_project_of_packagevista_add_external_msvc_project_of_package( PACKAGE_NAME [SOLUTION_FOLDER] [DEPENDENT (DENENDENT_TARGET)+ ] [ DEPENDS (DEPENDANT_TRAGET)+ ]  )
+# vista_add_external_msvc_project_of_package( PACKAGE_NAME [SOLUTION_FOLDER] [DEPENDENT (DENENDENT_TARGET)+ ] [ DEPENDS (DEPENDANT_TRAGET)+ ]  )
 # vista_find_package( <package> [version] [EXACT] [QUIET] [[REQUIRED|COMPONENTS] [components...]] [NO_POLICY_SCOPE] [NO_MODULE] )
 # vista_use_package( <package> [version] [EXACT] [QUIET] [[REQUIRED|COMPONENTS] [components...]] [NO_POLICY_SCOPE] [NO_MODULE] [FIND_DEPENDENCIES] )
+# vista_find_shader_dirs( PACKAGE_NAME )
 # vista_configure_app( PACKAGE_NAME [OUT_NAME] )
 # vista_configure_lib( PACKAGE_NAME [OUT_NAME] )
 # vista_install( TARGET [INCLUDE/BIN_SUBDIRECTORY [LIBRARY_SUBDIRECTORY] ] [NO_POSTFIX] )
@@ -759,6 +760,11 @@ macro( vista_use_package _PACKAGE_NAME )
 			# the internal storage to VISTA_USE_PACKAGE_LIBRARIES
 			set( INTERNAL_VISTA_FIND_PACKAGE_LIBS ${INTERNAL_VISTA_FIND_PACKAGE_LIBS} ${${_PACKAGE_NAME_UPPER}_LIBRARIES} )
 			
+			if( ${_PACKAGE_NAME_UPPER}_SHADER_DIRS )
+				list( APPEND VISTA_SHADER_DIRECTORIS ${${_PACKAGE_NAME_UPPER}_SHADER_DIRS} )
+				list( REMOVE_DUPLICATES VISTA_SHADER_DIRECTORIS )
+			endif( ${_PACKAGE_NAME_UPPER}_SHADER_DIRS )	
+			
 			#set( VISTA_USE_PACKAGE_LIBRARIES ${${_PACKAGE_NAME_UPPER}_LIBRARIES} ${VISTA_USE_PACKAGE_LIBRARIES} )
 
 		
@@ -820,6 +826,26 @@ macro( vista_use_package _PACKAGE_NAME )
 
 endmacro( vista_use_package _PACKAGE_NAME )
 
+# vista_find_shader_dirs( PACKAGE_NAME )
+# serches recursive for all subdirectories of CURRENT_SOURCE_DIR that contain shader files and 
+# adds them to the list of shader-directoriey.
+macro( vista_find_shader_dirs _PACKAGE_NAME )
+	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
+	
+	set ( ${_PACKAGE_NAME_UPPER}_INSTALL_SHADERS TRUE )
+	
+	set ( _EXTENSIONS "vp" "fp" "glsl" )
+	
+	foreach( _EXT ${_EXTENSIONS} )
+		file( GLOB_RECURSE _FOUND_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.${_EXT}" )			
+		foreach( _FILE ${_FOUND_FILES} )
+			string( REGEX REPLACE "(.*)/(.*)\\.${_EXT}" "\\1" _DIR ${_FILE} )
+			list( APPEND ${_PACKAGE_NAME_UPPER}_SHADER_DIRS ${_DIR} )
+			list( REMOVE_DUPLICATES ${_PACKAGE_NAME_UPPER}_SHADER_DIRS )
+		endforeach( _FILE ${_FOUND_FILES} )
+	endforeach( _EXT ${_EXTENSIONS} )
+	
+endmacro( vista_find_shader_dirs _PACKAGE_NAME )
 
 # vista_configure_app( package_name [output_name] [DONT_COPY_EXECUTABLE | COPY_EXECUTABLE_TO dir] [WORKING_DIR dir] )
 # sets some general properties for the target to configure it as application
@@ -899,6 +925,9 @@ macro( vista_configure_app _PACKAGE_NAME )
 			if( VISTACORELIBS_DRIVER_PLUGIN_DIRS )
 				set( _ENTRIES "${_ENTRIES}SET VISTACORELIBS_DRIVER_PLUGIN_DIRS=${VISTACORELIBS_DRIVER_PLUGIN_DIRS}\n" )
 			endif( VISTACORELIBS_DRIVER_PLUGIN_DIRS )
+			if( VISTA_SHADER_DIRECTORIS )
+				set( _ENTRIES "${_ENTRIES}SET VISTA_SHADER_DIRS=${VISTA_SHADER_DIRECTORIS}\n" )
+			endif( VISTA_SHADER_DIRECTORIS )
 			set( _ENVVARNAME "" )
 			foreach( _ENTRY ${VISTA_ENVVARS} ${VISTA_${_PACKAGE_NAME}_ENVVARS} )
 				if( "${_ENVVARNAME}" STREQUAL "" )
@@ -933,6 +962,9 @@ macro( vista_configure_app _PACKAGE_NAME )
 				string( REPLACE ";" ":" _VISTACORELIBS_DRIVER_PLUGIN_DIRS_ENV "${VISTACORELIBS_DRIVER_PLUGIN_DIRS}" )
 				set( _ENTRIES "${_ENTRIES}export VISTACORELIBS_DRIVER_PLUGIN_DIRS=${_VISTACORELIBS_DRIVER_PLUGIN_DIRS_ENV}\n" )
 			endif( VISTACORELIBS_DRIVER_PLUGIN_DIRS )
+			if( VISTA_SHADER_DIRECTORIS)
+				set( _ENTRIES "${_ENTRIES}export VISTA_SHADER_DIRS=${VISTA_SHADER_DIRECTORIS}\n" )
+			endif( VISTA_SHADER_DIRECTORIS )
 			set( _ENVVARNAME "" )
 			foreach( _ENTRY ${VISTA_ENVVARS} ${VISTA_${_PACKAGE_NAME}_ENVVARS} )
 				if( "${_ENVVARNAME}" STREQUAL "" )
@@ -1019,6 +1051,10 @@ macro( vista_configure_app _PACKAGE_NAME )
 			if( VISTACORELIBS_DRIVER_PLUGIN_DIRS )
 				set( _ENVIRONMENT "${_ENVIRONMENT}VISTACORELIBS_DRIVER_PLUGIN_DIRS=${VISTACORELIBS_DRIVER_PLUGIN_DIRS}&#x0A;" )
 			endif( VISTACORELIBS_DRIVER_PLUGIN_DIRS )
+			if( VISTA_SHADER_DIRECTORIS )
+				set( _ENVIRONMENT "${_ENVIRONMENT}VISTA_SHADER_DIRS=${VISTA_SHADER_DIRECTORIS}\n" )
+			endif( VISTA_SHADER_DIRECTORIS )
+			
 			set( _ENVVARNAME "" )
 			foreach( _ENTRY ${VISTA_${_PACKAGE_NAME}_ENVVARS} ${VISTA_ENVVARS} )
 				if( "${_ENVVARNAME}" STREQUAL "" )
@@ -1196,10 +1232,18 @@ macro( vista_install _PACKAGE_NAME )
 		set( ${_PACKAGE_NAME_UPPER}_INC_INSTALLDIR "${CMAKE_INSTALL_PREFIX}/include" )
 		set( ${_PACKAGE_NAME_UPPER}_LIB_INSTALLDIR "${CMAKE_INSTALL_PREFIX}/lib" )
 		set( ${_PACKAGE_NAME_UPPER}_BIN_INSTALLDIR "${CMAKE_INSTALL_PREFIX}/bin" )
+		
+		if( ${_PACKAGE_NAME_UPPER}_INSTALL_SHADERS )
+			set( ${_PACKAGE_NAME_UPPER}_SHADER_INSTALLDIR "${CMAKE_INSTALL_PREFIX}/shaders" )
+		endif( ${_PACKAGE_NAME_UPPER}_INSTALL_SHADERS )
 	else( _USE_POSTFIX )
 		set( ${_PACKAGE_NAME_UPPER}_INC_INSTALLDIR "${CMAKE_INSTALL_PREFIX}" )
 		set( ${_PACKAGE_NAME_UPPER}_LIB_INSTALLDIR "${CMAKE_INSTALL_PREFIX}" )
 		set( ${_PACKAGE_NAME_UPPER}_BIN_INSTALLDIR "${CMAKE_INSTALL_PREFIX}" )
+		
+		if( ${_PACKAGE_NAME_UPPER}_INSTALL_SHADERS )
+			set( ${_PACKAGE_NAME_UPPER}_SHADER_INSTALLDIR "${CMAKE_INSTALL_PREFIX}" )
+		endif( ${_PACKAGE_NAME_UPPER}_INSTALL_SHADERS )
 	endif( _USE_POSTFIX )
 
 	if( ${ARGC} GREATER 1 AND NOT ${ARGV1} STREQUAL "NO_POSTFIX"  )
@@ -1249,6 +1293,17 @@ macro( vista_install _PACKAGE_NAME )
 						PERMISSIONS ${VISTA_INSTALL_PERMISSIONS_NONEXEC} )
 			endif( "${_EXTENSION}" STREQUAL ".h" )
 		endforeach( _FILE _SOURCE_FILES )
+		
+		if( ${_PACKAGE_NAME_UPPER}_INSTALL_SHADERS )
+			set ( _EXTENSIONS "vp" "fp" "glsl" )
+			foreach( _EXT ${_EXTENSIONS} )
+				file( GLOB_RECURSE _FOUND_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.${_EXT}" )			
+		
+				install( FILES ${_FOUND_FILES} 
+							DESTINATION "${${_PACKAGE_NAME_UPPER}_SHADER_INSTALLDIR}" 
+							PERMISSIONS ${VISTA_INSTALL_PERMISSIONS_NONEXEC} )
+			endforeach( _EXT ${_EXTENSIONS} )
+		endif( ${_PACKAGE_NAME_UPPER}_INSTALL_SHADERS )
 
 		if( MSVC )
 			install( DIRECTORY "${${_PACKAGE_NAME_UPPER}_TARGET_OUTDIR}/"
@@ -1389,6 +1444,11 @@ macro( vista_create_cmake_config_build _PACKAGE_NAME _CONFIG_PROTO_FILE _TARGET_
 		set( _PACKAGE_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}"  )
 		list( REMOVE_DUPLICATES _PACKAGE_INCLUDE_DIRS )
 	endif( ${_PACKAGE_NAME_UPPER}_INCLUDE_OUTDIR )
+	
+	set(_PACKAGE_SHADER_DIRS )
+	if( ${_PACKAGE_NAME_UPPER}_SHADER_DIRS )
+		set( _PACKAGE_SHADER_DIRS ${${_PACKAGE_NAME_UPPER}_SHADER_DIRS} )
+	endif( ${_PACKAGE_NAME_UPPER}_SHADER_DIRS )
 	set(_PACKAGE_DEFINITIONS )
 	if( ${_PACKAGE_NAME_UPPER}_CONFIG_DEFINITIONS )
 		set( _PACKAGE_DEFINITIONS ${${_PACKAGE_NAME_UPPER}_CONFIG_DEFINITIONS} )
@@ -1528,6 +1588,12 @@ macro( vista_create_cmake_config_install _PACKAGE_NAME _CONFIG_PROTO_FILE _TARGE
 	else()
 		set( _PACKAGE_LIBRARY_DIRS "${_PACKAGE_ROOT_DIR}/lib" )
 	endif()
+	
+	set(_PACKAGE_SHADER_DIRS )
+	if( ${_PACKAGE_NAME_UPPER}_SHADER_INSTALLDIR )
+		set( _PACKAGE_SHADER_DIRS ${${_PACKAGE_NAME_UPPER}_SHADER_INSTALLDIR} )
+	endif( ${_PACKAGE_NAME_UPPER}_SHADER_INSTALLDIR )
+	
 	set(_PACKAGE_DEFINITIONS )
 	if( ${_PACKAGE_NAME_UPPER}_CONFIG_DEFINITIONS )
 		set( _PACKAGE_DEFINITIONS ${${_PACKAGE_NAME_UPPER}_CONFIG_DEFINITIONS} )
@@ -1555,6 +1621,16 @@ macro( vista_create_cmake_config_install _PACKAGE_NAME _CONFIG_PROTO_FILE _TARGE
 			list( APPEND _PACKAGE_RELATIVE_LIBRARY_DIRS "." )
 		endif( _REL_DIR )
 	endforeach( _DIR ${_PACKAGE_LIBRARY_DIRS} )
+	
+	set( _PACKAGE_RELATIVE_SHADER_DIRS )
+	foreach( _DIR ${_PACKAGE_SHADER_DIRS} )
+		file( RELATIVE_PATH _REL_DIR "${_PACKAGE_ROOT_DIR}" "${_DIR}" )
+		if( _REL_DIR )
+			list( APPEND _PACKAGE_RELATIVE_SHADER_DIRS "${_REL_DIR}" )
+		else( _REL_DIR )
+			list( APPEND _PACKAGE_RELATIVE_SHADER_DIRS "." )
+		endif( _REL_DIR )
+	endforeach( _DIR ${_PACKAGE_SHADER_DIRS} )
 
 	set( _TEMPORARY_FILENAME "${CMAKE_BINARY_DIR}/toinstall/${_PACKAGE_NAME}Config.cmake" )
 	# configure the actual file to a local folder, and add it for install
