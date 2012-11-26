@@ -666,6 +666,9 @@ endmacro( vista_find_package )
 # COMPONENTS can be followed by a list of optional, desired components
 # QUIET suppresses any warnings and other output except for errors
 # FIND_DEPENDENCIES If set, all packages that are required by the included packages are tried to be found and used automatically
+# NO_RECURSIVE_DEPENCENCY specifies that this package should not count as a recursive dependency, i.e. if a library uses this package,
+#                     and is then used (via vista_use_package) by another project, this package will not count as dependency for the
+#                     new project. This is usefull e.g. for header-only-libraries or libs that are statically linked-in
 macro( vista_use_package _PACKAGE_NAME )
 	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
 
@@ -705,19 +708,28 @@ macro( vista_use_package _PACKAGE_NAME )
 
 		# parse arguments
 		list( FIND _ARGUMENTS "FIND_DEPENDENCIES" _FIND_DEPENDENCIES_FOUND )
-		if( _FIND_DEPENDENCIES_FOUND )
+		if( _FIND_DEPENDENCIES_FOUND GREATER -1 )
 			set( _FIND_DEPENDENCIES TRUE )
 			list( REMOVE_ITEM _ARGUMENTS "FIND_DEPENDENCIES" )
-		else( _FIND_DEPENDENCIES_FOUND )
+		else()
 			set( _FIND_DEPENDENCIES FALSE )
-		endif( _FIND_DEPENDENCIES_FOUND )
+		endif()
+		
+		
+		list( FIND _ARGUMENTS "NO_RECURSIVE_DEPENCENCY" _NO_RECURSIVE_DEPENCENCY_FOUND )
+		if( _NO_RECURSIVE_DEPENCENCY_FOUND GREATER -1 )
+			set( _NO_RECURSIVE_DEPENCENCY TRUE )
+			list( REMOVE_ITEM _ARGUMENTS "NO_RECURSIVE_DEPENCENCY" )
+		else()
+			set( _NO_RECURSIVE_DEPENCENCY FALSE )
+		endif()
 
 		list( FIND _ARGUMENTS "QUIET" _QUIET_FOUND )
 		if( _QUIET_FOUND )
 			set( _QUIET TRUE )
-		else( _QUIET_FOUND )
+		else()
 			set( _QUIET FALSE )
-		endif( _QUIET_FOUND )
+		endif()
 
 		# finding will handle differences to already run find's
 		vista_find_package( ${ARGV} )
@@ -746,10 +758,12 @@ macro( vista_use_package _PACKAGE_NAME )
 			endif( VISTA_TARGET_LINK_DIRS )
 			set( VISTA_USING_${_PACKAGE_NAME_UPPER} TRUE )
 			
-			# store dependencies only if we were not called recursively
-			if( NOT INTERNAL_VISTA_FIND_PACKAGE_LIBS GREATER 1 )
-				list( APPEND VISTA_TARGET_FULL_DEPENDENCIES ${_PACKAGE_NAME} )
-				list( APPEND VISTA_TARGET_DEPENDENCIES "package" ${ARGV} )
+			if( NOT _NO_RECURSIVE_DEPENCENCY )
+				# store dependencies only if we were not called recursively
+				if( NOT INTERNAL_VISTA_FIND_PACKAGE_LIBS GREATER 1 )
+					list( APPEND VISTA_TARGET_FULL_DEPENDENCIES ${_PACKAGE_NAME} )
+					list( APPEND VISTA_TARGET_DEPENDENCIES "package" ${ARGV} )
+				endif()
 			endif()
 
 			# add libraries to VISTA_USE_PACKAGE_LIBRARIES. We do this after adding dependencies, and
