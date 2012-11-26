@@ -114,22 +114,22 @@ endmacro( vista_check_version_entry )
 macro( vista_extract_version_part _TARGET _ENTRY _SEPARATOR  )
 	set( ${_TARGET} )
 
-	if( _REMAINING_VERSION )
-		string( REGEX MATCH "^(${_ENTRY})${_SEPARATOR}(.*)$" _MATCH_SUCCESS ${_REMAINING_VERSION} )
+	if( NOT "${_REMAINING_VERSION}" STREQUAL "" )
+		string( REGEX MATCH "^(${_ENTRY})${_SEPARATOR}(.*)$" _MATCH_SUCCESS "${_REMAINING_VERSION}" )
 		if( _MATCH_SUCCESS )
 			# we found a textual start -> type
 			set( ${_TARGET} ${CMAKE_MATCH_1} )
 			set( _REMAINING_VERSION ${CMAKE_MATCH_2} )
-		else( _MATCH_SUCCESS )
-			string( REGEX MATCH "^(${_ENTRY})$" _MATCH2_SUCCESS ${_REMAINING_VERSION} )
-			if( _MATCH2_SUCCESS )
+		else()
+			string( REGEX MATCH "^(${_ENTRY})$" _MATCH2_SUCCESS "${_REMAINING_VERSION}" )
+			if( NOT "${_MATCH2_SUCCESS}" STREQUAL "" )
 				# we found a textual start -> type
 				set( ${_TARGET} ${CMAKE_MATCH_1} )
 				set( _REMAINING_VERSION ${CMAKE_MATCH_2} )
-			endif( _MATCH2_SUCCESS )
-		endif( _MATCH_SUCCESS )
-	endif( _REMAINING_VERSION )
-endmacro( vista_extract_version_part )
+			endif()
+		endif()
+	endif()
+endmacro()
 
 # vista_find_library_dir( TARGET_DIR_VARIABLE LIBRARY_NAME PATH [ PATH... ] )
 # searches the prepended pathes for the specified library, and, if found, adds
@@ -177,10 +177,7 @@ macro( vista_string_to_version VERSION_STRING VERSION_VARIABLES_PREFIX )
 		AND NOT ${VERSION_VARIABLES_PREFIX}_VERSION_TYPE STREQUAL "TRUNK" )
 		set( ${VERSION_VARIABLES_PREFIX}_VERSION_TYPE )
 		set( _REMAINING_VERSION ${VERSION_STRING} )
-	endif( NOT ${VERSION_VARIABLES_PREFIX}_VERSION_TYPE STREQUAL "HEAD"
-		AND NOT ${VERSION_VARIABLES_PREFIX}_VERSION_TYPE STREQUAL "RELEASE"
-		AND NOT ${VERSION_VARIABLES_PREFIX}_VERSION_TYPE STREQUAL "BRANCH"
-		AND NOT ${VERSION_VARIABLES_PREFIX}_VERSION_TYPE STREQUAL "TRUNK" )
+	endif()
 	vista_extract_version_part( ${VERSION_VARIABLES_PREFIX}_VERSION_NAME  "[a-zA-Z][^\\\\-]+" "\\\\-" )
 	vista_extract_version_part( ${VERSION_VARIABLES_PREFIX}_VERSION_MAJOR "[0-9\\\\+\\\\-]+"  "\\\\." )
 	vista_extract_version_part( ${VERSION_VARIABLES_PREFIX}_VERSION_MINOR "[0-9\\\\+\\\\-]+"  "\\\\." )
@@ -191,7 +188,7 @@ macro( vista_string_to_version VERSION_STRING VERSION_VARIABLES_PREFIX )
 	if( ${VERSION_VARIABLES_PREFIX}_VERSION_TYPE AND NOT ${VERSION_VARIABLES_PREFIX}_VERSION_NAME AND NOT ${VERSION_VARIABLES_PREFIX}_VERSION_MAJOR )
 		set( ${VERSION_VARIABLES_PREFIX}_VERSION_NAME ${${VERSION_VARIABLES_PREFIX}_VERSION_TYPE} )
 		set( ${VERSION_VARIABLES_PREFIX}_VERSION_TYPE "" )
-	endif( ${VERSION_VARIABLES_PREFIX}_VERSION_TYPE AND NOT ${VERSION_VARIABLES_PREFIX}_VERSION_NAME AND NOT ${VERSION_VARIABLES_PREFIX}_VERSION_MAJOR )
+	endif()
 
 endmacro( vista_string_to_version )
 
@@ -204,7 +201,7 @@ endmacro( vista_string_to_version )
 macro( vista_compare_versions INPUT_VERSION_PREFIX OWN_VERSION_PREFIX DIFFERENCE_OUTPUT_VAR )
 	set( _MATCHED FALSE )
 	set( ${DIFFERENCE_OUTPUT_VAR} -1 )
-
+	
 	# check if type matches
 	if( NOT ${INPUT_VERSION_PREFIX}_VERSION_TYPE
 			OR ${INPUT_VERSION_PREFIX}_VERSION_TYPE STREQUAL "RELEASE" )
