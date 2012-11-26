@@ -241,7 +241,7 @@ macro( vista_compare_versions INPUT_VERSION_PREFIX OWN_VERSION_PREFIX DIFFERENCE
 	endif( _MATCHED )
 endmacro( vista_compare_versions )
 
-# vista_find_package_dirs( PACKAGE_NAME EXAMPLE_FILE [NAMES folder1 folder2 ...] [PATHS path1 path2] )
+# vista_find_package_dirs( PACKAGE_NAME EXAMPLE_FILE [NAMES folder1 folder2 ...] [PATHS path1 path2] [DEBUG_OUTPUT] )
 # parses the standard search directories
 # CMAKE_PREFIX_PATH and CMAKE_SYSTEM_PREFIX_PATH -- to find any root dirs and their version
 # Parameters:
@@ -273,6 +273,7 @@ macro( vista_find_package_dirs _PACKAGE_NAME _EXAMPLE_FILE )
 
 	set( _NEXT_IS_NAME FALSE )
 	set( _NEXT_IS_PATH FALSE )
+	set( _DEBUG_OUTPUT FALSE )
 	foreach( _ARG ${_ARGS} )
 		if( ${_ARG} STREQUAL "NAMES" )
 			set( _NEXT_IS_NAME TRUE )
@@ -280,6 +281,10 @@ macro( vista_find_package_dirs _PACKAGE_NAME _EXAMPLE_FILE )
 		elseif( ${_ARG} STREQUAL "PATHS" )
 			set( _NEXT_IS_NAME FALSE)
 			set( _NEXT_IS_PATH TRUE )
+		elseif( ${_ARG} STREQUAL "DEBUG_OUTPUT" )
+			set( _NEXT_IS_NAME FALSE)
+			set( _NEXT_IS_PATH FALSE )
+			set( _DEBUG_OUTPUT TRUE )
 		elseif( _NEXT_IS_NAME )
 			list( APPEND _PACKAGE_FOLDER_NAMES ${_ARG} )
 		elseif( _NEXT_IS_PATH )
@@ -299,6 +304,9 @@ macro( vista_find_package_dirs _PACKAGE_NAME _EXAMPLE_FILE )
 	if( EXISTS "$ENV{${_PACKAGE_NAME_UPPER}_ROOT}" )
 		# check if PACKAGENAME_ROOT envvar is set and valid
 		# if so, use it as unversioned
+		if( _DEBUG_OUTPUT )
+			message( STATUS "vista_find_package_dirs( \"${_PACKAGE_NAME}\" ) Found env var ${_PACKAGE_NAME_UPPER}_ROOT=\"$ENV{${_PACKAGE_NAME_UPPER}_ROOT}\"" )
+		endif()
 		if( EXISTS "$ENV{${_PACKAGE_NAME_UPPER}_ROOT}/${_VISTA_HWARCH}/${_EXAMPLE_FILE}" )
 			set( _UNVERSIONED "$ENV{${_PACKAGE_NAME_UPPER}_ROOT}/${_VISTA_HWARCH}" )
 		elseif( EXISTS "$ENV{${_PACKAGE_NAME_UPPER}_ROOT}/${_EXAMPLE_FILE}" )
@@ -310,10 +318,14 @@ macro( vista_find_package_dirs _PACKAGE_NAME _EXAMPLE_FILE )
 		foreach( _FOLDER ${_PACKAGE_FOLDER_NAMES} )			
 			# look for pathes with a version
 			file( GLOB _TMP_PATHES "${_PATH}/${_FOLDER}/${_FOLDER}-*/" )
-			#message( "GLOB( ${_PATH}/${_FOLDER}/${_FOLDER}-*/ ) = ${_TMP_PATHES} " )
+			if( _DEBUG_OUTPUT )
+				message( STATUS "vista_find_package_dirs( \"${_PACKAGE_NAME}\" ) Results for \"${_PATH}/${_FOLDER}/${_FOLDER}-*/\" are ${_TMP_PATHES}" )
+			endif()
 			list( APPEND _VERSIONED_PATHES ${_TMP_PATHES} )
 			file( GLOB _TMP_PATHES "${_PATH}/${_FOLDER}-*" )
-			#message( "GLOB( ${_PATH}/${_FOLDER}-* ) = ${_TMP_PATHES} " )
+			if( _DEBUG_OUTPUT )
+				message( STATUS "vista_find_package_dirs( \"${_PACKAGE_NAME}\" ) Results for \"${_PATH}/${_FOLDER}-*\" are ${_TMP_PATHES}" )
+			endif()
 			list( APPEND _VERSIONED_PATHES ${_TMP_PATHES} )
 
 			# look for unversioned pathes
@@ -322,10 +334,16 @@ macro( vista_find_package_dirs _PACKAGE_NAME _EXAMPLE_FILE )
 					if( EXISTS "${_PATH}/${_FOLDER}/${_HWARCH}/${_EXAMPLE_FILE}" )						
 						# ../NAME/NAME/HWARCH
 						set( _UNVERSIONED "${_PATH}/${_FOLDER}/${_HWARCH}" )
+						if( _DEBUG_OUTPUT )
+							message( STATUS "vista_find_package_dirs( \"${_PACKAGE_NAME}\" ) found unversioned \"${_PATH}/${_FOLDER}/${_HWARCH}\"" )
+						endif()
 						break()
 					elseif( EXISTS "${_PATH}/${_HWARCH}/${_EXAMPLE_FILE}" )
 						# ../NAME/HWARCH
 						set( _UNVERSIONED "${_PATH}/${_HWARCH}" )
+						if( _DEBUG_OUTPUT )
+							message( STATUS "vista_find_package_dirs( \"${_PACKAGE_NAME}\" ) found unversioned \"${_PATH}/${_HWARCH}/${_EXAMPLE_FILE}\"" )
+						endif()
 						break()
 					endif( EXISTS "${_PATH}/${_FOLDER}/${_HWARCH}/${_EXAMPLE_FILE}" )
 				endforeach( _HWARCH ${VISTA_COMPATIBLE_HWARCH} )
@@ -334,9 +352,15 @@ macro( vista_find_package_dirs _PACKAGE_NAME _EXAMPLE_FILE )
 					if( EXISTS "${_PATH}/${_FOLDER}/${_EXAMPLE_FILE}" )
 						# ../NAME/NAME
 						set( _UNVERSIONED "${_PATH}/${_FOLDER}" )
+						if( _DEBUG_OUTPUT )
+							message( STATUS "vista_find_package_dirs( \"${_PACKAGE_NAME}\" ) found unversioned \"${_PATH}/${_FOLDER}\"" )
+						endif()
 					elseif( EXISTS "${_PATH}/${_EXAMPLE_FILE}" )
 						# ../NAME
 						set( _UNVERSIONED "${_PATH}" )
+						if( _DEBUG_OUTPUT )
+							message( STATUS "vista_find_package_dirs( \"${_PACKAGE_NAME}\" ) found unversioned \"${_PATH}\"" )
+						endif()
 					endif( EXISTS "${_PATH}/${_FOLDER}/${_EXAMPLE_FILE}" )
 				endif( NOT _UNVERSIONED )
 			endif( NOT _UNVERSIONED )
@@ -371,6 +395,13 @@ macro( vista_find_package_dirs _PACKAGE_NAME _EXAMPLE_FILE )
 			message( WARNING "vista_find_package_dirs cant extract version from \"${_PATH}\" - skipping" )
 		endif( _MATCHED )
 	endforeach( _PATH ${_VERSIONED_PATHES} )
+	
+	if( _DEBUG_OUTPUT )
+		message( STATUS "vista_find_package_dirs( \"${_PACKAGE_NAME}\" ) found dirs:" )
+		message( STATUS "\t\t${_PACKAGE_NAME_UPPER}_CANDIDATE_UNVERSIONED = ${${_PACKAGE_NAME_UPPER}_CANDIDATE_UNVERSIONED}" )
+		message( STATUS "\t\t${_PACKAGE_NAME_UPPER}_CANDIDATE_DIRS = ${${_PACKAGE_NAME_UPPER}_CANDIDATE_DIRS}" )
+		message( STATUS "\t\t${_PACKAGE_NAME_UPPER}_CANDIDATE_VERSIONS = ${${_PACKAGE_NAME_UPPER}_CANDIDATE_VERSIONS}" )
+	endif()
 
 endmacro( vista_find_package_dirs )
 
@@ -392,7 +423,7 @@ macro( vista_get_version_from_path _PATH _NAME_LIST _VERSION_VAR )
 	endforeach( _NAME ${${_NAME_LIST}} )
 endmacro( vista_get_version_from_path )
 
-# vista_find_package_root( PACKAGE EXAMPLE_FILE [DONT_ALLOW_UNVERSIONED] [PREFER_UNVERSIONED] [QUIET] [NAMES name1 name2 ...] [PATHS path1 path2] [ADVANCED] [NO_CACHE] )
+# vista_find_package_root( PACKAGE EXAMPLE_FILE [DONT_ALLOW_UNVERSIONED] [PREFER_UNVERSIONED] [QUIET] [DEBUG_OUTPUT] [NAMES name1 name2 ...] [PATHS path1 path2] [ADVANCED] [NO_CACHE] )
 # finds the package root fr PACKAGE, and stores it in the variable <PACKAGE>_ROOT_DIR
 # Should only be called from the context of a Find<XYZ>.cmake file - it automatically checks if
 # versions are requested, and if so, looks for an appropriately versioned dir, otherwise, it
@@ -402,6 +433,7 @@ endmacro( vista_get_version_from_path )
 # By default, <PACKAGE>_ROOT_DIR is a cahe var, but the optional arguments ADVANCED and NO_CACHE
 # make it advanced or uncached
 # if QUIET is specified, no info messages will be printed
+# if DEBUG_OUTPUT is specified, additional debug info will be printed
 # if DONT_ALLOW_UNVERSIONED is specified, no unversioned path is accepted when a versioned one is requested
 # if PREFER_UNVRSIONED is set and no version is requested, an unversioned package is used - otherwise by default
 # the highest version is chosen
@@ -438,6 +470,7 @@ macro( vista_find_package_root _PACKAGE_NAME _EXAMPLE_FILE )
 						OR ${_ARG} STREQUAL "PREFER_UNVERSIONED"
 						OR ${_ARG} STREQUAL "QUIET"
 						OR ${_ARG} STREQUAL "ADVANCED"
+						OR ${_ARG} STREQUAL "DEBUG_OUTPUT"
 						OR ${_ARG} STREQUAL "NO_CACHE" )
 						break()
 					else()
@@ -467,6 +500,7 @@ macro( vista_find_package_root _PACKAGE_NAME _EXAMPLE_FILE )
 		set( _QUIET FALSE )
 		set( _ADVANCED FALSE )
 		set( _NO_CACHE FALSE )
+		set( _DEBUG_OUTPUT FALSE )
 
 		set( _ARGS ${ARGV} )
 		list( FIND _ARGS "NO_CACHE" _FOUND )
@@ -489,14 +523,15 @@ macro( vista_find_package_root _PACKAGE_NAME _EXAMPLE_FILE )
 		if( _FOUND GREATER -1 )
 			set( _PREFER_UNVERSIONED TRUE )
 		endif( _FOUND GREATER -1 )
+		list( FIND _ARGS "DEBUG_OUTPUT" _FOUND )
+		if( _FOUND GREATER -1 )
+			set( _DEBUG_OUTPUT TRUE )
+		endif( _FOUND GREATER -1 )
 
 		list( REMOVE_ITEM _ARGS "NO_CACHE" "QUIET" "ADVANCED" "DONT_ALLOW_UNVERSIONED" )
 
 		#find package dirs
 		vista_find_package_dirs( ${_ARGS} )
-		
-		#message( "${_PACKAGE_NAME_UPPER}_CANDIDATE_DIRS = ${${_PACKAGE_NAME_UPPER}_CANDIDATE_DIRS}" )
-		#message( "${_PACKAGE_NAME_UPPER}_CANDIDATE_UNVERSIONED = ${${_PACKAGE_NAME_UPPER}_CANDIDATE_UNVERSIONED}" )
 
 		set( _FOUND_DIR "${_PACKAGE_NAME_UPPER}_ROOT_DIR-NOTFOUND" )
 		set( _FOUND_VERSION "" )
@@ -517,6 +552,10 @@ macro( vista_find_package_root _PACKAGE_NAME _EXAMPLE_FILE )
 		else()
 			set( _REQUESTED_VERSION )
 		endif( V${_PACKAGE_NAME}_FIND_VERSION_EXT )
+		
+		if( _DEBUG_OUTPUT )
+			message( STATUS "vista_find_package_root( \"${_PACKAGE_NAME}\" ) looking for version \"${_REQUESTED_VERSION}\"" )
+		endif()
 
 		if( _REQUESTED_VERSION )
 			# parse requested version
@@ -540,8 +579,11 @@ macro( vista_find_package_root _PACKAGE_NAME _EXAMPLE_FILE )
 					endif( _VERSION_DIFFERENCE VERSION_LESS _BEST_DIFF )
 				endif( NOT _VERSION_DIFFERENCE EQUAL -1 )
 			endforeach( _INDEX RANGE ${_COUNT} )
-
+			
 			if( NOT _FOUND_DIR )
+				if( _DEBUG_OUTPUT )
+					message( STATUS "vista_find_package_root( \"${_PACKAGE_NAME}\" ) found no matching version - trying unversioned" )
+				endif()
 				if( NOT _DONT_ALLOW_UNVERSIONED AND ${_PACKAGE_NAME_UPPER}_CANDIDATE_UNVERSIONED )
 					set( _FOUND_DIR ${${_PACKAGE_NAME_UPPER}_CANDIDATE_UNVERSIONED} )
 					set( _FOUND_VERSION )
@@ -549,21 +591,35 @@ macro( vista_find_package_root _PACKAGE_NAME _EXAMPLE_FILE )
 						message( STATUS "Package root for ${_PACKAGE_NAME} with version ${_REQUESTED_VERSION}"
 									"could not be found - using unversioned root" )
 					endif( NOT _QUIET )
+				else()
+					if( _DEBUG_OUTPUT )
+						message( STATUS "vista_find_package_root( \"${_PACKAGE_NAME}\" ) found no unversioned candidate" )
+					endif()
 				endif( NOT _DONT_ALLOW_UNVERSIONED AND ${_PACKAGE_NAME_UPPER}_CANDIDATE_UNVERSIONED )
 			elseif( _BEST_DIFF VERSION_GREATER 0.0.0.0 )
 				# no exact match - not found if exact, wrning otherwise
 				if( _VERSION_EXACT )
+					if( _DEBUG_OUTPUT )
+						message( STATUS "vista_find_package_root( \"${_PACKAGE_NAME}\" ) found no exactly matching version" )
+					endif()
 					set( _FOUND_DIR "${_PACKAGE_NAME_UPPER}_ROOT_DIR-NOTFOUND" )
 				elseif( NOT QUIET )
 					message( STATUS "Package ${_PACKAGE_NAME} not found with version ${_REQUESTED_VERSION} - "
 									"using best matching version ${_FOUND_VERSION}" )
 				endif( _VERSION_EXACT )
+			else()
+				if( _DEBUG_OUTPUT )
+					message( STATUS "vista_find_package_root( \"${_PACKAGE_NAME}\" ) found matching version in \"${_FOUND_DIR}\"" )
+				endif()
 			endif( NOT _FOUND_DIR )
 
 		else() # no version requested
 			if( ${_PACKAGE_NAME_UPPER}_CANDIDATE_UNVERSIONED AND ( _PREFER_UNVERSIONED OR NOT ${_PACKAGE_NAME_UPPER}_CANDIDATE_DIRS ) )
 				set( _FOUND_DIR ${${_PACKAGE_NAME_UPPER}_CANDIDATE_UNVERSIONED} )
 				set( _FOUND_VERSION )
+				if( _DEBUG_OUTPUT )
+					message( STATUS "vista_find_package_root( \"${_PACKAGE_NAME}\" ) found unversioned match in \"${_FOUND_DIR}\"" )
+				endif()
 			elseif( ${_PACKAGE_NAME_UPPER}_CANDIDATE_DIRS )
 				set( _BEST_DIFF  )
 
@@ -598,13 +654,20 @@ macro( vista_find_package_root _PACKAGE_NAME _EXAMPLE_FILE )
 			set( ${_PACKAGE_NAME}_VERSION ${${_PACKAGE_NAME_UPPER}_VERSION_STRING} )
 			set( ${_PACKAGE_NAME_UPPER}_VERSION ${${_PACKAGE_NAME_UPPER}_VERSION_STRING} )
 			vista_string_to_version( "${${_PACKAGE_NAME_UPPER}_VERSION_STRING}" "${_PACKAGE_NAME_UPPER}" )
+			if( _DEBUG_OUTPUT )
+				message( STATUS "vista_find_package_root( \"${_PACKAGE_NAME}\" ) found match" )
+			endif()
+		else()
+			if( _DEBUG_OUTPUT )
+				message( STATUS "vista_find_package_root( \"${_PACKAGE_NAME}\" ) found no match" )
+			endif()
 		endif( _FOUND_VERSION )
 		
 		
 
 	endif()
 
-endmacro( vista_find_package_root _PACKAGE_NAME _EXAMPLE_FILE )
+endmacro()
 
 # vista_find_library_uncached( ...find_library_parameters... )
 # usage is a little special: call exactly as find_library, but WITHOUT the target variable
