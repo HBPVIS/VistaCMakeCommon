@@ -5,10 +5,10 @@ include( VistaFindUtils )
 
 if( NOT VFREETYPE_FOUND )
 
-	vista_find_package_root( FREETYPE include/freetype/freetype.h )
+	vista_find_package_root( FreeType include/freetype/freetype.h )
 
 	if( FREETYPE_ROOT_DIR )
-		find_library( FREETYPE_LIBRARIES NAMES freetype
+		find_library( FREETYPE_LIBRARIES NAMES freetype FreeType
 					PATHS ${FREETYPE_ROOT_DIR}/lib
 					CACHE "FREETYPE library" )
 		mark_as_advanced( FREETYPE_LIBRARIES )
@@ -21,5 +21,5 @@ if( NOT VFREETYPE_FOUND )
 
 endif( NOT VFREETYPE_FOUND )
 
-find_package_handle_standard_args( VFREETYPE "FFREETYPE could not be found" FREETYPE_ROOT_DIR )
+find_package_handle_standard_args( VFREETYPE "FREETYPE could not be found" FREETYPE_ROOT_DIR )
 

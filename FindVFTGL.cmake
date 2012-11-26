@@ -5,7 +5,7 @@ include( VistaFindUtils )
 
 if( NOT VFTGL_FOUND )
 
-	vista_find_package_root( FTGL src/FTGL/ftgl.h )
+	vista_find_package_root( FTGL include/FTGL/ftgl.h )
 
 	if( FTGL_ROOT_DIR )
 		find_library( FTGL_LIBRARIES NAMES ftgl
@@ -13,7 +13,7 @@ if( NOT VFTGL_FOUND )
 					CACHE "FTGL library" )
 		mark_as_advanced( FTGL_LIBRARIES )
 
-		set( FTGL_INCLUDE_DIRS ${FTGL_ROOT_DIR}/src )
+		set( FTGL_INCLUDE_DIRS ${FTGL_ROOT_DIR}/include )
 		set( FTGL_LIBRARY_DIRS ${FTGL_ROOT_DIR}/lib )
 		get_filename_component( FTGL_LIBRARY_DIRS ${FTGL_LIBRARIES} PATH )
 
