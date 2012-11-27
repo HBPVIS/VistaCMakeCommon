@@ -1,4 +1,4 @@
-# $Id: FindVGTEST.cmake 21495 2011-05-25 07:52:18Z dr165799 $
+# $Id$
 
 include( FindPackageHandleStandardArgs )
 include( VistaFindUtils )
