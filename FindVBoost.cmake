@@ -8,7 +8,7 @@ if( NOT VBOOST_FOUND )
 		vista_find_package_root( Boost boost/any.hpp NAMES Boost boost NO_CACHE )
 
 		if( BOOST_ROOT_DIR )
-			set( BOOST_ROOT ${BOOST_ROOT_DIR} )			
+			set( BOOST_ROOT "${BOOST_ROOT_DIR}" )			
 		endif( BOOST_ROOT_DIR )
 	endif( NOT BOOST_ROOT )
 	
@@ -21,7 +21,7 @@ if( NOT VBOOST_FOUND )
 
 endif( NOT VBOOST_FOUND )
 
-find_package_handle_standard_args( VBOOST "BOOST could not be found" BOOST_ROOT_DIR )
+find_package_handle_standard_args( VBOOST "BOOST could not be found" BOOST_INCLUDE_DIRS )
 
 
 
