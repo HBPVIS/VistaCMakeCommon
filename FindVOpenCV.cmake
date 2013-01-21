@@ -7,13 +7,20 @@ if( NOT VOPENCV_FOUND )
 
 	# search config file
 	vista_find_package_root( OpenCV OpenCVConfig.cmake NAMES OpenCV opencv share/OpenCV share/opencv ADVANCED )
+	if( NOT OPENCV_ROOT_DIR )
+		vista_find_package_root( OpenCV share/OpenCVConfig.cmake NAMES OpenCV opencv share/OpenCV share/opencv ADVANCED )
+	endif()
+	if( NOT OPENCV_ROOT_DIR )
+		vista_find_package_root( OpenCV share/OpenCV/OpenCVConfig.cmake NAMES OpenCV opencv share/OpenCV share/opencv ADVANCED )
+	endif()
 
 	set( OPENCV_FOUND )
-	find_package( OpenCV QUIET PATHS ${OPENCV_ROOT_DIR} )
+	set( OpenCV_FOUND )
+	find_package( OpenCV PATHS "${OPENCV_ROOT_DIR}" "${OPENCV_ROOT_DIR}/share" "${OPENCV_ROOT_DIR}/share/OpenCV" )
 	# an OpenCVConfig.cmake has been found and loaded
 	if( OpenCV_FOUND )
 		set( OPENCV_LIBRARIES "${OpenCV_LIBS}" )
-		set( OPENCV_LIBRARY_DIRS "${OpenCV_LIB_DIR}" "${OpenCV_DIR}/bin"  )
+		set( OPENCV_LIBRARY_DIRS "${OpenCV_LIB_DIR}" "${OpenCV_DIR}/bin" )
 		set( OPENCV_INCLUDE_DIRS "${OpenCV_INCLUDE_DIRS}" )
 		set( OPENCV_VERSION "${OpenCV_VERSION}" )
 	endif()
