@@ -369,7 +369,15 @@ macro( vista_add_external_msvc_project_of_package _PACKAGE_NAME )
 				# sanity check if project exists
 				if( EXISTS "${_ENTRY}" )
 					message( STATUS "vista_add_external_msvc_project_of_package( ${_PACKAGE_NAME_UPPER} ) - adding external project as external_${_NAME}" )
-					include_external_msproject( "external_${_NAME}" "${_ENTRY}" )
+					if( MSVC11 )
+						#file( STRINGS "${_ENTRY}" _MSVCPROJ_GUID REGEX "<ProjectGUID>{[^}]+}</ProjectGUID>" )
+						#string( REGEX REPLACE "<ProjectGUID>{([^}]+)}</ProjectGUID>" "\\1" _MSVCPROJ_GUID "${_MSVCPROJ_GUID}" )
+						#message( "_MSVCPROJ_GUID ${_MSVCPROJ_GUID}" )
+						#include_external_msproject( "external_${_NAME}" "${_ENTRY}" GUID ${_MSVCPROJ_GUID} )
+						include_external_msproject( "external_${_NAME}" "${_ENTRY}" )
+					else()
+						include_external_msproject( "external_${_NAME}" "${_ENTRY}" )
+					endif()
 					list( APPEND _POSSIBLE_DEPENDENCIES ${_NAME} )
 					list( APPEND VISTA_EXTERNALLY_ADDED_PROJECTS ${_NAME} )
 					if( _FOLDER AND CMAKE_VERSION VERSION_GREATER 2.8.4 )
@@ -1030,11 +1038,12 @@ macro( vista_configure_app _PACKAGE_NAME )
 	
 	#if we're usign MSVC, we set up a *.vcproj.user file
 	if( MSVC )
-		if( MSVC10 )
-			find_file( VISTA_VCPROJUSER_PROTO_FILE "VisualStudio2010.vcxproj.user_proto" ${CMAKE_MODULE_PATH} )
-		else( MSVC10 )
-			find_file( VISTA_VCPROJUSER_PROTO_FILE "VisualStudio.vcproj.user_proto" ${CMAKE_MODULE_PATH} )
-		endif( MSVC10 )
+		if( MSVC10 OR MSVC11 )
+			set( VISTA_VCPROJUSER_PROTO_FILE_NAME "VisualStudio2010.vcxproj.user_proto" )
+		else()
+			set( VISTA_VCPROJUSER_PROTO_FILE_NAME "VisualStudio.vcproj.user_proto")
+		endif()
+		find_file( VISTA_VCPROJUSER_PROTO_FILE "${VISTA_VCPROJUSER_PROTO_FILE_NAME}" ${CMAKE_MODULE_PATH} )
 		set( VISTA_VCPROJUSER_PROTO_FILE ${VISTA_VCPROJUSER_PROTO_FILE} CACHE INTERNAL "" )
 		if( VISTA_VCPROJUSER_PROTO_FILE )
 			if( VISTA_64BIT )
@@ -1049,6 +1058,8 @@ macro( vista_configure_app _PACKAGE_NAME )
 				set( _VERSION_STRING "9,00" )
 			elseif( MSVC10 )
 				set( _VERSION_STRING "10,00" )
+			elseif( MSVC11 )
+				set( _VERSION_STRING "11,00" )
 			endif( MSVC80 )
 
 			if( _OVERRIDE_WORKING_DIR )
@@ -1082,23 +1093,23 @@ macro( vista_configure_app _PACKAGE_NAME )
 			
 			set( _COMMANDARGS ${VISTA_${_PACKAGE_NAME}_MSVC_ARGUMENTS} )
 			
-			if( MSVC10 )
+			if( MSVC10 OR MSVC11 )
 				configure_file(
 					${VISTA_VCPROJUSER_PROTO_FILE}
 					${CMAKE_CURRENT_BINARY_DIR}/${_PACKAGE_NAME}.vcxproj.user
 					@ONLY
 				)
 				set( ${_PACKAGE_NAME_UPPER}_TARGET_MSVC_PROJECT "${CMAKE_CURRENT_BINARY_DIR}/${_PACKAGE_NAME}.vcxproj" CACHE INTERNAL "" FORCE )
-			else( MSVC10 )
+			else()
 				configure_file(
 					${VISTA_VCPROJUSER_PROTO_FILE}
 					${CMAKE_CURRENT_BINARY_DIR}/${_PACKAGE_NAME}.vcproj.user
 					@ONLY
 				)
 				set( ${_PACKAGE_NAME_UPPER}_TARGET_MSVC_PROJECT "${CMAKE_CURRENT_BINARY_DIR}/${_PACKAGE_NAME}.vcproj" CACHE INTERNAL "" FORCE )
-			endif( MSVC10 )						
+			endif()						
 		else( VISTA_VCPROJUSER_PROTO_FILE )
-			message( WARNING "vista_configure_app( ${_PACKAGE_NAME} ) - could not find file VisualStudio.vcproj.user_proto" )
+			message( WARNING "vista_configure_app( ${_PACKAGE_NAME} ) - could not find file VisualStudio project user setting prototype \"${VISTA_VCPROJUSER_PROTO_FILE}\"" )
 		endif( VISTA_VCPROJUSER_PROTO_FILE )
 	endif( MSVC )	
 
@@ -1146,7 +1157,7 @@ macro( vista_configure_lib _PACKAGE_NAME )
 		endif( BUILD_SHARED_LIBS )
 		
 		# store location to msvcproj file
-		if( MSVC10 )
+		if( MSVC10 OR MSVC11 )
 			set( ${_PACKAGE_NAME_UPPER}_TARGET_MSVC_PROJECT "${CMAKE_CURRENT_BINARY_DIR}/${_PACKAGE_NAME}.vcxproj" CACHE INTERNAL "" FORCE )
 		elseif( MSVC )
 			set( ${_PACKAGE_NAME_UPPER}_TARGET_MSVC_PROJECT "${CMAKE_CURRENT_BINARY_DIR}/${_PACKAGE_NAME}.vcproj" CACHE INTERNAL "" FORCE )
