@@ -4,7 +4,7 @@ include( FindPackageHandleStandardArgs )
 include( VistaFindUtils )
 
 if( NOT VCATSXFEMSOLVER_FOUND )
-	vista_find_package_root( CatsXFEMSolver CatsXFEMSolver/XFEM.h )	
+	vista_find_package_root( CatsXFEMSolver CatsXFEMSolver/CatsXFEMSolver.h )	
 
 	if( CATSXFEMSOLVER_ROOT_DIR )
 		set( CATSXFEMSOLVER_INCLUDE_DIRS ${CATSXFEMSOLVER_ROOT_DIR})	
