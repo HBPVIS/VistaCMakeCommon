@@ -233,7 +233,7 @@ macro( vista_compare_versions INPUT_VERSION_PREFIX OWN_VERSION_PREFIX DIFFERENCE
 	if( _MATCHED )
 		# version type and name are okay - check number
 		# if no numer exists, distinguish: if name exists, no num is required for matching, else it does
-		if( NOT "${${INPUT_VERSION_PREFIX}_VERSION_MAJOR}" OR NOT "${${OWN_VERSION_PREFIX}_VERSION_MAJOR}" )
+		if( "${${INPUT_VERSION_PREFIX}_VERSION_MAJOR}" STREQUAL "" OR "${${OWN_VERSION_PREFIX}_VERSION_MAJOR}" STREQUAL "" )
 			if( _VERSION_REQUIRED )
 				set( ${DIFFERENCE_OUTPUT_VAR} "-1.-1.-1.-1" )
 			else()
