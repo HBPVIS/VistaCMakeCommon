@@ -522,10 +522,7 @@ macro( vista_find_package _PACKAGE_NAME )
 		endif()
 
 		if( _USING_COMPONENTS )
-			# we need to check if the components are already included or not
-			# NOTE: this relies on the Find<Package> or <Package>Config file to
-			# correctly set the PACKAGENAME_FOUND_COMPONENTS variable - otherwise, a rerun
-			# will be performed even if previous finds were sufficient
+			# we need to check if the components are already included or not			
 			if( ${_PACKAGE_NAME_UPPER}_FOUND_COMPONENTS )
 				foreach( _COMPONENT ${_PACKAGE_COMPONENTS} )
 					list( FIND ${_PACKAGE_NAME_UPPER}_FOUND_COMPONENTS ${_COMPONENT} _COMPONENT_FOUND )
@@ -536,10 +533,10 @@ macro( vista_find_package _PACKAGE_NAME )
 				endforeach( _COMPONENT ${_PACKAGE_COMPONENTS} )
 			else()
 				set( _DO_FIND TRUE )
-			endif( ${_PACKAGE_NAME_UPPER}_FOUND_COMPONENTS )
-		endif( _USING_COMPONENTS )
+			endif()
+		endif()
 
-	endif( ${_PACKAGE_NAME_UPPER}_FOUND )
+	endif()
 
 	if( _DO_FIND )
 		# this is somewhat of an intransparent hack: if _MESSAGE_IF_DO_FIND is set, we print a message
@@ -580,7 +577,7 @@ macro( vista_find_package _PACKAGE_NAME )
 			endforeach( _PATH ${CMAKE_MODULE_PATH} )
 		endif( NOT _NO_MODULE )
 
-
+		set( ${_PACKAGE_NAME_UPPER}_FOUND_COMPONENTS )
 
 		if( _FIND_VMODULE_EXISTS )
 			find_package( V${_PACKAGE_NAME} ${_PACKAGE_VERSION} ${_FIND_PACKAGE_ARGS} )
@@ -672,6 +669,10 @@ macro( vista_find_package _PACKAGE_NAME )
 			if( ${_PACKAGE_NAME}_ACTUAL_DIR )
 				set( ${_PACKAGE_NAME}_DIR "${${_PACKAGE_NAME}_ACTUAL_DIR}" CACHE PATH "The directory containing a CMake configuration file for $_PACKAGE_NAME}" FORCE )
 			endif()
+		endif()
+		
+		if( NOT ${_PACKAGE_NAME_UPPER}_FOUND_COMPONENTS )
+			set( ${_PACKAGE_NAME_UPPER}_FOUND_COMPONENTS ${_PACKAGE_COMPONENTS} )
 		endif()
 		
 	endif( _DO_FIND )
