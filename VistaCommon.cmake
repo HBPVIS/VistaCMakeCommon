@@ -11,6 +11,7 @@
 # vista_configure_lib( PACKAGE_NAME [OUT_NAME] )
 # vista_install( TARGET [INCLUDE/BIN_SUBDIRECTORY [LIBRARY_SUBDIRECTORY] ] [NO_POSTFIX] )
 # vista_install_files_by_extension( SEARCH_ROOT INSTALL_SUBDIR EXTENSION1 [EXTENSION2 ...] )
+# vista_install_all_dlls( INSTALL_SUBDIR )
 # vista_add_target_pathscript_dynamic_lib_path( _PACKAGE_NAME _ENVVAR _VALUE [PATH_LIST] )
 # vista_add_pathscript_dynamic_lib_path( _ENVVAR _VALUE [PATH_LIST] )
 # vista_add_target_pathscript_envvar( _PACKAGE_NAME _ENVVAR _VALUE [PATH_LIST] )
@@ -1407,7 +1408,7 @@ macro( vista_install_files_by_extension _SEARCH_ROOT _INSTALL_SUBDIR )
 	endif()
 endmacro( vista_install_files_by_extension )
 
-# vista_install_files_by_extension( INSTALL_SUBDIR )
+# vista_install_all_dlls( INSTALL_SUBDIR )
 # searches for ALL .dll's or .so's in all link directories, and installs them
 # to the specified subdir. Only dlls that already exist at configure time will be installed!
 # WARNING use with great care! this can potentially copy a whole lot of dlls if
