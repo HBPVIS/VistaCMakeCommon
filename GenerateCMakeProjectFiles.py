@@ -8,7 +8,7 @@ backupExtension = ".BAK"
 excludeDirs = [ "cvs", ".svn", "build", "built", "cmake" ]
 sourceExtensions = [ ".c", ".cpp", ".h" ]
 addSourceFilesListToSources = True
-defaultCoreLibsVersion = "DARWIN"
+defaultCoreLibsVersion = "PLUTO"
 
 findCommented = re.compile( r'\s*#\s*.*' )
 findSetListRegEx = re.compile( r'set\(\s*(\S+)\s*\Z' )
@@ -474,9 +474,14 @@ def GenMultiProject( mode, startDir, projectName, renew, version, linkVistaCoreL
 		fileHandle.write( "vista_conditional_add_subdirectory( " + projectNameUpper + "_BUILD_" + str.upper(subproject) + " " + subproject + " ON )\n" )
 	fileHandle.write( "\n" )
 
+	
 if len( sys.argv ) >= 2 and sys.argv[1] != "-h" and sys.argv[1] != "--help" :
-	startDir = sys.argv[1]
-	argcount = 2
+	if sys.argv[1][0] == '-':
+		startDir = os.getcwd()
+		argcount = 1
+	else:
+		startDir = sys.argv[1]
+		argcount = 2
 	mode = MODE_SRC
 	onlyBuildSourceLists = False
 	projectName = os.path.basename( startDir )
@@ -539,7 +544,7 @@ if len( sys.argv ) >= 2 and sys.argv[1] != "-h" and sys.argv[1] != "--help" :
 		GenCMakeForLib( startDir, projectName, renew, version, linkVistaCoreLibs )
 else:
 	print( "Usage:" )
-	print( "GenerateCMakeProjectFiles.py MainDir [Options]" )
+	print( "GenerateCMakeProjectFiles.py [MainDir] [Options]" )
 	print( "Options" )
 	print( "  -app                     : the project will be configured as an application" )
 	print( "  -lib                     : the project will be configured as a library " )
