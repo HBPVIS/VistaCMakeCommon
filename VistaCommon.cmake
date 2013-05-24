@@ -12,8 +12,8 @@
 # vista_install( TARGET [INCLUDE/BIN_SUBDIRECTORY [LIBRARY_SUBDIRECTORY] ] [NO_POSTFIX] )
 # vista_install_files_by_extension( SEARCH_ROOT INSTALL_SUBDIR EXTENSION1 [EXTENSION2 ...] )
 # vista_install_all_dlls( INSTALL_SUBDIR )
-# vista_add_target_pathscript_dynamic_lib_path( _PACKAGE_NAME _ENVVAR _VALUE [PATH_LIST] )
-# vista_add_pathscript_dynamic_lib_path( _ENVVAR _VALUE [PATH_LIST] )
+# vista_add_target_pathscript_dynamic_lib_path( _PACKAGE_NAME _VALUE [PATH_LIST] )
+# vista_add_pathscript_dynamic_lib_path( _VALUE [PATH_LIST] )
 # vista_add_target_pathscript_envvar( _PACKAGE_NAME _ENVVAR _VALUE [PATH_LIST] )
 # vista_add_pathscript_envvar( _ENVVAR _VALUE [PATH_LIST] )
 # vista_set_target_msvc_arguments( _PACKAGE_NAME _COMMANDLINE_VARS )
@@ -682,7 +682,7 @@ macro( vista_find_package _PACKAGE_NAME )
 endmacro( vista_find_package )
 
 
-# vista_use_package( PACKAGE [VERSION] [EXACT] [[COMPONENTS | REQUIRED] comp1 comp2 ... ] [QUIET] [FIND_DEPENDENCIES] )
+# vista_use_package( PACKAGE [VERSION] [EXACT] [[COMPONENTS | REQUIRED] comp1 comp2 ... ] [QUIET] [FIND_DEPENDENCIES] [NO_RECURSIVE_DEPENCENCY] )
 # finds the desired Package and automatically sets the include dirs, library dirs, definitions for the project.
 # Libraries have to be included using the VARIABLE PACKAGENAME_LIBRARIES. Alternatively, VISTA_USE_PACKAGE_LIBRARIES contains
 # all libraries that have been linked by vista_use_package calls. Additionally, buildsystem-specific variables are set that

@@ -18,12 +18,21 @@ if( NOT VOPENAL_FOUND )
 
 		set( OPENAL_LIBRARIES ${OPENAL_LIBRARIES} CACHE INTERNAL "" FORCE )
 		
-		vista_find_library_uncached(
-			NAMES OpenAL al openal OpenAL32
-			PATH_SUFFIXES lib64 lib libs64 libs libs/Win32 libs/Win64
-			PATHS
-			${OPENAL_ROOT_DIR}
-		)
+		if( VISTA_64BIT )
+			vista_find_library_uncached(
+				NAMES OpenAL al openal OpenAL32
+				PATH_SUFFIXES lib64 libs64 libs/Win64
+				PATHS
+				${OPENAL_ROOT_DIR}
+			)
+		else()
+			vista_find_library_uncached(
+				NAMES OpenAL al openal OpenAL32
+				PATH_SUFFIXES lib libs libs/Win32
+				PATHS
+				${OPENAL_ROOT_DIR}
+			)
+		endif()
 		if( VISTA_UNCACHED_LIBRARY )
 			set( OPENAL_LIBRARIES ${VISTA_UNCACHED_LIBRARY} )
 			get_filename_component( OPENAL_LIBRARY_DIRS ${VISTA_UNCACHED_LIBRARY} PATH )
