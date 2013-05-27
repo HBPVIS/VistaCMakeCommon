@@ -2,7 +2,7 @@ include( FindPackageHandleStandardArgs )
 include( VistaFindUtils )
 
 if( NOT VHDF5_FOUND )
-	vista_find_package_root( VHDF5 include/hdf5.h NAMES hdf5 HDF5 )
+	vista_find_package_root( HDF5 include/hdf5.h NAMES hdf5 HDF5 )
 
 	if( HDF5_ROOT_DIR )
 		set( HDF5_INCLUDE_DIRS ${HDF5_ROOT_DIR}/include/ )
@@ -12,4 +12,4 @@ if( NOT VHDF5_FOUND )
 
 endif( NOT VHDF5_FOUND )
 
-find_package_handle_standard_args( VHDF5 "hdf5 could not be found" VHDF5_ROOT_DIR )
+find_package_handle_standard_args( VHDF5 "hdf5 could not be found" HDF5_ROOT_DIR )
