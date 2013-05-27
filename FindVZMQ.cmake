@@ -5,7 +5,7 @@ include( VistaFindUtils )
 
 if( NOT VZMQ_FOUND )
 
-	vista_find_package_root( ZMQ include/zmq.h NAMES ZMQ zeromq ZeroMQ Zeromq DEBUG_OUTPUT)
+	vista_find_package_root( ZMQ include/zmq.h NAMES ZMQ zeromq ZeroMQ Zeromq )
 
 	if( ZMQ_ROOT_DIR )
 		
