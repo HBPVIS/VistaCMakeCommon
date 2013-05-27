@@ -76,7 +76,7 @@ def GenSourceListForSubdir( dirName, parentDir, renew, relDir = "", relSourceGro
 		relDir = relDir + "/" + dirName
 	localSourceGroup = dirName
 	if( dirName == "" or dirName == "src" or dirName == "Src" or dirName == "source" or dirName == "Source" ):
-		localSourceGroup = "Source Files"
+		localSourceGroup = "source"
 	if( relSourceGroup == "" ):
 		relSourceGroup = localSourceGroup
 	else:

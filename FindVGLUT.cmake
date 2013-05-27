@@ -10,9 +10,9 @@ if( NOT VGLUT_FOUND )
 		# Glut was not found yet in prior config runs
 		# first, check if we find the root dir on our own
 		
-		vista_find_package_root( GLUT "include/GL/freeglut.h" NAMES freeglut glut )
+		vista_find_package_root( GLUT "include/GL/freeglut.h" NAMES freeglut glut OpenSG)
 		if( NOT GLUT_ROOT_DIR )
-			vista_find_package_root( GLUT "include/GL/glut.h" NAMES freeglut glut )
+			vista_find_package_root( GLUT "include/GL/glut.h" NAMES freeglut glut OpenSG)
 		endif()
 		
 		unset( GLUT_LIBRARIES )
