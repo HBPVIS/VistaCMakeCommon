@@ -13,30 +13,31 @@ if( NOT VZMQ_FOUND )
 									PATHS "${ZMQ_ROOT_DIR}/lib"
 									CACHE "ZMQ library" )
 
-		set( ZMQ_INCLUDE_DIRS ${ZMQ_ROOT_DIR}/include )
+		set( ZMQ_INCLUDE_DIRS "${ZMQ_ROOT_DIR}/include" )
 		
 		if( ${ZMQ_VERSION_STRING} VERSION_GREATER 3.0)
 			if( UNIX )
 				#UNIX is easy, as usual
-				set( ZMQ_LIBRARY_DIRS ${ZMQ_ROOT_DIR}/lib )
+				set( ZMQ_LIBRARY_DIRS "${ZMQ_ROOT_DIR}/lib" )
 			elseif(WIN32)
 				#zmq 3.x puts the dlls in a separate bin directory AND differentiates 
 				#between win32 and x86_64 builds
 				if(VISTA_64BIT) 
 					set( ZMQ_LIBRARY_DIRS 
-						 ${ZMQ_ROOT_DIR}/lib/x64
-						 ${ZMQ_ROOT_DIR}/bin/x64 )
+						 "${ZMQ_ROOT_DIR}/lib/x64"
+						 "${ZMQ_ROOT_DIR}/bin/x64" )
 				elseif(VISTA_32BIT)
 					set( ZMQ_LIBRARY_DIRS 
-						 ${ZMQ_ROOT_DIR}/lib/Win32
-						 ${ZMQ_ROOT_DIR}/bin/Win32 )
+						 "${ZMQ_ROOT_DIR}/lib/Win32"
+						 "${ZMQ_ROOT_DIR}/bin/Win32" )
 				endif(VISTA_64BIT)
 				#zmq insists on libraries being named libzmq.lib and libzmq.dll
 				set(ZMQ_LIBRARIES libzmq)
 			endif(UNIX)
 		else( )
 			#for older versions ==> just use the standard lib path
-			set( ZMQ_LIBRARY_DIRS ${ZMQ_ROOT_DIR}/lib)
+			set( ZMQ_LIBRARY_DIRS "${ZMQ_ROOT_DIR}/lib" )
+			set( ZMQ_LIBRARIES libzmq )
 		endif( )
 		
 		#get_filename_component( ZMQ_LIBRARY_DIRS "${VISTA_UNCACHED_LIBRARY}" PATH )
