@@ -9,10 +9,6 @@ if( NOT VZMQ_FOUND )
 
 	if( ZMQ_ROOT_DIR )
 		
-		vista_find_library_uncached( NAMES zmq ZMQ libzmq
-									PATHS "${ZMQ_ROOT_DIR}/lib"
-									CACHE "ZMQ library" )
-
 		set( ZMQ_INCLUDE_DIRS "${ZMQ_ROOT_DIR}/include" )
 		
 		if( ${ZMQ_VERSION_STRING} VERSION_GREATER 3.0)
@@ -36,12 +32,15 @@ if( NOT VZMQ_FOUND )
 			endif(UNIX)
 		else( )
 			#for older versions ==> just use the standard lib path
-			set( ZMQ_LIBRARY_DIRS "${ZMQ_ROOT_DIR}/lib" )
-			set( ZMQ_LIBRARIES libzmq )
+			#set( ZMQ_LIBRARY_DIRS "${ZMQ_ROOT_DIR}/lib" )
+			#set( ZMQ_LIBRARIES libzmq )
+			vista_find_library_uncached( NAMES zmq ZMQ libzmq
+									PATHS "${ZMQ_ROOT_DIR}/lib"
+									CACHE "ZMQ library" )
+			get_filename_component( ZMQ_LIBRARY_DIRS "${VISTA_UNCACHED_LIBRARY}" PATH )
+			get_filename_component( ZMQ_LIBRARIES "${VISTA_UNCACHED_LIBRARY}" NAME )
 		endif( )
 		
-		#get_filename_component( ZMQ_LIBRARY_DIRS "${VISTA_UNCACHED_LIBRARY}" PATH )
-		#get_filename_component( ZMQ_LIBRARIES "${VISTA_UNCACHED_LIBRARY}" NAME )
 	endif( ZMQ_ROOT_DIR )
 
 endif( NOT VZMQ_FOUND )
