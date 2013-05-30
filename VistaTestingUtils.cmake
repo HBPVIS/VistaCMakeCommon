@@ -67,6 +67,7 @@ macro( vista_configure_test TEST_NAME )
 	vista_set_outdir( ${TEST_NAME} ${CMAKE_CURRENT_BINARY_DIR} )
 	vista_configure_app( ${TEST_NAME} DONT_COPY_EXECUTABLE )
 	vista_create_default_info_file( ${TEST_NAME} )
+	# FOLDER property groups the executable's project into the "Tests" folder in the Visual Studio solution
 	set_target_properties( ${TEST_NAME} PROPERTIES FOLDER "Tests" )
 	
 	add_test( NAME ${TEST_NAME}Execute 
@@ -74,6 +75,8 @@ macro( vista_configure_test TEST_NAME )
 		"--gtest_output=xml:${PROJECT_BINARY_DIR}/TestResults/${TEST_NAME}_results.xml" )
 	
 	# configure add_test with sufficient dll path envvar
+	# VISTA_TARGET_LINK_DIRS filled via vista_use_package macro
+	# VISTA_ADDITIONAL_PATHENTRIES filled via vista_add_pathscript_dynamic_lib_path macro
 	set( _DYNAMIC_LIB_DIRS ${VISTA_TARGET_LINK_DIRS} ${VISTA_ADDITIONAL_PATHENTRIES} )
 	if( _DYNAMIC_LIB_DIRS )
 		if( WIN32 )
