@@ -8,8 +8,12 @@ if( NOT VHDF5_FOUND )
 		set( HDF5_INCLUDE_DIRS ${HDF5_ROOT_DIR}/include/ )
 		set( HDF5_LIBRARY_DIRS ${HDF5_ROOT_DIR}/lib )
 		if ( WIN32 )
-		  set( HDF5_LIBRARIES libhdf5_cpp libhdf5 )
+		  set (HDF5_LIBRARIES_OPT libhdf5_cpp libhdf5 )
+		  set (HDF5_LIBRARIES_DBG libhdf5_cpp_D libhdf5_D )
+		  
+		  set( HDF5_LIBRARIES optimized ${HDF5_LIBRARIES_OPT} debug ${HDF5_LIBRARIES_DBG}  )
 		else()
+		  # TODO: set for linux
 		  set( HDF5_LIBRARIES hdf5_cpp hdf5 )
 		endif ( WIN32 )
 	endif( HDF5_ROOT_DIR )
