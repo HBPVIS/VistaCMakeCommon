@@ -1,4 +1,4 @@
-import  sys, os, subprocess
+import  sys, os
 from VistaPythonCommon import out,err, syscall,OptionParser,AddVistaPythonCommonArgs
 
 # TODO make a lot of stuff configureable 
