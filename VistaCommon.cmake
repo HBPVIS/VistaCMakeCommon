@@ -357,6 +357,8 @@ macro( vista_add_external_msvc_project_of_package _PACKAGE_NAME )
 			endif()
 		endforeach()
 		
+		message( "${_PACKAGE_NAME_UPPER}_MSVC_PROJECT = ${${_PACKAGE_NAME_UPPER}_MSVC_PROJECT}" )
+		
 		if( "${${_PACKAGE_NAME_UPPER}_MSVC_PROJECT}" STREQUAL "" AND NOT "${_WARNING_LEVEL}" STREQUAL "SILENT" )
 			# Sorry for the mess below. But CMake requires it to write a string like this if you want to make it multi-line and formatted...
 			message( "${_WARNING_LEVEL}" 
@@ -452,10 +454,20 @@ macro( vista_find_package _PACKAGE_NAME )
 		elseif( ${_ARG} STREQUAL "REQUIRED" )
 			set( _PARSE_COMPONENTS TRUE )
 			list( APPEND _FIND_PACKAGE_ARGS "REQUIRED" )
+			if( _VISTAUSEPACKAGE_COMPONENTS ) # possible overwrite of components from vista_use_package
+				list( APPEND _FIND_PACKAGE_ARGS ${_VISTAUSEPACKAGE_COMPONENTS} )
+				set( _PACKAGE_COMPONENTS ${_VISTAUSEPACKAGE_COMPONENTS} )
+				set( _USING_COMPONENTS TRUE )
+			endif()
 			set( _REQUIRED TRUE )
 		elseif( ${_ARG} STREQUAL "COMPONENTS" )
 			set( _PARSE_COMPONENTS TRUE )
 			list( APPEND _FIND_PACKAGE_ARGS "COMPONENTS" )
+			if( _VISTAUSEPACKAGE_COMPONENTS ) # possible overwrite of components from vista_use_package
+				list( APPEND _FIND_PACKAGE_ARGS ${_VISTAUSEPACKAGE_COMPONENTS} )
+				set( _PACKAGE_COMPONENTS ${_VISTAUSEPACKAGE_COMPONENTS} )
+				set( _USING_COMPONENTS TRUE )
+			endif()
 		elseif( ${_ARG} STREQUAL "EXACT" )
 			set( _EXACT TRUE )
 			set( _PARSE_COMPONENTS FALSE )
@@ -472,9 +484,11 @@ macro( vista_find_package _PACKAGE_NAME )
 			# the requested version
 			set( _PACKAGE_VERSION ${_ARG} )
 		elseif( _PARSE_COMPONENTS )
-			list( APPEND _FIND_PACKAGE_ARGS ${_ARG} )
-			list( APPEND _PACKAGE_COMPONENTS ${_ARG} )
-			set( _USING_COMPONENTS TRUE )
+			if( NOT _VISTAUSEPACKAGE_COMPONENTS ) # only re-parse components if they aren't specified by vista_use_package alreaedy
+				list( APPEND _FIND_PACKAGE_ARGS ${_ARG} )
+				list( APPEND _PACKAGE_COMPONENTS ${_ARG} )
+				set( _USING_COMPONENTS TRUE )
+			endif()
 		else()
 			message( WARNING "vista_find_package( ${_PACKAGE_NAME} ) - Unknown argument [${_ARG}]" )
 		endif( ${_ARG} STREQUAL "FIND_DEPENDENCIES" )
@@ -703,6 +717,7 @@ macro( vista_use_package _PACKAGE_NAME )
 	# check if we need to rerun. this is the case it has not been used yet,
 	# or if it has been used, but now additional dependencies are requested
 	set( _REQUIRES_RERUN TRUE )
+	set( _VISTAUSEPACKAGE_COMPONENTS )
 	if( VISTA_USE_${_PACKAGE_NAME_UPPER} )
 		# extract components, to see if they are met already or not
 		set( _REQUESTED_COMPONENTS )
@@ -721,11 +736,22 @@ macro( vista_use_package _PACKAGE_NAME )
 			endif( ${_ARG} STREQUAL "COMPONENTS" OR ${_ARG} STREQUAL "REQUIRED" )
 		endforeach( _ARG ${ARGV} )
 
-		# todo: check against components
 		if( NOT _COMPONENTS_FOUND )
 			set( _REQUIRES_RERUN FALSE )
-			# todo: check version
-		endif( NOT _COMPONENTS_FOUND )
+		else()
+			# we need to check if any additional componants are required
+			foreach( _COMPONENT ${_REQUESTED_COMPONENTS} )
+				list( FIND ${_PACKAGE_NAME_UPPER}_FOUND_COMPONENTS ${_COMPONENT} _FOUND )
+				if( _FOUND EQUAL -1 )
+					# we need to find additional components - merge the requested and the already found ones
+					# so that the new search finds both the newly requested components and those from the last run
+					set( _VISTAUSEPACKAGE_COMPONENTS ${_REQUESTED_COMPONENTS} ${${_PACKAGE_NAME_UPPER}_FOUND_COMPONENTS} )
+					list( REMOVE_DUPLICATES _VISTAUSEPACKAGE_COMPONENTS )
+					break()
+				endif()
+			endforeach()
+		endif()
+		# todo: check version
 
 	endif( VISTA_USE_${_PACKAGE_NAME_UPPER} )
 
@@ -760,6 +786,7 @@ macro( vista_use_package _PACKAGE_NAME )
 
 		# finding will handle differences to already run find's
 		vista_find_package( ${_ARGUMENTS} )
+		set( _VISTAUSEPACKAGE_COMPONENTS )
 
 		# set required variables if package was found AND it wasn't sufficiently included before (in which case _DO_FIND is FALSE )
 		if( ${_PACKAGE_NAME_UPPER}_FOUND AND ( _DO_FIND OR NOT VISTA_USE_${_PACKAGE_NAME_UPPER} ) )
