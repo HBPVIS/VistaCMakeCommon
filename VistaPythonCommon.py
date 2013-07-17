@@ -10,46 +10,29 @@ def ExitGently():
     out.flush()
     os._exit(0)
 
+
 def syscall(cmd,ExitOnError=False):
-		if __optionparser is not None:
-			(options, args) = __optionparser.parse_args()
-			if True == options.verbose:
-				out.write(cmd)
-		out.flush()
-		err.flush()
+	if __optionparser is not None:
+		(options, args) = __optionparser.parse_args()
+		if True == options.verbose:
+			out.write(cmd)
+	out.flush()
+	err.flush()
 	#for arg in args:
 	#    out.write(arg)
 	#    out.write(' ')
 	#out.write('\n')
-		RC=0
-		try:
-				if sys.version_info<(2,7,0):
-					#subprocess.check_call(cmd,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,shell=True)
-					p = subprocess.Popen(cmd, universal_newlines=True, stdout=subprocess.PIPE,stderr=subprocess.STDOUT,shell=True)
-					out.write(p.communicate()[0])
-					RC=int(p.returncode)
-					if RC != 0:						
-						err.write('ReturnCode: '+str(RC)+'\n')
-						if True == ExitOnError:
-							os._exit(returncode)
-				else:
-					output = subprocess.check_output(cmd,universal_newlines=True,stderr=subprocess.STDOUT,shell=True)
-					out.write(str(output))
-				#TODO insert ifdef pythonversion. below 2.7 check_call, above check_output
-		except subprocess.CalledProcessError as e:
-				RC=int(e.returncode)
-				err.write(e.cmd)
-				if sys.version_info>(2,7,0):
-					err.write('\n'+str(e.output)+'\n')
-				err.flush()
-				if True == ExitOnError:
-					out.write("Returncode is: "+e.rwturncode+' \n')
-					out.flush()
-					os._exit(e.returncode)
-		return RC
-	#output = subprocess.check_output(cmd, shell=True)
-
-	
+	RC=0
+	p = subprocess.Popen(cmd, universal_newlines=True, stdout=subprocess.PIPE,stderr=subprocess.STDOUT,shell=True)
+	out.write(p.communicate()[0])
+	RC=int(p.returncode)
+	if RC != 0:
+		err.write('Systemcall with command '+cmd+' returned '+str(RC)+'\n')
+		if True == ExitOnError:
+			out.flush()
+			err.flush()
+			os._exit(RC)
+	return RC
 
 #checks VISTA_CMAKE_COMMON and VISTA_EXTERNAL_LIBS
 def CHECKS():
