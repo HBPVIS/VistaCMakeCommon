@@ -24,7 +24,7 @@ if( NOT VTOLUA++_FOUND )
 					NO_DEFAULT_PATH )
 		mark_as_advanced( TOLUA++_EXECUTABLE )
 
-		set( TOLUA++_DEPENDENCIES package LUA REQUIRED )
+		set( TOLUA++_DEPENDENCIES package lua REQUIRED )
 
 	endif( TOLUA++_ROOT_DIR )
 

@@ -15,6 +15,7 @@ if( NOT VZMQ_FOUND )
 			if( UNIX )
 				#UNIX is easy, as usual
 				set( ZMQ_LIBRARY_DIRS "${ZMQ_ROOT_DIR}/lib" )
+				set( ZMQ_LIBRARIES zmq )
 			elseif(WIN32)
 				#zmq 3.x puts the dlls in a separate bin directory AND differentiates 
 				#between win32 and x86_64 builds
