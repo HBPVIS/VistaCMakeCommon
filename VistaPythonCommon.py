@@ -11,9 +11,10 @@ def ExitGently():
     os._exit(0)
 
 def syscall(cmd,ExitOnError=False):
-		(options, args) = __optionparser.parse_args()
-		if True == options.verbose:
-			out.write(cmd)
+		if __optionparser is not None:
+			(options, args) = __optionparser.parse_args()
+			if True == options.verbose:
+				out.write(cmd)
 		out.flush()
 		err.flush()
 	#for arg in args:
