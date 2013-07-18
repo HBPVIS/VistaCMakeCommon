@@ -726,14 +726,17 @@ macro( vista_use_package _PACKAGE_NAME )
 				set( _PARSE_COMPONENTS TRUE )
 			elseif( ${_ARG} STREQUAL "QUIET"
 					OR ${_ARG} STREQUAL "EXACT"
-					OR ${_ARG} STREQUAL "NO_POLICY_SCOPE" )
+					OR ${_ARG} STREQUAL "NO_POLICY_SCOPE"
+					OR ${_ARG} STREQUAL "FIND_DEPENDENCIES"	
+					OR ${_ARG} STREQUAL "NO_RECURSIVE_DEPENCENCY"
+					OR ${_ARG} STREQUAL "NO_RMODULE" )
 				set( _PARSE_COMPONENTS FALSE )
 			elseif( _PARSE_COMPONENTS )
 				list( APPEND _REQUESTED_COMPONENTS ${_ARG} )
 				set( _COMPONENTS_FOUND TRUE )
 			endif( ${_ARG} STREQUAL "COMPONENTS" OR ${_ARG} STREQUAL "REQUIRED" )
 		endforeach( _ARG ${ARGV} )
-
+		
 		if( NOT _COMPONENTS_FOUND )
 			set( _REQUIRES_RERUN FALSE )
 		else()
@@ -750,6 +753,8 @@ macro( vista_use_package _PACKAGE_NAME )
 			endforeach()
 		endif()
 		# todo: check version
+		
+		message( "(${_PACKAGE_NAME}) _REQUESTED_COMPONENTS = ${_REQUESTED_COMPONENTS}" )
 
 	endif( VISTA_USE_${_PACKAGE_NAME_UPPER} )
 
@@ -857,7 +862,7 @@ macro( vista_use_package _PACKAGE_NAME )
 								# find and use the dependency. If it fails, utter a warning
 								if( NOT _QUIET )
 									set( _MESSAGE_IF_DO_FIND "Automatically adding ${_PACKAGE_NAME}-dependency \"${_DEPENDENCY_ARGS}\"" )
-								endif( NOT _QUIET )								
+								endif( NOT _QUIET )
 								vista_use_package( ${_DEPENDENCY_ARGS} FIND_DEPENDENCIES )
 								if( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND AND NOT _QUIET )
 									message( WARNING "vista_use_package( ${_PACKAGE_NAME} ) - Package depends on \"${_DEPENDENCY_ARGS}\", but including it failed" )
