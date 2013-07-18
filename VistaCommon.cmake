@@ -753,8 +753,6 @@ macro( vista_use_package _PACKAGE_NAME )
 			endforeach()
 		endif()
 		# todo: check version
-		
-		message( "(${_PACKAGE_NAME}) _REQUESTED_COMPONENTS = ${_REQUESTED_COMPONENTS}" )
 
 	endif( VISTA_USE_${_PACKAGE_NAME_UPPER} )
 
