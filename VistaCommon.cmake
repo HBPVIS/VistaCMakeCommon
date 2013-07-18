@@ -357,8 +357,6 @@ macro( vista_add_external_msvc_project_of_package _PACKAGE_NAME )
 			endif()
 		endforeach()
 		
-		message( "${_PACKAGE_NAME_UPPER}_MSVC_PROJECT = ${${_PACKAGE_NAME_UPPER}_MSVC_PROJECT}" )
-		
 		if( "${${_PACKAGE_NAME_UPPER}_MSVC_PROJECT}" STREQUAL "" AND NOT "${_WARNING_LEVEL}" STREQUAL "SILENT" )
 			# Sorry for the mess below. But CMake requires it to write a string like this if you want to make it multi-line and formatted...
 			message( "${_WARNING_LEVEL}" 
