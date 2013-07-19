@@ -1,5 +1,5 @@
 import  sys, os
-from VistaPythonCommon import out,err, syscall,AddVistaPythonCommonArgs
+from VistaPythonCommon import out,err, syscall,AddVistaPythonCommonArgs,CheckForCMakeError
 
 # TODO make a lot of stuff configureable 
 # like compilerversion or target
