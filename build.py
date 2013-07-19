@@ -1,4 +1,4 @@
-import  sys, os
+import  sys, os, time, shutil
 from VistaPythonCommon import out,err, syscall,AddVistaPythonCommonArgs,CheckForCMakeError
 
 # TODO make a lot of stuff configureable 
@@ -31,12 +31,19 @@ def InitParser():
     _BUILD_TYPE = option.build_type
     _COMPILER =  option.compiler
 
-def JenkinsBuild():
+def JenkinsBuild(DeleteCMakeCache=True):
+    out.write("VISTA_CMAKE_COMMON: "+os.getenv('VISTA_CMAKE_COMMON'))
+    out.flush()
     _ARCH=os.getenv('ARCH')
     _BUILD_TYPE=os.getenv('BUILD_TYPE')
     _COMPILER=os.getenv('COMPILER')
+    starttime=time.time()
     if 'nt' == os.name:    
         buildfolder='build_win.'+_ARCH+'.vc10'
+        if True==DeleteCMakeCache:
+            shutil.rmtree(buildfolder)
+            out.write("\n\nElapsed time for delete cache: "+str(int(time.time()-starttime))+" seconds\n")
+            out.flush()
         if not os.path.exists(buildfolder):
             syscall('mkdir '+buildfolder,ExitOnError=True)    
         os.chdir(os.path.join(basepath,buildfolder))
@@ -49,7 +56,7 @@ def JenkinsBuild():
             out.flush()
             err.flush()
             os._exit(-1)
-        cmakecmd='cmake.exe -g '+msvc_ver+' -DCMAKE_BUILD_TYPE='+_BUILD_TYPE+' ' +os.path.join(basepath)
+        cmakecmd='cmake.exe -G '+msvc_ver+' -DCMAKE_CONFIGURATION_TYPES='+_BUILD_TYPE+' ' +os.path.join(basepath)
         rc, ConsoleOutput = syscall(cmakecmd,ExitOnError=True)
         if(CheckForCMakeError(ConsoleOutput)):
             out.write(ConsoleOutput)
@@ -57,13 +64,18 @@ def JenkinsBuild():
             err.write('\n\n*** ERROR *** Cmake failed to generate configuration\n\n')
             err.flush()
             os._exit(-1)
+        else:
+            out.write(ConsoleOutput)
+            out.flush()
         tmp='call "c:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\VC\\vcvarsall.bat" x86'
         tmp+=' & msbuild ALL_BUILD.vcxproj /property:configuration='+_BUILD_TYPE
-        tmp+=' /clp:ErrorsOnly'
+        tmp+=' /m /clp:ErrorsOnly'
         syscall(tmp,ExitOnError=True)
         os.chdir(os.path.join(basepath))
     elif 'posix' == os.name:
         buildfolder='build_LINUX.'+_ARCH+_COMPILER+_BUILD_TYPE
+        if True==DeleteCMakeCache:
+            shutil.rmtree(buildfolder)
         env=''
         if (0 == os.getenv('NODE_NAME').find('linuxgpu')):
             if _COMPILER == 'GCC44':
@@ -95,7 +107,8 @@ def JenkinsBuild():
             syscall(env+'make',ExitOnError=True)
         syscall(env+'gcc -v')
         os.chdir(basepath)
-
+    out.write("\n\nElapsed time: "+str(int(time.time()-starttime))+" seconds\n")
+    out.flush()
 def GetUserCountOnHost():
         if 'nt' == os.name:
                 pass
