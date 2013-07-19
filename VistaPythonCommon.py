@@ -64,7 +64,7 @@ def AddVistaPythonCommonArgs(parser):
 def CheckForCMakeError(ConsoleText):
 	if 'CMake Error' in ConsoleText:
 		return True
-	else
+	else:
 		return False
 	
 
