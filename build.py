@@ -39,13 +39,15 @@ def JenkinsBuild(DeleteCMakeCache=True):
     _COMPILER=os.getenv('COMPILER')
     starttime=time.time()
     if 'nt' == os.name:    
-        buildfolder='build_win.'+_ARCH+'.vc10'
-        if True==DeleteCMakeCache:
-            shutil.rmtree(buildfolder)
-            out.write("\n\nElapsed time for delete cache: "+str(int(time.time()-starttime))+" seconds\n")
-            out.flush()
-        if not os.path.exists(buildfolder):
-            syscall('mkdir '+buildfolder,ExitOnError=True)    
+        buildfolder='build_win.'+_ARCH+'.vc10'        
+        if os.path.exists(buildfolder):
+            if True==DeleteCMakeCache:
+                shutil.rmtree(buildfolder)
+                out.write("\n\nElapsed time for delete cache: "+str(int(time.time()-starttime))+" seconds\n")
+                out.flush()
+                syscall('mkdir '+buildfolder,ExitOnError=True)
+        else:
+            syscall('mkdir '+buildfolder,ExitOnError=True)
         os.chdir(os.path.join(basepath,buildfolder))
         if 'X86_64' == _ARCH:
             msvc_ver='"Visual Studio 10 Win64"'
