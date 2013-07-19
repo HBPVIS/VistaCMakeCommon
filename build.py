@@ -50,7 +50,13 @@ def JenkinsBuild():
             err.flush()
             os._exit(-1)
         tmp='cmake.exe -g '+msvc_ver+' ' +os.path.join(basepath)
-        syscall(tmp,ExitOnError=True)
+        rc, ConsoleOutput = syscall(tmp,ExitOnError=True)
+		if(CheckForCMakeError(ConsoleOutput)):
+			out.write(ConsoleOutput)
+			out.flush()
+			err.write('\n\n*** ERROR *** Cmake failed to generate configuration\n\n')
+            err.flush()
+            os._exit(-1)
         for btype in _BUILT_TYPE:
             out.write("Starting "+ btype +"\n")
             tmp='call "c:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\VC\\vcvarsall.bat" x86'

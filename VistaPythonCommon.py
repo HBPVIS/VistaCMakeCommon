@@ -24,15 +24,17 @@ def syscall(cmd,ExitOnError=False):
 	#out.write('\n')
 	RC=0
 	p = subprocess.Popen(cmd, universal_newlines=True, stdout=subprocess.PIPE,stderr=subprocess.STDOUT,shell=True)
-	out.write(p.communicate()[0])
+	#out.write(p.communicate()[0])
+	output = p.communicate()[0]
 	RC=int(p.returncode)
 	if RC != 0:
+		out.write(output)
 		err.write('Systemcall with command '+cmd+' returned '+str(RC)+'\n')
 		if True == ExitOnError:
 			out.flush()
 			err.flush()
 			os._exit(RC)
-	return RC
+	return RC, output
 
 #checks VISTA_CMAKE_COMMON and VISTA_EXTERNAL_LIBS
 def CHECKS():
@@ -59,5 +61,11 @@ def AddVistaPythonCommonArgs(parser):
 	__optionparser = parser
 	return parser
 
+def CheckForCMakeError(ConsoleText):
+	if 'CMake Error' in ConsoleText:
+		return True
+	else
+		return False
+	
 
 CHECKS()
