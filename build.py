@@ -6,7 +6,7 @@ from VistaPythonCommon import out,err, syscall,AddVistaPythonCommonArgs
 basepath=os.getcwd()
 _ARCH=''
 _COMPILER=''
-_BUILT_TYPE=[]
+_BUILD_TYPE=[]
 def InitParser():
     parser = OptionParser()
     parser=AddVistaPythonCommonArgs(parser)
@@ -28,12 +28,12 @@ def InitParser():
                       help="define the build_type(s)")
     (options, args) = parser.parse_args()
     _ARCH = option.arch
-    _BUILT_TYPE = option.build_type
+    _BUILD_TYPE = option.build_type
     _COMPILER =  option.compiler
 
 def JenkinsBuild():
     _ARCH=os.getenv('ARCH')
-    _BUILT_TYPE=os.getenv('BUILD_TYPE')
+    _BUILD_TYPE=os.getenv('BUILD_TYPE')
     _COMPILER=os.getenv('COMPILER')
     if 'nt' == os.name:    
         buildfolder='build_win.'+_ARCH+'.vc10'
@@ -58,12 +58,12 @@ def JenkinsBuild():
             err.flush()
             os._exit(-1)
         tmp='call "c:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\VC\\vcvarsall.bat" x86'
-        tmp+=' & msbuild ALL_BUILD.vcxproj /property:configuration='+_BUILT_TYPE
+        tmp+=' & msbuild ALL_BUILD.vcxproj /property:configuration='+_BUILD_TYPE
         tmp+=' /clp:ErrorsOnly'
         syscall(tmp,ExitOnError=True)
         os.chdir(os.path.join(basepath))
     elif 'posix' == os.name:
-        buildfolder='build_LINUX.'+_ARCH+_COMPILER+_BUILT_TYPE
+        buildfolder='build_LINUX.'+_ARCH+_COMPILER+_BUILD_TYPE
         env=''
         if (0 == os.getenv('NODE_NAME').find('linuxgpu')):
             if _COMPILER == 'GCC44':
