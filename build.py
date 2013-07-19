@@ -87,12 +87,12 @@ def JenkinsBuild():
             err.flush()
             os._exit(-1)
         if (0 == os.getenv('NODE_NAME').find('linuxgpu')):
-		if 0==GetUserCountOnHost():
-                	syscall(env+'make -j',ExitOnError=True)
-	        else:
-        	        syscall(env+'make -j2',ExitOnError=True)
-	else:
-		syscall(env+'make',ExitOnError=True)
+            if 0==GetUserCountOnHost():
+                syscall(env+'make -j',ExitOnError=True)
+            else:
+                syscall(env+'make -j2',ExitOnError=True)
+        else:
+            syscall(env+'make',ExitOnError=True)
         syscall(env+'gcc -v')
         os.chdir(basepath)
 
