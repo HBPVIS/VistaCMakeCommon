@@ -33,7 +33,7 @@ def InitParser():
 
 def JenkinsBuild():
     _ARCH=os.getenv('ARCH')
-    _BUILT_TYPE=['Debug','Release']
+    _BUILT_TYPE=os.getenv('BUILD_TYPE')
     _COMPILER=os.getenv('COMPILER')
     if 'nt' == os.name:    
         buildfolder='build_win.'+_ARCH+'.vc10'
@@ -49,23 +49,21 @@ def JenkinsBuild():
             out.flush()
             err.flush()
             os._exit(-1)
-        tmp='cmake.exe -g '+msvc_ver+' ' +os.path.join(basepath)
-        rc, ConsoleOutput = syscall(tmp,ExitOnError=True)
+        cmakecmd='cmake.exe -g '+msvc_ver+' -DCMAKE_BUILD_TYPE='+BUILD_TYPE+' ' +os.path.join(basepath)
+        rc, ConsoleOutput = syscall(cmakecmd,ExitOnError=True)
         if(CheckForCMakeError(ConsoleOutput)):
             out.write(ConsoleOutput)
             out.flush()
             err.write('\n\n*** ERROR *** Cmake failed to generate configuration\n\n')
             err.flush()
             os._exit(-1)
-        for btype in _BUILT_TYPE:
-            out.write("Starting "+ btype +"\n")
-            tmp='call "c:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\VC\\vcvarsall.bat" x86'
-            tmp+=' & msbuild ALL_BUILD.vcxproj /property:configuration='
-            tmp+=btype+' /clp:ErrorsOnly'
-            syscall(tmp,ExitOnError=True)
+        tmp='call "c:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\VC\\vcvarsall.bat" x86'
+        tmp+=' & msbuild ALL_BUILD.vcxproj /property:configuration='+_BUILT_TYPE
+        tmp+=' /clp:ErrorsOnly'
+        syscall(tmp,ExitOnError=True)
         os.chdir(os.path.join(basepath))
     elif 'posix' == os.name:
-        buildfolder='build_LINUX.'+_ARCH
+        buildfolder='build_LINUX.'+_ARCH+_COMPILER+_BUILT_TYPE
         env=''
         if (0 == os.getenv('NODE_NAME').find('linuxgpu')):
             if _COMPILER == 'GCC44':
@@ -78,11 +76,26 @@ def JenkinsBuild():
                 err.write('unsupported architecture '+_ARCH)
                 os._exit(-1)
         if not os.path.exists(buildfolder):
-            syscall(env+'$VISTA_CMAKE_COMMON/MakeLinuxBuildStructure.sh',ExitOnError=True)
-            os.chdir(buildfolder)
+            syscall('mkdir '+buildfolder,ExitOnError=True)
+        os.chdir(os.path.join(basepath,buildfolder))
+        cmakecmd='cmake -DCMAKE_BUILD_TYPE='+BUILD_TYPE+' ' +os.path.join(basepath)
+        rc, ConsoleOutput = syscall(env+cmakecmd,ExitOnError=True)
+        if(CheckForCMakeError(ConsoleOutput)):
+            out.write(ConsoleOutput)
+            out.flush()
+            err.write('\n\n*** ERROR *** Cmake failed to generate configuration\n\n')
+            err.flush()
+            os._exit(-1)
+        if 0==GetUserCountOnHost():
+                syscall(env+'make -j',ExitOnError=True)
         else:
-            os.chdir(buildfolder)
-            syscall('./RerunCMake.sh cmake',ExitOnError=True)
-        syscall(env+'make',ExitOnError=True)
+                syscall(env+'make -j2',ExitOnError=True)
         syscall(env+'gcc -v')
         os.chdir(basepath)
+
+def GetUserCountOnHost():
+        if 'nt' == os.name:
+                pass
+        elif 'posix' == os.name:
+                rc, ConsoleOutput = syscall('who | wc -l',ExitOnError=True)
+                return int(ConsoleOutput)
