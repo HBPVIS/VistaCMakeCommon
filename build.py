@@ -49,7 +49,7 @@ def JenkinsBuild():
             out.flush()
             err.flush()
             os._exit(-1)
-        cmakecmd='cmake.exe -g '+msvc_ver+' -DCMAKE_BUILD_TYPE='+BUILD_TYPE+' ' +os.path.join(basepath)
+        cmakecmd='cmake.exe -g '+msvc_ver+' -DCMAKE_BUILD_TYPE='+_BUILD_TYPE+' ' +os.path.join(basepath)
         rc, ConsoleOutput = syscall(cmakecmd,ExitOnError=True)
         if(CheckForCMakeError(ConsoleOutput)):
             out.write(ConsoleOutput)
@@ -78,7 +78,7 @@ def JenkinsBuild():
         if not os.path.exists(buildfolder):
             syscall('mkdir '+buildfolder,ExitOnError=True)
         os.chdir(os.path.join(basepath,buildfolder))
-        cmakecmd='cmake -DCMAKE_BUILD_TYPE='+BUILD_TYPE+' ' +os.path.join(basepath)
+        cmakecmd='cmake -DCMAKE_BUILD_TYPE='+_BUILD_TYPE+' ' +os.path.join(basepath)
         rc, ConsoleOutput = syscall(env+cmakecmd,ExitOnError=True)
         if(CheckForCMakeError(ConsoleOutput)):
             out.write(ConsoleOutput)
