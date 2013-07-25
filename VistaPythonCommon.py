@@ -1,3 +1,6 @@
+# Common python stuff
+# $Id
+
 import sys, os, subprocess
 from optparse import OptionParser
 out = sys.stdout   ## use out.write('foobar') for multiplatform and pythonindependant prints
@@ -5,12 +8,52 @@ err = sys.stderr
 
 __optionparser = None
 
-def ExitGently():
+
+#flush streambuffers and quit
+def ExitGently(iReturnCode = 0):
     err.flush()
     out.flush()
-    os._exit(0)
+    os._exit(iReturnCode)
+    
+#shell or commandline call of strCmd
+#    @return Errorcode and Commandoutput
+def SimpleSysCall(strCmd, ExitOnError = True):
+    iReturnCode = 0
+    
+    pCall = subprocess.Popen(strCmd, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+    strOutput = pCall.communicate()[0]
+    iReturnCode = int(pCall.returncode)
+    if iReturnCode != 0:
+        out.write(strOutput)
+        err.write('Systemcall with command ' + strCmd + ' failed wit return ' + str(iReturnCode) + '\n')
+        out.flush()
+        err.flush()
+        if True == ExitOnError:
+            os._exit(iReturnCode)
+    return iReturnCode, strOutput
+    
+#checks existance of environmentvariable strEnvvar and corresponding path 
+#    @return True if variable and path exist      
+def CheckForEnv(strEnvvar):
+    if os.getenv(strEnvvar)!=None:
+        out.write(strEnvvar+': '+os.getenv(strEnvvar)+'\n')
+        if os.path.exists(os.getenv(strEnvvar)):
+            return True
+        else:
+            err.write('*** ERROR *** Path of '+strEnvvar+' does not exist\n')
+            return False
+    else:
+        err.write('*** ERROR *** '+strEnvvar+' not set\n')
+        return False
+    
+#checks VISTA_CMAKE_COMMON and VISTA_EXTERNAL_LIBS  
+def CheckForVistaEnv():
+    if not CheckForEnv("VISTA_CMAKE_COMMON"):
+        ExitGently(0)
+    if not CheckForEnv("VISTA_EXTERNAL_LIBS"):
+        ExitGently(0)
 
-
+        
 def syscall(cmd,ExitOnError=False):
     if __optionparser is not None:
         (options, args) = __optionparser.parse_args()
@@ -53,7 +96,7 @@ def CHECKS():
     if not os.path.exists(val):
         out.write("Exiting, Path of VISTA_CMAKE_COMMON ("+val+") does not exist\n")
         ExitGently()
-
+    
 def AddVistaPythonCommonArgs(parser):
     parser.add_option("-v", action="store_true", dest="verbose", default=False)
     parser.add_option("-q", action="store_false", dest="verbose")
