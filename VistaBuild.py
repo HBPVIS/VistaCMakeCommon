@@ -10,6 +10,6 @@ def BuildIt(strBuildType, strCompiler, bDeleteCMakeCache = True):
     if sys.platform == 'linux2':
         VistaBuildLinux.BuildIt(strBuildType, strCompiler, bDeleteCMakeCache = True)
         
-    elif sys.platform == 'win32'
+    elif sys.platform == 'win32':
         VistaBuildWindows.BuildIt(strBuildType, strCompiler, bDeleteCMakeCache = True)
     

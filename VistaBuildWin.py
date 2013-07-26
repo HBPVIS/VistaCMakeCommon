@@ -24,7 +24,7 @@ def BuildIt(strBuildType, strCompiler = 'MSVC_10_64BIT', bDeleteCMakeCache = Tru
             strMSCV += ' Win64'
             
         strVCVersion = strCompiler.split('_')[1]
-        if not strVCVersion.isdigit()
+        if not strVCVersion.isdigit():
             sys.stderr.write('\n\n*** ERROR *** Formt of Visual Studio version\n\n')
             ExitGently(-1)
         
