@@ -52,7 +52,7 @@ def BuildIt(strBuildType, strCompiler = 'MSVC_10_64BIT', bDeleteCMakeCache = Tru
             
         #make it
         strVC = 'call "c:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\VC\\vcvarsall.bat" x86'
-        strVC += ' & msbuild ALL_BUILD.vcxproj /property:configuration='+_BUILD_TYPE
+        strVC += ' & msbuild ALL_BUILD.vcxproj /property:configuration=' + strBuildType
         strVC += ' /m /clp:ErrorsOnly'
         iRC, strConsoleOutput = VistaPythonCommon.SimpleSysCall(strVC)
         
