@@ -58,7 +58,7 @@ def BuildIt(strBuildType, strCompiler = 'MSVC_10_64BIT', bDeleteCMakeCache = Tru
         
         sys.stdout.write(strConsoleOutput)
         sys.stdout.flush()
-        os.chdir(os.path.join(basepath))
+        os.chdir(os.path.join(strBasepath))
     
     else:
         sys.stderr.write('\n\n*** ERROR *** Win32 build on non Windows system\n\n')
