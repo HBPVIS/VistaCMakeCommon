@@ -43,10 +43,6 @@ def BuildIt(strBuildType, strCompiler = 'GCC_DEFAULT', bDeleteCMakeCache = True)
             else:
                 sys.stderr.write('unsupported gcc-version: ' + strCompiler)
                 VistaPythonCommon.ExitGently(-1)
-        
-            iRC, strConsoleOutput = VistaPythonCommon.SimpleSysCall(strGCCEnv)
-            sys.stdout.write(strConsoleOutput)
-            sys.stdout.flush()
 
         #configure cmake
         strCMakeCmd = strGCCEnv + 'cmake -DCMAKE_BUILD_TYPE=' + strBuildType + ' ' + os.path.join(strBasepath)
@@ -59,7 +55,7 @@ def BuildIt(strBuildType, strCompiler = 'GCC_DEFAULT', bDeleteCMakeCache = True)
             VistaPythonCommon.ExitGently(-1)
 
         #log gcc version
-        iRC, strConsoleOutput = VistaPythonCommon.SimpleSysCall('gcc -v')
+        iRC, strConsoleOutput = VistaPythonCommon.SimpleSysCall(strGCCEnv + 'gcc -v')
         sys.stdout.write(strConsoleOutput)
         sys.stdout.flush()
             
