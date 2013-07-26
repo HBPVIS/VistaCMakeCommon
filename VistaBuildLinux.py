@@ -65,7 +65,7 @@ def BuildIt(strBuildType, strCompiler = 'GCC_DEFAULT', bDeleteCMakeCache = True)
             
         #make it
         if (0 == os.uname()[1].find('linuxgpu')):
-            iRC, strConsoleOutput = SimpleSysCall('who | wc -l')
+            iRC, strConsoleOutput = VistaPythonCommon.SimpleSysCall('who | wc -l')
             if 0==int(strConsoleOutput):
                 iRC, strConsoleOutput = VistaPythonCommon.SimpleSysCall('make -j')
             else:

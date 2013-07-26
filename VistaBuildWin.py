@@ -16,18 +16,18 @@ def BuildIt(strBuildType, strCompiler = 'MSVC_10_64BIT', bDeleteCMakeCache = Tru
     
     #make sure we are on windows system
     if sys.platform == 'win32':
-
-        strArch = ''
-        strMSCV = 'Visual Studio ' + strVCVersion
-        if '64BIT' in strCompiler:
-            strArch = '-x64'
-            strMSCV += ' Win64'
             
         strVCVersion = strCompiler.split('_')[1]
         if not strVCVersion.isdigit():
             sys.stderr.write('\n\n*** ERROR *** Formt of Visual Studio version\n\n')
             ExitGently(-1)
         
+        strArch = ''
+        strMSCV = 'Visual Studio ' + strVCVersion
+        if '64BIT' in strCompiler:
+            strArch = '-x64'
+            strMSCV += ' Win64'
+            
         strBuildFolder='build.win32' + strArch + '.vc' + strVCVersion        
         
         if not os.path.exists(strBuildFolder):
