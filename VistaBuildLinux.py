@@ -32,8 +32,8 @@ def BuildIt(strBuildType, strCompiler = 'GCC_DEFAULT', bDeleteCMakeCache = True)
         os.chdir(os.path.join(strBasepath, strBuildFolder))
                 
         #check compiler if we are on gpucluster
+        strGCCEnv = ''
         if (0 == os.uname()[1].find('linuxgpu')):
-            strGCCEnv = ''
             if 'GCC_DEFAULT' in strCompiler:
                 strGCCEnv+='module unload gcc;module load gcc;'
             elif 'GCC_47' in strCompiler:
