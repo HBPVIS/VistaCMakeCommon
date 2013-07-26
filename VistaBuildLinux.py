@@ -35,11 +35,11 @@ def BuildIt(strBuildType, strCompiler = 'GCC_DEFAULT', bDeleteCMakeCache = True)
         if (0 == os.uname()[1].find('linuxgpu')):
             strGCCEnv = ''
             if 'GCC_DEFAULT' in strCompiler:
-                strGCCEnv+='module unload gcc;module load gcc'
+                strGCCEnv+='module unload gcc;module load gcc;'
             elif 'GCC_47' in strCompiler:
-                strGCCEnv+='module unload gcc;module load gcc/4.7'
+                strGCCEnv+='module unload gcc;module load gcc/4.7;'
             elif 'GCC_48' in strCompiler:
-                strGCCEnv+='module unload gcc;module load gcc/4.8'
+                strGCCEnv+='module unload gcc;module load gcc/4.8;'
             else:
                 sys.stderr.write('unsupported gcc-version: ' + strCompiler)
                 VistaPythonCommon.ExitGently(-1)
@@ -49,7 +49,7 @@ def BuildIt(strBuildType, strCompiler = 'GCC_DEFAULT', bDeleteCMakeCache = True)
             sys.stdout.flush()
 
         #configure cmake
-        strCMakeCmd = 'cmake -DCMAKE_BUILD_TYPE=' + strBuildType + ' ' + os.path.join(strBasepath)
+        strCMakeCmd = strGCCEnv + 'cmake -DCMAKE_BUILD_TYPE=' + strBuildType + ' ' + os.path.join(strBasepath)
         iRC, strConsoleOutput = VistaPythonCommon.SimpleSysCall(strCMakeCmd)
         sys.stdout.write(strConsoleOutput)
         sys.stdout.flush()
@@ -67,11 +67,11 @@ def BuildIt(strBuildType, strCompiler = 'GCC_DEFAULT', bDeleteCMakeCache = True)
         if (0 == os.uname()[1].find('linuxgpu')):
             iRC, strConsoleOutput = VistaPythonCommon.SimpleSysCall('who | wc -l')
             if 0==int(strConsoleOutput):
-                iRC, strConsoleOutput = VistaPythonCommon.SimpleSysCall('make -j')
+                iRC, strConsoleOutput = VistaPythonCommon.SimpleSysCall(strGCCEnv + 'make -j')
             else:
-                iRC, strConsoleOutput = VistaPythonCommon.SimpleSysCall('make -j2')
+                iRC, strConsoleOutput = VistaPythonCommon.SimpleSysCall(strGCCEnv + 'make -j2')
         else:
-            iRC, strConsoleOutput = VistaPythonCommon.SimpleSysCall('make')
+            iRC, strConsoleOutput = VistaPythonCommon.SimpleSysCall(strGCCEnv + 'make')
             
         sys.stdout.write(strConsoleOutput)
         sys.stdout.flush()
