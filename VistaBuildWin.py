@@ -41,7 +41,7 @@ def BuildIt(strBuildType, strCompiler = 'MSVC_10_64BIT', bDeleteCMakeCache = Tru
         os.chdir(os.path.join(strBasepath, strBuildFolder))
         
         #configure cmake
-        strCMakeCmd = 'cmake.exe -G ' + strMSCV + ' -DCMAKE_CONFIGURATION_TYPES=' + strBuildType + ' ' + os.path.join(strBasepath)
+        strCMakeCmd = 'cmake.exe -G "' + strMSCV + '" -DCMAKE_CONFIGURATION_TYPES=' + strBuildType + ' ' + os.path.join(strBasepath)
         iRC, strConsoleOutput = VistaPythonCommon.SimpleSysCall(strCMakeCmd)
         sys.stdout.write(strConsoleOutput)
         sys.stdout.flush()
