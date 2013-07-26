@@ -15,7 +15,7 @@ def BuildIt(strBuildType, strCompiler = 'MSVC_10_64BIT', bDeleteCMakeCache = Tru
     strBasepath = os.getcwd()
     
     #make sure we are on windows system
-    if sys.platform == 'win32'
+    if sys.platform == 'win32':
 
         strArch = ''
         strMSCV = 'Visual Studio ' + strVCVersion
