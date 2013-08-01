@@ -40,7 +40,7 @@ def BuildIt(strBuildType, strCompiler = 'GCC_DEFAULT', bDeleteCMakeCache = True)
                 strGCCEnv = 'module unload gcc;module unload intel;module load gcc/4.7;'
             elif 'GCC_48' in strCompiler:
                 strGCCEnv = 'module unload gcc;module unload intel;module load gcc/4.8;'
-            elif 'INTEL_DEFAULT' in strCompiler:
+            elif 'INTEL_CXX' in strCompiler:
                 strGCCEnv = 'module unload gcc;module unload intel;module load intel;'
             else:
                 sys.stderr.write('unsupported compiler-version: ' + strCompiler)
