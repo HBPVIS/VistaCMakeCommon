@@ -11,13 +11,6 @@ def BuildIt(strBuildType, strCompiler = 'GCC_DEFAULT', bDeleteCMakeCache = True)
     sys.stdout.write('Compiler: ' + strCompiler + '\n')
     sys.stdout.flush()
     
-    strVistaCMakeCommonPath = os.environ['VISTA_CMAKE_COMMON']
-    sys.stdout.write('VistaCMakeCommonBase: ' + os.environ['VISTA_CMAKE_COMMON'] + '\n')
-    sys.stdout.flush()
-    os.environ['VISTA_CMAKE_COMMON'] = strVistaCMakeCommonPath + '/COMPILER/' + strCompiler
-    sys.stdout.write('VistaCMakeCommonFull: ' + os.environ['VISTA_CMAKE_COMMON'] + '\n')
-    sys.stdout.flush()
-    
     fStartTime=time.time()
     strBasepath = os.getcwd()
     
