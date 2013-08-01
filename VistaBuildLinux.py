@@ -11,13 +11,13 @@ def BuildIt(strBuildType, strCompiler = 'GCC_DEFAULT', bDeleteCMakeCache = True)
     sys.stdout.write('Compiler: ' + strCompiler + '\n')
     sys.stdout.flush()
     
-	strVistaCMakeCommonPath = os.environ['VISTA_CMAKE_COMMON']
-	sys.stdout.write('VistaCMakeCommonBase: ' + os.environ['VISTA_CMAKE_COMMON'] + '\n')
-	sys.stdout.flush()
-	os.environ['VISTA_CMAKE_COMMON'] = strVistaCMakeCommonPath + '/COMPILER/' + strCompiler
-	sys.stdout.write('VistaCMakeCommonFull: ' + os.environ['VISTA_CMAKE_COMMON'] + '\n')
-	sys.stdout.flush()
-	
+    strVistaCMakeCommonPath = os.environ['VISTA_CMAKE_COMMON']
+    sys.stdout.write('VistaCMakeCommonBase: ' + os.environ['VISTA_CMAKE_COMMON'] + '\n')
+    sys.stdout.flush()
+    os.environ['VISTA_CMAKE_COMMON'] = strVistaCMakeCommonPath + '/COMPILER/' + strCompiler
+    sys.stdout.write('VistaCMakeCommonFull: ' + os.environ['VISTA_CMAKE_COMMON'] + '\n')
+    sys.stdout.flush()
+    
     fStartTime=time.time()
     strBasepath = os.getcwd()
     
@@ -47,7 +47,7 @@ def BuildIt(strBuildType, strCompiler = 'GCC_DEFAULT', bDeleteCMakeCache = True)
                 strGCCEnv = 'module unload gcc;module unload intel;module load gcc/4.7;'
             elif 'GCC_48' in strCompiler:
                 strGCCEnv = 'module unload gcc;module unload intel;module load gcc/4.8;'
-			elif 'INTEL_DEFAULT' in strCompiler:
+            elif 'INTEL_DEFAULT' in strCompiler:
                 strGCCEnv = 'module unload gcc;module unload intel;module load intel;'
             else:
                 sys.stderr.write('unsupported compiler-version: ' + strCompiler)
