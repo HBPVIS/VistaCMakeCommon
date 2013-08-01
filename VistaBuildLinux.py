@@ -11,6 +11,13 @@ def BuildIt(strBuildType, strCompiler = 'GCC_DEFAULT', bDeleteCMakeCache = True)
     sys.stdout.write('Compiler: ' + strCompiler + '\n')
     sys.stdout.flush()
     
+	strVistaCMakeCommonPath = os.environ['VISTA_CMAKE_COMMON']
+	sys.stdout.write('VistaCMakeCommonBase: ' + os.environ['VISTA_CMAKE_COMMON'] + '\n')
+	sys.stdout.flush()
+	os.environ['VISTA_CMAKE_COMMON'] = strVistaCMakeCommonPath + '/COMPILER/' + strCompiler
+	sys.stdout.write('VistaCMakeCommonFull: ' + os.environ['VISTA_CMAKE_COMMON'] + '\n')
+	sys.stdout.flush()
+	
     fStartTime=time.time()
     strBasepath = os.getcwd()
     
@@ -35,13 +42,15 @@ def BuildIt(strBuildType, strCompiler = 'GCC_DEFAULT', bDeleteCMakeCache = True)
         strGCCEnv = ''
         if (0 == os.uname()[1].find('linuxgpu')):
             if 'GCC_DEFAULT' in strCompiler:
-                strGCCEnv+='module unload gcc;module load gcc;'
+                strGCCEnv = 'module unload gcc;module unload intel;module load gcc;'
             elif 'GCC_47' in strCompiler:
-                strGCCEnv+='module unload gcc;module load gcc/4.7;'
+                strGCCEnv = 'module unload gcc;module unload intel;module load gcc/4.7;'
             elif 'GCC_48' in strCompiler:
-                strGCCEnv+='module unload gcc;module load gcc/4.8;'
+                strGCCEnv = 'module unload gcc;module unload intel;module load gcc/4.8;'
+			elif 'INTEL_DEFAULT' in strCompiler:
+                strGCCEnv = 'module unload gcc;module unload intel;module load intel;'
             else:
-                sys.stderr.write('unsupported gcc-version: ' + strCompiler)
+                sys.stderr.write('unsupported compiler-version: ' + strCompiler)
                 VistaPythonCommon.ExitGently(-1)
 
         #configure cmake
@@ -55,7 +64,7 @@ def BuildIt(strBuildType, strCompiler = 'GCC_DEFAULT', bDeleteCMakeCache = True)
             VistaPythonCommon.ExitGently(-1)
 
         #log gcc version
-        iRC, strConsoleOutput = VistaPythonCommon.SimpleSysCall(strGCCEnv + 'gcc -v')
+        iRC, strConsoleOutput = VistaPythonCommon.SimpleSysCall(strGCCEnv + '$CXX -v')
         sys.stdout.write(strConsoleOutput)
         sys.stdout.flush()
             
