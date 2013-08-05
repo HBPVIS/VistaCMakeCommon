@@ -28,7 +28,7 @@ def BuildIt(strBuildType, strCompiler = 'MSVC_10_64BIT', bDeleteCMakeCache = Tru
             strArch = '-x64'
             strMSCV += ' Win64'
             
-        strBuildFolder='build.win32' + strArch + '.vc' + strVCVersion        
+        strBuildFolder='build'#.win32' + strArch + '.vc' + strVCVersion #shortening this one because of vc10 bug regarding filename length 
         
         if not os.path.exists(strBuildFolder):
             VistaPythonCommon.SimpleSysCall('mkdir ' + strBuildFolder)
