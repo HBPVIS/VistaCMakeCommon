@@ -446,13 +446,13 @@ macro( vista_get_version_from_path _PATH _NAME_LIST _VERSION_VAR )
 endmacro( vista_get_version_from_path )
 
 # vista_find_package_root( PACKAGE EXAMPLE_FILE [DONT_ALLOW_UNVERSIONED] [PREFER_UNVERSIONED] [QUIET] [DEBUG_OUTPUT] [NAMES name1 name2 ...] [PATHS path1 path2] [ADVANCED] [NO_CACHE] )
-# finds the package root fr PACKAGE, and stores it in the variable <PACKAGE>_ROOT_DIR
+# finds the package root for PACKAGE, and stores it in the variable <PACKAGE>_ROOT_DIR
 # Should only be called from the context of a Find<XYZ>.cmake file - it automatically checks if
 # versions are requested, and if so, looks for an appropriately versioned dir, otherwise, it
 # takes the first unversioned dir or the one with the highest version
 # Since the ROOT_DIR is a cache variable, it can be manipulated by the user - if it is changed manually
 # the new path is checked to try to extract a version
-# By default, <PACKAGE>_ROOT_DIR is a cahe var, but the optional arguments ADVANCED and NO_CACHE
+# By default, <PACKAGE>_ROOT_DIR is a cache var, but the optional arguments ADVANCED and NO_CACHE
 # make it advanced or uncached
 # if QUIET is specified, no info messages will be printed
 # if DEBUG_OUTPUT is specified, additional debug info will be printed
@@ -486,6 +486,7 @@ macro( vista_find_package_root _PACKAGE_NAME _EXAMPLE_FILE )
 			set( _NEXT_IS_FOLDER FALSE )
 			foreach( _ARG ${_ARGS} )
 				if( ${_ARG} STREQUAL "NAMES" )
+                    Message(${NAMES})
 					set( _NEXT_IS_FOLDER TRUE )
 				elseif( _NEXT_IS_FOLDER )
 					if( ${_ARG} STREQUAL "DONT_ALLOW_UNVERSIONED"
