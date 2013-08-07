@@ -58,7 +58,7 @@ def GetSourceFilesAndDirs( path ):
 	dirs.sort()
 	return files, dirs
 
-def GenSourceListForSubdir( dirName, parentDir, renew, relDir = "", relSourceGroup = "" ):
+def GenSourceListForSubdir( dirName, parentDir, renew, bIsToplevel = False, relDir = "", relSourceGroup = "" ):
 	if( dirName in excludeDirs ):
 		return False
 
@@ -68,6 +68,12 @@ def GenSourceListForSubdir( dirName, parentDir, renew, relDir = "", relSourceGro
 	# we dont want to parse the cmake directories
 	testCacheFile = os.path.join( fullDirName, "CMakeCache.txt" )
 	if( os.path.exists( testCacheFile ) ):
+		return
+		
+	#we also don't want to parse folders which contain a CMakeLists.txt, since these are new cmake projects
+	testCacheFile = os.path.join( fullDirName, "CMakeLists.txt" )
+	if( bIsToplevel == False and os.path.exists( testCacheFile ) ):
+		print( "skipping directory \"" + fullDirName + "\" - contains CMakeLists.txt" )
 		return
 
 	if( relDir == "" ):
@@ -89,7 +95,7 @@ def GenSourceListForSubdir( dirName, parentDir, renew, relDir = "", relSourceGro
 
 	# recursively generate sourcefiles for subdirs
 	for dir in subDirs:
-		if GenSourceListForSubdir( dir, fullDirName, renew, relDir, relSourceGroup ):
+		if GenSourceListForSubdir( dir, fullDirName, renew, False, relDir, relSourceGroup ):
 			sourceSubDirs.append( dir )
 
 	if( len( sourceSubDirs ) == 0 and len( sourceFiles ) == 0 ):
@@ -287,11 +293,11 @@ def GenSourceLists( startDir, renew ):
 
 	#check if there are toplevel sourcefiles
 	if( len( sourceFiles ) > 0 ):
-		GenSourceListForSubdir( "", startDir, renew )
+		GenSourceListForSubdir( "", startDir, renew, True )
 		sourceSubDirs.append( "." )
 	else:
 		for dir in subDirs:
-			isSourceDir = GenSourceListForSubdir( dir, startDir, renew )
+			isSourceDir = GenSourceListForSubdir( dir, startDir, renew, False )
 			if isSourceDir:
 				sourceSubDirs.append( dir )
 
