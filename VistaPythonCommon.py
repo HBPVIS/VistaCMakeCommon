@@ -1,35 +1,41 @@
-# Common python stuff
 # $Id
+# VistaPythonCommon python stuff
 
 import sys, os, subprocess
 from optparse import OptionParser
-out = sys.stdout   ## use out.write('foobar') for multiplatform and pythonindependant prints
+out = sys.stdout   ## use out.write('foobar') for multiplatform and python independant prints
 err = sys.stderr
 
 __optionparser = None
-
 
 #flush streambuffers and quit
 def ExitGently(iReturnCode = 0):
     err.flush()
     out.flush()
     os._exit(iReturnCode)
-    
+
+#flush streambuffers and quit with error message 
+def ExitError(strErrorMessage,iReturnCode = 0):
+    out.flush()
+    err.write('\n'+strErrorMessage+'\n')
+    err.flush()    
+    os._exit(iReturnCode)
+
 #shell or commandline call of strCmd
 #    @return Errorcode and Commandoutput
-def SimpleSysCall(strCmd, ExitOnError = True):
+def SysCall(strCmd, ExitOnError = True,Debug=False):
     iReturnCode = 0
-    
+    if True == Debug:
+        out.write('\nExecuting Command:'+cmd+'\n')
+        out.flush()
     pCall = subprocess.Popen(strCmd, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
     strOutput = pCall.communicate()[0]
     iReturnCode = int(pCall.returncode)
     if iReturnCode != 0:
         out.write(strOutput)
-        err.write('Systemcall with command ' + strCmd + ' failed wit return ' + str(iReturnCode) + '\n')
-        out.flush()
-        err.flush()
+        err.write('Systemcall with command ' + strCmd + ' failed with return ' + str(iReturnCode) + '\n')
         if True == ExitOnError:
-            os._exit(iReturnCode)
+            ExitError('Exiting '+str(iReturnCode))
     return iReturnCode, strOutput
     
 #checks existance of environmentvariable strEnvvar and corresponding path 
@@ -54,32 +60,6 @@ def CheckForVistaEnv():
         ExitGently(0)
 
         
-def syscall(cmd,ExitOnError=False):
-    if __optionparser is not None:
-        (options, args) = __optionparser.parse_args()
-        if True == options.verbose:
-            out.write(cmd)
-    out.write(cmd)
-    out.flush()
-    err.flush()
-    #for arg in args:
-    #    out.write(arg)
-    #    out.write(' ')
-    #out.write('\n')
-    RC=0
-    p = subprocess.Popen(cmd, universal_newlines=True, stdout=subprocess.PIPE,stderr=subprocess.STDOUT,shell=True)
-    #out.write(p.communicate()[0])
-    output = p.communicate()[0]
-    RC=int(p.returncode)
-    if RC != 0:
-        out.write(output)
-        err.write('Systemcall with command '+cmd+' returned '+str(RC)+'\n')
-        out.flush()
-        err.flush()
-        if True == ExitOnError:
-            os._exit(RC)
-    return RC, output
-
 #checks VISTA_CMAKE_COMMON and VISTA_EXTERNAL_LIBS
 def CHECKS():
     val = os.getenv("VISTA_CMAKE_COMMON")
@@ -97,6 +77,7 @@ def CHECKS():
         out.write("Exiting, Path of VISTA_CMAKE_COMMON ("+val+") does not exist\n")
         ExitGently()
     
+# not used right now but maybe later
 def AddVistaPythonCommonArgs(parser):
     parser.add_option("-v", action="store_true", dest="verbose", default=False)
     parser.add_option("-q", action="store_false", dest="verbose")
@@ -105,6 +86,8 @@ def AddVistaPythonCommonArgs(parser):
     __optionparser = parser
     return parser
 
+#CMake everytime return zero, even when errors occur 
+#so this functions parses the output for errors
 def CheckForCMakeError(ConsoleText):
     if 'CMake Error' in ConsoleText:
         return True

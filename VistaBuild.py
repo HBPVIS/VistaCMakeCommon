@@ -8,8 +8,10 @@ import  sys, VistaBuildLinux, VistaBuildWin
 def BuildIt(strBuildType, strCompiler, bDeleteCMakeCache = True):
     
     if sys.platform == 'linux2':
-        VistaBuildLinux.BuildIt(strBuildType, strCompiler, bDeleteCMakeCache = True)
+        VistaBuildLinux.BuildIt(strBuildType, strCompiler, bDeleteCMakeCache)
         
     elif sys.platform == 'win32':
-        VistaBuildWin.BuildIt(strBuildType, strCompiler, bDeleteCMakeCache = True)
-    
+        VistaBuildWin.BuildIt(strBuildType, strCompiler, bDeleteCMakeCache)
+    else:
+        sys.err.write('Unsupported Platform ' + sys.platform)
+        sys.err.flush()
