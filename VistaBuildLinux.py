@@ -16,8 +16,7 @@ def BuildIt(strBuildType='Default', strCompiler = 'GCC_DEFAULT', bDeleteCMakeCac
     
     fStartTime=time.time()
         
-    strSysName = os.uname()[0].upper()
-    strMachine = os.uname()[4].upper()
+ 
     
     # pretty ugly we switch standard build and jenkins by the buildfolder and then ignore it ...
     # but that works for windows. the reason behind this is, that you need a folder for debug and one for release anyway
@@ -47,6 +46,8 @@ def MakeLinuxStandardBuild(strCompiler,bDeleteCMakeCache):
     sys.stdout.flush()
     
 def MakeJenkinsBuild(strBuildType,strCompiler,bDeleteCMakeCache):
+    strSysName = os.uname()[0].upper()
+    strMachine = os.uname()[4].upper()
     strBuildFolder = 'build.' + strSysName + '.' + strMachine + '.' + strCompiler + '.' + strBuildType
     if strBuildType is 'Default':
         VistaPythonCommon.ExitError('right now BuildType Default is not supported for Jenkins and Linux',-1)
