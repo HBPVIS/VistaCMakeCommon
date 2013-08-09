@@ -38,44 +38,30 @@ def SysCall(strCmd, ExitOnError = True,Debug=False):
             ExitError('Exiting '+str(iReturnCode))
     return iReturnCode, strOutput
     
-#checks existance of environmentvariable strEnvvar and corresponding path 
-#    @return True if variable and path exist      
-def CheckForEnv(strEnvvar):
-    if os.getenv(strEnvvar)!=None:
-        out.write(strEnvvar+': '+os.getenv(strEnvvar)+'\n')
-        if os.path.exists(os.getenv(strEnvvar)):
-            return True
-        else:
-            err.write('*** ERROR *** Path of '+strEnvvar+' does not exist\n')
-            return False
-    else:
-        err.write('*** ERROR *** '+strEnvvar+' not set\n')
-        return False
     
-#checks VISTA_CMAKE_COMMON and VISTA_EXTERNAL_LIBS  
-def CheckForVistaEnv():
-    if not CheckForEnv("VISTA_CMAKE_COMMON"):
-        ExitGently(0)
-    if not CheckForEnv("VISTA_EXTERNAL_LIBS"):
-        ExitGently(0)
-
-        
 #checks VISTA_CMAKE_COMMON and VISTA_EXTERNAL_LIBS
-def CHECKS():
+# is called upon first import 
+def _CheckForVistaEnv():
+    #VISTA_CMAKE_COMMON
     val = os.getenv("VISTA_CMAKE_COMMON")
     if val is None:
-        out.write("Exiting, VISTA_CMAKE_COMMON not set\n") 
-        ExitGently()
+        ExitError("Exiting, VISTA_CMAKE_COMMON not set\n",-1)
     if not os.path.exists(val):
-        out.write("Exiting, Path of VISTA_CMAKE_COMMON ("+val+") does not exist\n")
-        ExitGently()
+        ExitError("Exiting, Path of VISTA_CMAKE_COMMON ("+val+") does not exist\n",-1)
+        
+    #VISTA_EXTERNAL_LIBS
     val = os.getenv("VISTA_EXTERNAL_LIBS")
     if val is None:
-        out.write("Exiting, VISTA_EXTERNAL_LIBS not set\n")
-        ExitGently()
-    if not os.path.exists(val):
-        out.write("Exiting, Path of VISTA_CMAKE_COMMON ("+val+") does not exist\n")
-        ExitGently()
+        ExitError("Exiting, VISTA_EXTERNAL_LIBS not set\n",-1)
+    # now we have the special case that VISTA_EXTERNAL_LIBS allows multiple pathes like /home/vrsw/:/home/av006de/dev
+    if sys.platform == 'win32':
+        strSeperator=';'
+    else:
+        strSeperator=':'
+    strPathes=val.split(strSeperator)
+    for p in strPathes:
+        if not os.path.exists(p):
+            ExitError("Exiting, Path of VISTA_EXTERNAL_LIBS ("+p+") does not exist\n",-1)
     
 # not used right now but maybe later
 def AddVistaPythonCommonArgs(parser):
@@ -95,4 +81,4 @@ def CheckForCMakeError(ConsoleText):
         return False
     
 
-CHECKS()
+_CheckForVistaEnv()
