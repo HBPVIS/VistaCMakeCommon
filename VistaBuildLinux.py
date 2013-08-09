@@ -59,7 +59,7 @@ def MakeJenkinsBuild(strBuildType,strCompiler,bDeleteCMakeCache):
             shutil.rmtree(strBuildFolder)#clean cmake build
             VistaPythonCommon.SysCall('mkdir ' + strBuildFolder)
 
-	strBasePath = os.getcwd()
+    strBasePath = os.getcwd()
     os.chdir(os.path.join(strBasePath, strBuildFolder))
             
     #check compiler if we are on gpucluster
