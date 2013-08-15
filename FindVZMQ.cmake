@@ -3,9 +3,26 @@
 include( FindPackageHandleStandardArgs )
 include( VistaFindUtils )
 
+# Note: if the optional component PGM is requested, only zeromq versions that have a dummy file callsed
+#       "ZEROMQ_WITH_PGM" in their folder will be found. More precisely, it has to reside in the
+#        architecture-specific folder, next to the lib- and include-folder 
+#        (e.g. /home/vrsw/zeromq/zeromq-2.2.2/LINUX_X86_64/ZEROMQ_WITH_PGM). If this file is not created,
+#        the cmake-find-module will still find the PGM version when using find_package( ZMQ ), but
+#         not if pgm is also requested by ind_package( ZMQ REQUIRED PGM )
+
 if( NOT VZMQ_FOUND )
 
-	vista_find_package_root( ZMQ include/zmq.h NAMES ZMQ zeromq ZeroMQ Zeromq )
+message( "VZMQ_FIND_COMPONENTS = ${VZMQ_FIND_COMPONENTS}")
+
+	list( FIND VZMQ_FIND_COMPONENTS "PGM" _INDEX )
+	
+	message( "_INDEX = ${_INDEX}" )
+
+	if( _INDEX EQUAL -1 )
+		vista_find_package_root( ZMQ include/zmq.h NAMES ZMQ zeromq ZeroMQ Zeromq )
+	else()
+		vista_find_package_root( ZMQ ZEROMQ_WITH_PGM NAMES ZMQ zeromq ZeroMQ Zeromq )
+	endif()
 
 	if( ZMQ_ROOT_DIR )
 		
