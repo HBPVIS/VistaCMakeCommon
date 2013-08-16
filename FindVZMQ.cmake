@@ -12,12 +12,8 @@ include( VistaFindUtils )
 
 if( NOT VZMQ_FOUND )
 
-message( "VZMQ_FIND_COMPONENTS = ${VZMQ_FIND_COMPONENTS}")
-
 	list( FIND VZMQ_FIND_COMPONENTS "PGM" _INDEX )
 	
-	message( "_INDEX = ${_INDEX}" )
-
 	if( _INDEX EQUAL -1 )
 		vista_find_package_root( ZMQ include/zmq.h NAMES ZMQ zeromq ZeroMQ Zeromq )
 	else()
