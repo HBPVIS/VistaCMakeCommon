@@ -34,7 +34,7 @@ if( NOT VTBB_FOUND )
 						set( TBB_LIBRARY_DIRS 
 							 ${TBB_ROOT_DIR}/lib/intel64/vc8 
 							 ${TBB_ROOT_DIR}/bin/intel64/vc8 )
-					elseif(VISTA_32BIT)
+					else(VISTA_64BIT) 
 						set( TBB_LIBRARY_DIRS 
 							 ${TBB_ROOT_DIR}/lib/intel32/vc8 
 							 ${TBB_ROOT_DIR}/bin/intel32/vc8 )
@@ -44,7 +44,7 @@ if( NOT VTBB_FOUND )
 						set( TBB_LIBRARY_DIRS 
 							 ${TBB_ROOT_DIR}/lib/intel64/vc9 
 						     ${TBB_ROOT_DIR}/bin/intel64/vc9 )
-					elseif(VISTA_32BIT)
+					else(VISTA_64BIT) 
 						set( TBB_LIBRARY_DIRS 
 							 ${TBB_ROOT_DIR}/lib/intel32/vc9 
 						     ${TBB_ROOT_DIR}/bin/intel32/vc9 )
@@ -54,7 +54,7 @@ if( NOT VTBB_FOUND )
 						set( TBB_LIBRARY_DIRS 
 							 ${TBB_ROOT_DIR}/lib/intel64/vc10 
 						     ${TBB_ROOT_DIR}/bin/intel64/vc10 )
-					elseif(VISTA_32BIT)
+					else(VISTA_64BIT) 
 						set( TBB_LIBRARY_DIRS 
 							 ${TBB_ROOT_DIR}/lib/intel32/vc10
 						     ${TBB_ROOT_DIR}/bin/intel32/vc10 )
