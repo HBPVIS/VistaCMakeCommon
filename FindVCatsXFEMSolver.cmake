@@ -4,7 +4,7 @@ include( FindPackageHandleStandardArgs )
 include( VistaFindUtils )
 
 if( NOT VCATSXFEMSOLVER_FOUND )
-	vista_find_package_root( CatsXFEMSolver CatsXFEMSolver/CatsXFEMSolver.h )	
+	vista_find_package_root( CatsXFEMSolver CatsXFEMSolver/XFEM.h )	
 
 	if( CATSXFEMSOLVER_ROOT_DIR )
 		set( CATSXFEMSOLVER_INCLUDE_DIRS ${CATSXFEMSOLVER_ROOT_DIR})	
@@ -13,17 +13,11 @@ if( NOT VCATSXFEMSOLVER_FOUND )
 			set( CATSXFEMSOLVER_LIBRARIES libgoto2_nehalemp-r1.13 umfpack libamd libg2c libgcc libshared libSources)
 		else ()
 			set( CATSXFEMSOLVER_LIBRARIES 
-				optimized libgoto2_nehalemp-r1.13
 				optimized umfpack
-				optimized libamd 
-				optimized libg2c 
-				optimized libgcc 
+				optimized libamd 				
 				optimized Propagation
-				debug libgoto2_nehalemp-r1.13
 				debug umfpack
 				debug libamd 
-				debug libg2c 
-				debug libgcc 
 				debug PropagationD)
 		endif()
 	else( CATSXFEMSOLVER_ROOT_DIR )
