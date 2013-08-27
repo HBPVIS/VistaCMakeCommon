@@ -16,7 +16,8 @@ if( NOT VFREETYPE_FOUND )
 		set( FREETYPE_INCLUDE_DIRS ${FREETYPE_ROOT_DIR}/include )
 		set( FREETYPE_LIBRARY_DIRS ${FREETYPE_ROOT_DIR}/lib )
 		get_filename_component( FREETYPE_LIBRARY_DIRS ${FREETYPE_LIBRARIES} PATH )
-
+    else ( FREETYPE_ROOT_DIR )
+        message( WARNING "vista_find_package_root - File named include/freetype/freetype.h not found" )	
 	endif( FREETYPE_ROOT_DIR )
 
 endif( NOT VFREETYPE_FOUND )
