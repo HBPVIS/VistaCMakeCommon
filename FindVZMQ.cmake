@@ -36,7 +36,7 @@ if( NOT VZMQ_FOUND )
 					set( ZMQ_LIBRARY_DIRS 
 						 "${ZMQ_ROOT_DIR}/lib/x64"
 						 "${ZMQ_ROOT_DIR}/bin/x64" )
-				elseif(VISTA_32BIT)
+				else(VISTA_64BIT)
 					set( ZMQ_LIBRARY_DIRS 
 						 "${ZMQ_ROOT_DIR}/lib/Win32"
 						 "${ZMQ_ROOT_DIR}/bin/Win32" )
