@@ -4,7 +4,7 @@
 import  sys, os, time, shutil, VistaPythonCommon
 
 #build project in current directory     
-def BuildIt(strBuildType='Default', strCompiler = 'MSVC_10_64BIT', bDeleteCMakeCache = True, strBuildFolder='JenkinsDefault'):
+def BuildIt(strBuildType='Default', strCompiler = 'MSVC_10_64BIT', strCMakeVariables = '', bDeleteCMakeCache = True, strBuildFolder='JenkinsDefault'):
 
     #make sure we are on windows system
     if sys.platform != 'win32':
@@ -43,7 +43,7 @@ def BuildIt(strBuildType='Default', strCompiler = 'MSVC_10_64BIT', bDeleteCMakeC
     os.chdir(os.path.join(strBasepath, strBuildFolder))
     
     #configure cmake
-    strCMakeCmd = 'cmake.exe -G "' + strMSCV + '" ' + os.path.join(strBasepath)
+    strCMakeCmd = 'cmake.exe -G "' + strMSCV + '" ' + strCMakeVariables + ' ' + os.path.join(strBasepath)
     iRC, strConsoleOutput = VistaPythonCommon.SysCall(strCMakeCmd)
     sys.stdout.write(strConsoleOutput)
     sys.stdout.flush()

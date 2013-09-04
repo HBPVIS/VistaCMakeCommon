@@ -4,7 +4,7 @@
 import  sys, os, time, shutil, VistaPythonCommon
 
 #build project in current directory     
-def BuildIt(strBuildType='Default', strCompiler = 'GCC_DEFAULT', bDeleteCMakeCache = True, strBuildFolder='JenkinsDefault'):
+def BuildIt(strBuildType='Default', strCompiler = 'GCC_DEFAULT', strCMakeVariables = '', bDeleteCMakeCache = True, strBuildFolder='JenkinsDefault'):
     
     #make sure we are on linux system
     if sys.platform != 'linux2':
@@ -21,7 +21,7 @@ def BuildIt(strBuildType='Default', strCompiler = 'GCC_DEFAULT', bDeleteCMakeCac
     # pretty ugly we switch standard build and jenkins by the buildfolder and then ignore it ...
     # but that works for windows. the reason behind this is, that you need a folder for debug and one for release anyway
     if strBuildFolder is 'JenkinsDefault':        
-        MakeJenkinsBuild(strBuildType,strCompiler,bDeleteCMakeCache)
+        MakeJenkinsBuild(strBuildType, strCompiler, strCMakeVariables, bDeleteCMakeCache)
     else:
         MakeLinuxStandardBuild(strCompiler,bDeleteCMakeCache)
     
@@ -45,7 +45,7 @@ def MakeLinuxStandardBuild(strCompiler,bDeleteCMakeCache):
     sys.stdout.write(strConsoleOutput)
     sys.stdout.flush()
     
-def MakeJenkinsBuild(strBuildType,strCompiler,bDeleteCMakeCache):
+def MakeJenkinsBuild(strBuildType, strCompiler, strCMakeVariables, bDeleteCMakeCache):
     strSysName = os.uname()[0].upper()
     strMachine = os.uname()[4].upper()
     strBuildFolder = 'build.' + strSysName + '.' + strMachine + '.' + strCompiler + '.' + strBuildType
@@ -66,7 +66,7 @@ def MakeJenkinsBuild(strBuildType,strCompiler,bDeleteCMakeCache):
     strCompilerEnv = GetCompilerEnvCall(strCompiler)
 
     #configure cmake
-    strCMakeCmd = strCompilerEnv + 'cmake -DCMAKE_BUILD_TYPE=' + strBuildType + ' ' + os.path.join(strBasePath)
+    strCMakeCmd = strCompilerEnv + 'cmake -DCMAKE_BUILD_TYPE=' + strBuildType + ' ' + strCMakeVariables + ' ' + os.path.join(strBasePath)
     iRC, strConsoleOutput = VistaPythonCommon.SysCall(strCMakeCmd)
     sys.stdout.write(strConsoleOutput)
     sys.stdout.flush()
@@ -95,17 +95,21 @@ def MakeJenkinsBuild(strBuildType,strCompiler,bDeleteCMakeCache):
 #since every syscall opens a new shell we have to set environment each time :(
 def GetCompilerEnvCall(strCompiler):
     if (0 == os.uname()[1].find('linuxgpu')):
-        if 'GCC_DEFAULT' in strCompiler:
-            return 'module unload gcc;module unload intel;module load gcc;'
-        elif 'GCC_47' in strCompiler:
-            return 'module unload gcc;module unload intel;module load gcc/4.7;'
-        elif 'GCC_48' in strCompiler:
-            return 'module unload gcc;module unload intel;module load gcc/4.8;'
-        elif 'INTEL_CXX' in strCompiler:
-            return 'module unload gcc;module unload intel;module load intel;'
+        liCompilerDef = strCompiler.split('_', 1)
+        if (len(liCompilerDef) != 0):
+            if 'INTEL' in liCompilerDef[0]:
+                return 'module unload gcc;module unload intel;module load intel;'
+            elif 'GCC' in liCompilerDef[0]:
+                if (len(liCompilerDef) > 1):
+                    if 'DEFAULT' in liCompilerDef[1]:
+                        return 'module unload gcc;module unload intel;module load gcc;'
+                    else:
+                        return 'module unload gcc;module unload intel;module load gcc/' + liCompilerDef[1] + ';'
+            else:
+                sys.stderr.write('unsupported compiler-version: ' + strCompiler)
+                VistaPythonCommon.ExitGently(-1)
         else:
-            sys.stderr.write('unsupported compiler-version: ' + strCompiler)
-            VistaPythonCommon.ExitGently(-1)
+            return ''
     else:
         return ''
         
