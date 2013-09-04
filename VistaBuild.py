@@ -9,10 +9,10 @@ import  sys, VistaBuildLinux, VistaBuildWin
 def BuildIt(strBuildType, strCompiler, strCMakeVariables = '', bDeleteCMakeCache = True, strBuildFolder='JenkinsDefault'):
     
     if sys.platform == 'linux2':
-        VistaBuildLinux.BuildIt(strBuildType, strCompiler, strCMakeVariables = '', bDeleteCMakeCache, strBuildFolder)
+        VistaBuildLinux.BuildIt(strBuildType, strCompiler, strCMakeVariables, bDeleteCMakeCache, strBuildFolder)
         
     elif sys.platform == 'win32':
-        VistaBuildWin.BuildIt(strBuildType, strCompiler, strCMakeVariables = '', bDeleteCMakeCache, strBuildFolder)
+        VistaBuildWin.BuildIt(strBuildType, strCompiler, strCMakeVariables, bDeleteCMakeCache, strBuildFolder)
         
     else:
         sys.err.write('Unsupported Platform ' + sys.platform)
