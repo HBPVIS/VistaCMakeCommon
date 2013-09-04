@@ -12,6 +12,7 @@ def BuildIt(strBuildType='Default', strCompiler = 'GCC_DEFAULT', strCMakeVariabl
 
     sys.stdout.write('Buildtype: ' + strBuildType + '\n')
     sys.stdout.write('Compiler: ' + strCompiler + '\n')
+    sys.stdout.write('CMake Definitions: ' + strCMakeVariables + '\n')
     sys.stdout.flush()
     
     fStartTime=time.time()
