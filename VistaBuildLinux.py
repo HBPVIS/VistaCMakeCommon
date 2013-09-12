@@ -4,7 +4,7 @@
 import  sys, os, time, shutil, VistaPythonCommon
 
 #build project in current directory     
-def BuildIt(strBuildType='Default', strCompiler = 'GCC_DEFAULT', strCMakeVariables = '', bDeleteCMakeCache = True, strBuildFolder='JenkinsDefault'):
+def BuildIt(strBuildType='Default', strCompiler = 'GCC_DEFAULT', strCMakeVariables = '', bDeleteCMakeCache = True, strBuildFolder='JenkinsDefault', bRunTests = False ):
     
     #make sure we are on linux system
     if sys.platform != 'linux2':
@@ -89,6 +89,10 @@ def MakeJenkinsBuild(strBuildType, strCompiler, strCMakeVariables, bDeleteCMakeC
             iRC, strConsoleOutput = VistaPythonCommon.SysCall(strCompilerEnv + 'make -j2')
     else:
         iRC, strConsoleOutput = VistaPythonCommon.SysCall(strCompilerEnv + 'make')
+    
+    #execute tests
+    if True == bRunTests:
+        iRC, strConsoleOutput = VistaPythonCommon.SysCall(strCompilerEnv + 'make test')
         
     sys.stdout.write(strConsoleOutput)
     sys.stdout.flush()
