@@ -3,7 +3,7 @@
 
 import  sys, os, time, shutil, VistaPythonCommon
 
-#build project in current directory     
+#build project in current directory                                                                                                                 
 def BuildIt(strBuildType='Default', strCompiler = 'GCC_DEFAULT', strCMakeVariables = '', bDeleteCMakeCache = True, strBuildFolder='JenkinsDefault', bRunTests = False ):
     
     #make sure we are on linux system
@@ -22,7 +22,7 @@ def BuildIt(strBuildType='Default', strCompiler = 'GCC_DEFAULT', strCMakeVariabl
     # pretty ugly we switch standard build and jenkins by the buildfolder and then ignore it ...
     # but that works for windows. the reason behind this is, that you need a folder for debug and one for release anyway
     if strBuildFolder is 'JenkinsDefault':        
-        MakeJenkinsBuild(strBuildType, strCompiler, strCMakeVariables, bDeleteCMakeCache)
+        MakeJenkinsBuild(strBuildType, strCompiler, strCMakeVariables, bDeleteCMakeCache,bRunTests)
     else:
         MakeLinuxStandardBuild(strCompiler,bDeleteCMakeCache)
     
@@ -46,7 +46,7 @@ def MakeLinuxStandardBuild(strCompiler,bDeleteCMakeCache):
     sys.stdout.write(strConsoleOutput)
     sys.stdout.flush()
     
-def MakeJenkinsBuild(strBuildType, strCompiler, strCMakeVariables, bDeleteCMakeCache):
+def MakeJenkinsBuild(strBuildType, strCompiler, strCMakeVariables, bDeleteCMakeCache,bRunTests):
     strSysName = os.uname()[0].upper()
     strMachine = os.uname()[4].upper()
     strBuildFolder = 'build.' + strSysName + '.' + strMachine + '.' + strCompiler + '.' + strBuildType
@@ -89,6 +89,9 @@ def MakeJenkinsBuild(strBuildType, strCompiler, strCMakeVariables, bDeleteCMakeC
             iRC, strConsoleOutput = VistaPythonCommon.SysCall(strCompilerEnv + 'make -j2')
     else:
         iRC, strConsoleOutput = VistaPythonCommon.SysCall(strCompilerEnv + 'make')
+    
+    sys.stdout.write(strConsoleOutput)
+    sys.stdout.flush()
     
     #execute tests
     if True == bRunTests:
