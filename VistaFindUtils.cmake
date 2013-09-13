@@ -4,9 +4,9 @@
 # vista_check_version_entry( INPUT_VERSION OWN_VERSION DIFFERENCE_VAR )
 # vista_string_to_version( VERSION_STRING VERSION_VARIABLES_PREFIX )
 # vista_compare_versions( INPUT_VERSION_PREFIX OWN_VERSION_PREFIX DIFFERENCE_VAR )
-# vista_find_package_dirs( PACKAGE_NAME EXAMPLE_FILE [NAMES folder1 folder2 ...] )
+# vista_find_package_dirs( PACKAGE_NAME EXAMPLE_FILE [NAMES name1 name2 ...] [ PATHS path1 path2 ... ] )
 # vista_get_version_from_path( PATH NAME_LIST VERSION_VAR )
-# SEE FULL DOCUMENTATION! vista_find_package_root( PACKAGE EXAMPLE_FILE [DONT_ALLOW_UNVERSIONED] [QUIET] [NAMES name1 name2 ...] [ADVANCED] [NO_CACHE] )
+# SEE FULL DOCUMENTATION! vista_find_package_root( PACKAGE EXAMPLE_FILE [DONT_ALLOW_UNVERSIONED] [QUIET] [NAMES name1 name2 ...] [ PATHS path1 path2 ... ] [ADVANCED] [NO_CACHE] )
 # SEE FULL DOCUMENTATION! vista_find_library_uncached( ...find_library_parameters... )
 
 if( NOT VISTA_FIND_UTILS_INCLUDED )
