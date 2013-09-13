@@ -14,7 +14,7 @@ if( NOT VVTK_FOUND )
 		)
 	endif( EXISTS "$ENV{${_PACKAGE_NAME_UPPER}_ROOT}" )
 
-	foreach( _PATH $ENV{VRDEV} $ENV{VISTA_EXTERNAL_LIBS}  ${CMAKE_PREFIX_PATH} $ENV{CMAKE_PREFIX_PATH} )
+	foreach( _PATH ${VISTA_PACKAGE_SEARCH_PATHS} )
 		file( TO_CMAKE_PATH ${_PATH} _PATH )
 		list( APPEND _SEARCH_PREFIXES
 				"${_PATH}/VTK*/${VISTA_HWARCH}/lib/*"
@@ -26,7 +26,7 @@ if( NOT VVTK_FOUND )
 				"${_PATH}/vtk/*/${VISTA_HWARCH}/lib/*"
 				"${_PATH}/vtk/*/lib/*"
 		)
-	endforeach( _PATH $ENV{VRDEV} $ENV{VISTA_EXTERNAL_LIBS} ${CMAKE_PREFIX_PATH} $ENV{CMAKE_PREFIX_PATH} )
+	endforeach( _PATH ${VISTA_PACKAGE_SEARCH_PATHS} )
 
 	foreach( _PATH ${_SEARCH_PREFIXES} )
 		file( GLOB _TMP_FILES "${_PATH}/VTKConfig.cmake" )
