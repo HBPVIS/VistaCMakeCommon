@@ -15,7 +15,7 @@ def ExitGently(iReturnCode = 0):
     os._exit(iReturnCode)
 
 #flush streambuffers and quit with error message 
-def ExitError(strErrorMessage,iReturnCode = 0):
+def ExitError(strErrorMessage,iReturnCode = -1):
     out.flush()
     err.write('\n'+strErrorMessage+'\n')
     err.flush()    
@@ -35,7 +35,7 @@ def SysCall(strCmd, ExitOnError = True,Debug=False):
         out.write(strOutput)
         err.write('Systemcall with command ' + strCmd + ' failed with return ' + str(iReturnCode) + '\n')
         if True == ExitOnError:
-            ExitError('Exiting '+str(iReturnCode))
+            ExitError('',iReturnCode)
     return iReturnCode, strOutput
     
     
