@@ -20,17 +20,17 @@ if( NOT VAXIS2_FOUND )
 			optimized axutil
 			optimized guththila
 			optimized neethi
-			debug axiomD
-			debug axis2_engineD
-			debug axis2_http_receiverD
-			debug axis2_http_senderD
-			debug axis2_parserD
-			debug axis2_tcp_receiverD
-			debug axis2_tcp_senderD
-			debug axis2_xpathD
-			debug axutilD
-			debug guththilaD
-			debug neethiD
+			debug axiom
+			debug axis2_engine
+			debug axis2_http_receiver
+			debug axis2_http_sender
+			debug axis2_parser
+			debug axis2_tcp_receiver
+			debug axis2_tcp_sender
+			debug axis2_xpath
+			debug axutil
+			debug guththila
+			debug neethi
 		)
 		mark_as_advanced( AXIS2_LIBRARIES )
 
