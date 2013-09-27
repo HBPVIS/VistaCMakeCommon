@@ -35,7 +35,7 @@ def SysCall(strCmd, ExitOnError = True,Debug=False):
         out.write(strOutput)
         err.write('Systemcall with command ' + strCmd + ' failed with return ' + str(iReturnCode) + '\n')
         if True == ExitOnError:
-            ExitError('',iReturnCode)
+            ExitError('Exiting with ',iReturnCode)
     return iReturnCode, strOutput
     
     

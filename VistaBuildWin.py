@@ -37,7 +37,7 @@ def BuildIt(strBuildType='Default', strCompiler = 'MSVC_10_64BIT', strCMakeVaria
         VistaPythonCommon.SysCall('mkdir ' + strBuildFolder)
     else:
        if True == bDeleteCMakeCache:
-            shutil.rmtree(strBuildFolder)#clean cmake build
+            shutil.rmtree(strBuildFolder,True)#clean cmake build
             sys.stdout.write("\nDeleting Cache\nElapsed time : " + str(int(time.time()-fStartTime)) + " seconds\n")
             VistaPythonCommon.SysCall('mkdir ' + strBuildFolder)
 

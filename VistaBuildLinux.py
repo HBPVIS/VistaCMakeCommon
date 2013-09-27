@@ -38,7 +38,7 @@ def MakeLinuxStandardBuild(strCompiler,bDeleteCMakeCache):
         VistaPythonCommon.SysCall(strCompilerEnv+'$VISTA_CMAKE_COMMON/MakeLinuxBuildStructure.sh')
     else:
        if True == bDeleteCMakeCache:
-            shutil.rmtree(strBuildFolder)#clean cmake build
+            shutil.rmtree(strBuildFolder,True)#clean cmake build
             VistaPythonCommon.SysCall(strCompilerEnv+'$VISTA_CMAKE_COMMON/MakeLinuxBuildStructure.sh')
     
     os.chdir(os.path.join(os.getcwd(), strBuildFolder))
