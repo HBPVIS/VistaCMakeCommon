@@ -13,8 +13,10 @@ def BuildIt(strBuildType='Default', strCompiler = 'GCC_DEFAULT', strCMakeVariabl
     sys.stdout.write('Buildtype: ' + strBuildType + '\n')
     sys.stdout.write('Compiler: ' + strCompiler + '\n')
     sys.stdout.write('CMake Definitions: ' + strCMakeVariables + '\n')
-    sys.stdout.write('Execute tests: ' + bRunTests + '\n')
-    sys.stdout.write('Install: ' + bInstall + '\n')
+    if True == bRunTests:
+        sys.stdout.write('Executing tests\n')
+    if True == bInstall:
+        sys.stdout.write('Make install\n')
     sys.stdout.flush()
     
     fStartTime=time.time()
