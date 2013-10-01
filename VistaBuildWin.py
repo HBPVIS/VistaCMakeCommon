@@ -13,6 +13,8 @@ def BuildIt(strBuildType='Default', strCompiler = 'MSVC_10_64BIT', strCMakeVaria
     sys.stdout.write('Buildtype: ' + strBuildType + '\n')
     sys.stdout.write('Compiler: ' + strCompiler + '\n')
     sys.stdout.write('CMake Definitions: ' + strCMakeVariables + '\n')
+    sys.stdout.write('Execute tests: ' + bRunTests + '\n')
+    sys.stdout.write('Install: ' + bInstall + '\n')
     sys.stdout.flush()
     
     fStartTime=time.time()

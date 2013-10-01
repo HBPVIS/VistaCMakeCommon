@@ -13,6 +13,8 @@ def BuildIt(strBuildType='Default', strCompiler = 'GCC_DEFAULT', strCMakeVariabl
     sys.stdout.write('Buildtype: ' + strBuildType + '\n')
     sys.stdout.write('Compiler: ' + strCompiler + '\n')
     sys.stdout.write('CMake Definitions: ' + strCMakeVariables + '\n')
+    sys.stdout.write('Execute tests: ' + bRunTests + '\n')
+    sys.stdout.write('Install: ' + bInstall + '\n')
     sys.stdout.flush()
     
     fStartTime=time.time()
@@ -22,7 +24,7 @@ def BuildIt(strBuildType='Default', strCompiler = 'GCC_DEFAULT', strCMakeVariabl
     # pretty ugly we switch standard build and jenkins by the buildfolder and then ignore it ...
     # but that works for windows. the reason behind this is, that you need a folder for debug and one for release anyway
     if strBuildFolder is 'JenkinsDefault':        
-        MakeJenkinsBuild(strBuildType, strCompiler, strCMakeVariables, bDeleteCMakeCache,bRunTests)
+        MakeJenkinsBuild(strBuildType, strCompiler, strCMakeVariables, bDeleteCMakeCache, bRunTests, bInstall)
     else:
         MakeLinuxStandardBuild(strCompiler,bDeleteCMakeCache)
     
