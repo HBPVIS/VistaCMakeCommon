@@ -82,6 +82,10 @@ def MSVCTestCall():
         strVC = 'call "c:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\VC\\vcvarsall.bat" x86'
         strVC += ' & msbuild RUN_TESTS.vcxproj '
         
-        iRC, strConsoleOutput = VistaPythonCommon.SysCall(strVC)
+        iRC, strConsoleOutput = VistaPythonCommon.SysCall(strVC,ExitOnError = False)
+        if 0 != iRC:
+            strVC = 'call "c:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\VC\\vcvarsall.bat" x86'
+            strVC += ' & msbuild RUN_TESTS_VERBOSE.vcxproj '
+            iRC, strConsoleOutput = VistaPythonCommon.SysCall(strVC,ExitOnError = True)
         sys.stdout.write(strConsoleOutput)
         sys.stdout.flush()
