@@ -46,7 +46,7 @@ def MakeLinuxStandardBuild(strCompiler,bDeleteCMakeCache):
     sys.stdout.write(strConsoleOutput)
     sys.stdout.flush()
     
-def MakeJenkinsBuild(strBuildType, strCompiler, strCMakeVariables, bDeleteCMakeCache,bRunTests):
+def MakeJenkinsBuild(strBuildType, strCompiler, strCMakeVariables, bDeleteCMakeCache, bRunTests, bInstall):
     strSysName = os.uname()[0].upper()
     strMachine = os.uname()[4].upper()
     strBuildFolder = 'build.' + strSysName + '.' + strMachine + '.' + strCompiler + '.' + strBuildType
