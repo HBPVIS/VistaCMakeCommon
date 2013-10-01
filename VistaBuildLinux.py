@@ -4,7 +4,7 @@
 import  sys, os, time, shutil, VistaPythonCommon
 
 #build project in current directory                                                                                                                 
-def BuildIt(strBuildType='Default', strCompiler = 'GCC_DEFAULT', strCMakeVariables = '', bDeleteCMakeCache = True, strBuildFolder='JenkinsDefault', bRunTests = False ):
+def BuildIt(strBuildType='Default', strCompiler = 'GCC_DEFAULT', strCMakeVariables = '', bDeleteCMakeCache = True, strBuildFolder='JenkinsDefault', bRunTests = False, bInstall = False ):
     
     #make sure we are on linux system
     if sys.platform != 'linux2':
@@ -98,9 +98,16 @@ def MakeJenkinsBuild(strBuildType, strCompiler, strCMakeVariables, bDeleteCMakeC
         iRC, strConsoleOutput = VistaPythonCommon.SysCall(strCompilerEnv + 'make test',ExitOnError = False)
         if 0 != iRC:
             iRC, strConsoleOutput = VistaPythonCommon.SysCall(strCompilerEnv + 'make test_verbose',ExitOnError = True)
+        sys.stdout.write(strConsoleOutput)
+        sys.stdout.flush()
         
-    sys.stdout.write(strConsoleOutput)
-    sys.stdout.flush()
+    #install
+    if True == bInstall:
+        iRC, strConsoleOutput = VistaPythonCommon.SysCall(strCompilerEnv + 'make install')
+        sys.stdout.write(strConsoleOutput)
+        sys.stdout.flush()
+        
+        
         
 #since every syscall opens a new shell we have to set environment each time :(
 def GetCompilerEnvCall(strCompiler):

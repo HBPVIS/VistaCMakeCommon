@@ -4,7 +4,7 @@
 import  sys, os, time, shutil, VistaPythonCommon
 
 #build project in current directory     
-def BuildIt(strBuildType='Default', strCompiler = 'MSVC_10_64BIT', strCMakeVariables = '', bDeleteCMakeCache = True, strBuildFolder='JenkinsDefault', bRunTests = False):
+def BuildIt(strBuildType='Default', strCompiler = 'MSVC_10_64BIT', strCMakeVariables = '', bDeleteCMakeCache = True, strBuildFolder='JenkinsDefault', bRunTests = False, bInstall = False):
 
     #make sure we are on windows system
     if sys.platform != 'win32':
@@ -63,6 +63,10 @@ def BuildIt(strBuildType='Default', strCompiler = 'MSVC_10_64BIT', strCMakeVaria
     if True == bRunTests:
         MSVCTestCall()    
         
+    #install
+    if True == bInstall:
+        MSVCInstallCall()    
+        
     os.chdir(os.path.join(strBasepath))
        
     sys.stdout.write("\n\nElapsed time: " + str(int(time.time()-fStartTime)) + " seconds\n")
@@ -81,11 +85,18 @@ def MSVCTestCall():
         sys.stdout.write('\nStarting to build Tests \n')
         strVC = 'call "c:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\VC\\vcvarsall.bat" x86'
         strVC += ' & msbuild RUN_TESTS.vcxproj '
-        
         iRC, strConsoleOutput = VistaPythonCommon.SysCall(strVC,ExitOnError = False)
         if 0 != iRC:
             strVC = 'call "c:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\VC\\vcvarsall.bat" x86'
             strVC += ' & msbuild RUN_TESTS_VERBOSE.vcxproj '
             iRC, strConsoleOutput = VistaPythonCommon.SysCall(strVC,ExitOnError = True)
+        sys.stdout.write(strConsoleOutput)
+        sys.stdout.flush()
+        
+def MSVCInstallCall( strTarget = "ALL_BUILD" ):
+        sys.stdout.write('\nStarting to build Tests \n')
+        strVC = 'call "c:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\VC\\vcvarsall.bat" x86'
+        strVC += ' & msbuild INSTALL.vcxproj '
+        iRC, strConsoleOutput = VistaPythonCommon.SysCall(strVC)
         sys.stdout.write(strConsoleOutput)
         sys.stdout.flush()
