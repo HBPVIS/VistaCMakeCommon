@@ -10,7 +10,7 @@
 #####################################################
 set( CTEST_OUTPUT_ON_FAILURE TRUE )
 
-# create another testbuild that produces verbose output
+# create additional test targets with varying output that produces verbose output
 if( MSVC )
 	set( SILENT_TEST_NAME "RUN_TESTS_SILENT" )
 	set( FAILUREOUTPUT_TEST_NAME "RUN_TESTS_OUTPUT_ON_FAILURE" )
@@ -26,19 +26,25 @@ else()
 	set( VERBOSE_TEST_NAME "test_verbose" )
 	set( CTEST_CONFIG_DIR "${CMAKE_BUILD_TYPE}" )
 endif()
+	
+get_property( _TEST_TARGETS_HAVE_BEEN_CONFIGURED GLOBAL PROPERTY VISTA_TEST_TARGETS_HAVE_BEEN_CONFIGURED ) 
+if( NOT _TEST_TARGETS_HAVE_BEEN_CONFIGURED )
 
-add_custom_target( ${SILENT_TEST_NAME} 
-					COMMAND ${CMAKE_CTEST_COMMAND} -C "${CTEST_CONFIG_DIR}" --force-new-ctest-process
-					WORKING_DIRECTORY "${CMAKE_BINARY_DIR}" )
-set_target_properties( ${SILENT_TEST_NAME} PROPERTIES FOLDER "Tests" )
-add_custom_target( ${FAILUREOUTPUT_TEST_NAME} 
-					COMMAND ${CMAKE_CTEST_COMMAND} -C "${CTEST_CONFIG_DIR}" --force-new-ctest-process --output-on-failure
-					WORKING_DIRECTORY "${CMAKE_BINARY_DIR}" )
-set_target_properties( ${FAILUREOUTPUT_TEST_NAME} PROPERTIES FOLDER "Tests" )
-add_custom_target( ${VERBOSE_TEST_NAME} 
-					COMMAND ${CMAKE_CTEST_COMMAND} -C "${CTEST_CONFIG_DIR}" --force-new-ctest-process -V
-					WORKING_DIRECTORY "${CMAKE_BINARY_DIR}" )
-set_target_properties( ${VERBOSE_TEST_NAME} PROPERTIES FOLDER "Tests" )
+	add_custom_target( ${SILENT_TEST_NAME} 
+						COMMAND ${CMAKE_CTEST_COMMAND} -C "${CTEST_CONFIG_DIR}" --force-new-ctest-process
+						WORKING_DIRECTORY "${CMAKE_BINARY_DIR}" )
+	set_target_properties( ${SILENT_TEST_NAME} PROPERTIES FOLDER "Tests" )
+	add_custom_target( ${FAILUREOUTPUT_TEST_NAME} 
+						COMMAND ${CMAKE_CTEST_COMMAND} -C "${CTEST_CONFIG_DIR}" --force-new-ctest-process --output-on-failure
+						WORKING_DIRECTORY "${CMAKE_BINARY_DIR}" )
+	set_target_properties( ${FAILUREOUTPUT_TEST_NAME} PROPERTIES FOLDER "Tests" )
+	add_custom_target( ${VERBOSE_TEST_NAME} 
+						COMMAND ${CMAKE_CTEST_COMMAND} -C "${CTEST_CONFIG_DIR}" --force-new-ctest-process -V
+						WORKING_DIRECTORY "${CMAKE_BINARY_DIR}" )
+	set_target_properties( ${VERBOSE_TEST_NAME} PROPERTIES FOLDER "Tests" )
+	
+	set_property( GLOBAL PROPERTY VISTA_TEST_TARGETS_HAVE_BEEN_CONFIGURED TRUE )
+endif()
 
 #####################################################
 # MACROS
