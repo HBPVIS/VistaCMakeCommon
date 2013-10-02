@@ -65,11 +65,11 @@ def BuildIt(strBuildType='Default', strCompiler = 'MSVC_10_64BIT', strCMakeVaria
     
     #execute tests
     if True == bRunTests:
-		if strBuildType is not 'Default':
-			MSVCTestCall(strBuildType)
-		else:
-			MSVCTestCall('Debug')
-			MSVCTestCall('Release')     
+        if strBuildType is not 'Default':
+            MSVCTestCall(strBuildType)
+        else:
+            MSVCTestCall('Debug')
+            MSVCTestCall('Release')     
         
     #install
     if True == bInstall:
