@@ -90,7 +90,10 @@ macro( vista_configure_test TEST_NAME )
 			set_property( TEST ${TEST_NAME}Execute APPEND PROPERTY ENVIRONMENT "PATH=${_ENVIRONMENT}\\;%PATH%" )	
 		else()
 			string( REPLACE ";" ":" _ENVIRONMENT "${_DYNAMIC_LIB_DIRS}" )
-			set_property( TEST ${TEST_NAME}Execute APPEND PROPERTY ENVIRONMENT "LD_LIBRARY_PATH=${_ENVIRONMENT}:${LD_LIBRARY_PATH}" )	
+			set( "_VAR" "\$ENV{LD_LIBRARY_PATH}" )
+			# @TODO: for now we do not set the LD_LIBRARY_PATH, because cmake escaping prevents entering the correct syntax
+			# thus, we'll have to rely on RPATH for now
+			# set_property( TEST ${TEST_NAME}Execute APPEND PROPERTY ENVIRONMENT "LD_LIBRARY_PATH=${_ENVIRONMENT}:${_VAR}" )	
 		endif()
 	endif()
 	
