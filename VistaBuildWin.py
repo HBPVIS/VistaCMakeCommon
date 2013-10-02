@@ -65,7 +65,11 @@ def BuildIt(strBuildType='Default', strCompiler = 'MSVC_10_64BIT', strCMakeVaria
     
     #execute tests
     if True == bRunTests:
-        MSVCTestCall()    
+		if strBuildType is not 'Default':
+			MSVCTestCall(strBuildType)
+		else:
+			MSVCTestCall('Debug')
+			MSVCTestCall('Release')     
         
     #install
     if True == bInstall:
@@ -85,10 +89,10 @@ def MSVCBuildCall(strBuildType):
         sys.stdout.write(strConsoleOutput)
         sys.stdout.flush()
         
-def MSVCTestCall():
+def MSVCTestCall(strBuildType):
         sys.stdout.write('\nStarting to build Tests \n')
         strVC = 'call "c:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\VC\\vcvarsall.bat" x86'
-        strVC += ' & msbuild RUN_TESTS.vcxproj '
+        strVC += ' & msbuild RUN_TESTS.vcxproj /property:configuration=' + strBuildType
         iRC, strConsoleOutput = VistaPythonCommon.SysCall(strVC,ExitOnError = False)
         if 0 != iRC:
             strVC = 'call "c:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\VC\\vcvarsall.bat" x86'
