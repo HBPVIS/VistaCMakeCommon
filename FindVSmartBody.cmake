@@ -16,8 +16,19 @@ if( NOT VSMARTBODY_FOUND )
             ${SMARTBODY_ROOT_DIR}/core/smartbody/steersuite-1.3/external/
             ${SMARTBODY_ROOT_DIR}/lib/wsp/wsp/include/
             ${SMARTBODY_ROOT_DIR}/core/smartbody/SmartBody/src/external/glew/
-            ${SMARTBODY_ROOT_DIR}/core/smartbody/Python27/include
+            
         )
+        
+        if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+            list(APPEND SMARTBODY_INCLUDE_DIRS
+                ${SMARTBODY_ROOT_DIR}/core/smartbody/Python27/include
+            )
+            else() # Linux   
+            list(APPEND SMARTBODY_INCLUDE_DIRS
+                /usr/local_rwth/sw/python/2.7.5/x86_64/include/python2.7/
+            )    
+        endif()
+        
         if(CMAKE_SIZEOF_VOID_P EQUAL 8)
             set( SMARTBODY_LIBRARY_DIRS 
             ${SMARTBODY_ROOT_DIR}/core/smartbody/SmartBody/lib
@@ -62,17 +73,18 @@ if( NOT VSMARTBODY_FOUND )
         endif(CMAKE_SIZEOF_VOID_P EQUAL 8)
         
         set( SMARTBODY_LIBRARIES            
-
+            optimized SmartBody
+            debug SmartBody_d
             #linux ? xerces-c
             #optimized bonebus
             #debug bonebus_d
-            optimized steerlib
+            
             #optimized vhmsg
             #optimized wsp
             #debug activemq-cppd
             #optimized libactivemq-cpp.so.14
-            debug steerlibd
-            debug wspd
+            
+            
             # linux ?boost_filesystem    
 
         )
@@ -85,16 +97,16 @@ if( NOT VSMARTBODY_FOUND )
         optimized vhcl #windows
         debug vhcl_d #windows
         boost_filesystem-vc100-mt-1_51.lib #windows ?
-        boost_system-vc100-mt-1_51.lib #windows ? 
-        optimized SmartBody
-        debug SmartBody_d
+        boost_system-vc100-mt-1_51.lib #windows ?        
+        optimized steerlib
+        debug steerlibd
     )
     else() # Linux   
     list(APPEND SMARTBODY_LIBRARIES
         xerces-c
-        SmartBody
         boost_filesystem
         boost_system
+        steerlib
     )    
     endif()
         
