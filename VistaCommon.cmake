@@ -215,7 +215,7 @@ endmacro( vista_conditional_add_subdirectory )
 # local macro, for use in this file only
 function( local_clean_old_config_references _PACKAGE_NAME _PACKAGE_TARGET_FILE _EXCLUDE_DIR )
 	string( TOUPPER _PACKAGE_NAME_UPPER ${_PACKAGE_NAME} )
-	
+		
 	# we only want to do this if the version changes! (and only if a version exists at all
 	if( NOT "${VISTA_${_PACKAGE_NAME_UPPER}_INTERNAL_LAST_CHECK_VERSION}" STREQUAL "${${_PACKAGE_NAME_UPPER}_VERSION_EXT}" )
 		set( VISTA_${_PACKAGE_NAME_UPPER}_INTERNAL_LAST_CHECK_VERSION "${${_PACKAGE_NAME_UPPER}_VERSION_EXT}" CACHE INTERNAL "" FORCE )
@@ -228,7 +228,7 @@ function( local_clean_old_config_references _PACKAGE_NAME _PACKAGE_TARGET_FILE _
 			file( TO_CMAKE_PATH "${_FILE}" _FILE )
 			if( NOT _FILE STREQUAL _OWN_FILE )
 				set( PACKAGE_REFERENCE_OUTDATED FALSE )
-				include( "${_FILE}" )
+				include( "${_FILE}" )				
 				if( PACKAGE_REFERENCE_OUTDATED OR "${_PACKAGE_TARGET_FILE}" STREQUAL "${${_PACKAGE_NAME_UPPER}_REFERENCED_FILE}" )
 					string( REGEX MATCH "(${VISTA_CMAKE_COMMON}/share/.+)/.*" _MATCHED ${_FILE} )
 					if( _MATCHED )
@@ -242,24 +242,24 @@ function( local_clean_old_config_references _PACKAGE_NAME _PACKAGE_TARGET_FILE _
 
 		set( PACKAGE_REFERENCE_EXISTS_TEST )
 	endif()
-endfunction( local_clean_old_config_references _PACKAGE_NAME _PACKAGE_ROOT_DIR )
+endfunction()
 
 # local macro, for use in this file only
 function( local_use_existing_config_libs _NAME _ROOT_DIR _CONFIG_FILE _LIBRARY_DIR_LIST )
 	get_filename_component( _ROOT_DIR "${_ROOT_DIR}" REALPATH )
 	string( TOUPPER ${_NAME} _NAME_UPPER )
 	if( EXISTS "${_CONFIG_FILE}" )
-		include( ${_CONFIG_FILE} )
+		include( "${_CONFIG_FILE}" )
 		get_filename_component( ${_NAME_UPPER}_ROOT_DIR "${${_NAME_UPPER}_ROOT_DIR}" REALPATH )
 		if( "${${_NAME_UPPER}_ROOT_DIR}" STREQUAL "${_ROOT_DIR}" )
 			if( ${_NAME_UPPER}_LIBRARY_DIRS )
 				list( APPEND ${_LIBRARY_DIR_LIST} "${${_NAME_UPPER}_LIBRARY_DIRS}" )
 				list( REMOVE_DUPLICATES ${_LIBRARY_DIR_LIST} )
-			endif( ${_NAME_UPPER}_LIBRARY_DIRS )
-		endif( "${${_NAME_UPPER}_ROOT_DIR}" STREQUAL "${_ROOT_DIR}" )
-	endif( EXISTS "${_CONFIG_FILE}" )
+			endif()
+		endif()
+	endif()
 	set( ${_LIBRARY_DIR_LIST} ${${_LIBRARY_DIR_LIST}} PARENT_SCOPE )
-endfunction( local_use_existing_config_libs )
+endfunction()
 
 # vista_enable_all_compiler_warnings()
 # Enables all compiler warnings, excluding some (subjectively less important) ones
@@ -722,7 +722,7 @@ macro( vista_use_package _PACKAGE_NAME )
 	# check if we need to rerun. this is the case it has not been used yet,
 	# or if it has been used, but now additional dependencies are requested
 	set( _REQUIRES_RERUN TRUE )
-	set( _VISTAUSEPACKAGE_COMPONENTS )
+	set( _VISTAUSEPACKAGE_COMPONENTS )	
 	if( VISTA_USE_${_PACKAGE_NAME_UPPER} )
 		# extract components, to see if they are met already or not
 		set( _REQUESTED_COMPONENTS )
@@ -744,10 +744,9 @@ macro( vista_use_package _PACKAGE_NAME )
 			endif( ${_ARG} STREQUAL "COMPONENTS" OR ${_ARG} STREQUAL "REQUIRED" )
 		endforeach( _ARG ${ARGV} )
 		
-		if( NOT _COMPONENTS_FOUND )
-			set( _REQUIRES_RERUN FALSE )
-		else()
-			# we need to check if any additional componants are required
+		set( _REQUIRES_RERUN FALSE )
+		if( _COMPONENTS_FOUND )
+			# we need to check if any additional components are required
 			foreach( _COMPONENT ${_REQUESTED_COMPONENTS} )
 				list( FIND ${_PACKAGE_NAME_UPPER}_FOUND_COMPONENTS ${_COMPONENT} _FOUND )
 				if( _FOUND EQUAL -1 )
@@ -755,13 +754,14 @@ macro( vista_use_package _PACKAGE_NAME )
 					# so that the new search finds both the newly requested components and those from the last run
 					set( _VISTAUSEPACKAGE_COMPONENTS ${_REQUESTED_COMPONENTS} ${${_PACKAGE_NAME_UPPER}_FOUND_COMPONENTS} )
 					list( REMOVE_DUPLICATES _VISTAUSEPACKAGE_COMPONENTS )
+					set( _REQUIRES_RERUN TRUE )
 					break()
 				endif()
 			endforeach()
 		endif()
 		# todo: check version
 
-	endif( VISTA_USE_${_PACKAGE_NAME_UPPER} )
+	endif()
 
 	if( _REQUIRES_RERUN )
 		# we first extract some parameters, then try to find the package
@@ -841,9 +841,8 @@ macro( vista_use_package _PACKAGE_NAME )
 				list( REMOVE_DUPLICATES VISTA_SHADER_DIRECTORIS )
 			endif( ${_PACKAGE_NAME_UPPER}_SHADER_DIRS )	
 			
-			#set( VISTA_USE_PACKAGE_LIBRARIES ${${_PACKAGE_NAME_UPPER}_LIBRARIES} ${VISTA_USE_PACKAGE_LIBRARIES} )
-
-		
+			#mark call now (lateron, _PACKAGE_NAME_UPPER might be overwritten by sub-calls for dependencies)
+			set( VISTA_USE_${_PACKAGE_NAME_UPPER} TRUE )
 
 			# parse dependencies automatically call vista_use_package on not previously found ones
 			# indicate for them that they are recursively called, to prevent adding them to the dependency list,
@@ -895,9 +894,7 @@ macro( vista_use_package _PACKAGE_NAME )
 				set( INTERNAL_VISTA_FIND_PACKAGE_LIBS )
 			endif()			
 
-		endif( ${_PACKAGE_NAME_UPPER}_FOUND AND ( _DO_FIND OR NOT VISTA_USE_${_PACKAGE_NAME_UPPER} ) )
-		
-		set( VISTA_USE_${_PACKAGE_NAME_UPPER} TRUE )
+		endif()		
 	endif( _REQUIRES_RERUN )
 
 endmacro( vista_use_package _PACKAGE_NAME )
@@ -1604,13 +1601,13 @@ macro( vista_create_cmake_config_build _PACKAGE_NAME _CONFIG_PROTO_FILE _TARGET_
 			# configure the actual reference file
 			set( _REFERENCE_TARGET_FILENAME "${${_PACKAGE_NAME_UPPER}_BUILD_CONFIG_REFERENCE_DIR}/${_PACKAGE_NAME}Config.cmake" )
 			configure_file(	${VISTA_REFERENCE_CONFIG_PROTO_FILE} ${_REFERENCE_TARGET_FILENAME} @ONLY )
-			endif( VISTA_REFERENCE_CONFIG_PROTO_FILE )
-	else( VISTA_COPY_BUILD_CONFIGS_REFS_TO_CMAKECOMMON )
+		endif()
+	else()
 		# since prior configure runs may have already added it (before the cache was turned off), we
 		# delete any prior copied versions to this location
 		local_clean_old_config_references( ${_PACKAGE_NAME} ${_REFERENCED_FILE} "" )
-	endif( VISTA_COPY_BUILD_CONFIGS_REFS_TO_CMAKECOMMON )
-endmacro( vista_create_cmake_config_build )
+	endif()
+endmacro()
 
 # vista_create_cmake_install( PACKAGE_NAME CONFIG_PROTO_FILE TARGET_DIR )
 # configures the specified <package>Config.cmake prototype file, stores it in a temporary
