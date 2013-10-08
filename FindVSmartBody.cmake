@@ -42,13 +42,16 @@ if( NOT VSMARTBODY_FOUND )
             ${SMARTBODY_ROOT_DIR}/lib/activemq/activemq-cpp/vs2010-build/DebugDLL64
             ${SMARTBODY_ROOT_DIR}/lib/activemq/activemq-cpp/vs2010-build/ReleaseDLL
             ${SMARTBODY_ROOT_DIR}/lib/xerces-c/lib
-            /usr/local_rwth/sw/boost/1_53_0/gcc_4.4.6-openmpi_1.6.4/lib/
+		/usr/local_rwth/sw/boost/1_53_0/gcc_4.4.6-openmpi_1.6.4/lib/
+		/usr/local_rwth/sw/python/2.7.5/x86_64/lib/
             ${SMARTBODY_ROOT_DIR}/core/smartbody/Python27/libs
         )
         else(CMAKE_SIZEOF_VOID_P EQUAL 8)
-            set( SMARTBODY_LIBRARY_DIRS 
-            ${SMARTBODY_ROOT_DIR}/core/smartbody/SmartBody/lib
-            ${SMARTBODY_ROOT_DIR}/core/smartbody/SmartBody/src/external/glew
+            set( SMARTBODY_LIBRARY_DIRS
+            /usr/local_rwth/sw/boost/1_53_0/gcc_4.4.6-openmpi_1.6.4/lib/
+		/usr/local_rwth/sw/python/2.7.5/x86_64/lib/
+		${SMARTBODY_ROOT_DIR}/core/smartbody/SmartBody/lib
+            #${SMARTBODY_ROOT_DIR}/core/smartbody/SmartBody/src/external/glew
             ${SMARTBODY_ROOT_DIR}/lib/vhcl/lib
             ${SMARTBODY_ROOT_DIR}/lib/boost/lib
             ${SMARTBODY_ROOT_DIR}/lib/bonebus/lib
@@ -106,7 +109,11 @@ if( NOT VSMARTBODY_FOUND )
         xerces-c
         boost_filesystem
         boost_system
-        steerlib
+	boost_regex
+	boost_python
+        pprAI
+	steerlib
+	python2.7
     )    
     endif()
         
