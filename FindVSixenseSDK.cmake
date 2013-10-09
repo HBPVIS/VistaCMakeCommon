@@ -4,7 +4,7 @@ include( FindPackageHandleStandardArgs )
 include( VistaFindUtils )
 
 if( NOT VSIXENSESDK_FOUND )
-	vista_find_package_root( SIXENSESDK include/sixense.h )
+	vista_find_package_root( SixenseSDK include/sixense.h )
 	
 	if( SIXENSESDK_ROOT_DIR )
 		set( SIXENSESDK_INCLUDE_DIRS "${SIXENSESDK_ROOT_DIR}/include" )
@@ -26,10 +26,10 @@ if( NOT VSIXENSESDK_FOUND )
 			endif()
 		elseif( UNIX )
 			if( VISTA_64BIT )
-				set( SIXENSESDK_LIBRARY_DIRS "${SIXENSESDK_ROOT_DIR}/lib/linux_x64/debug_dll" "${SIXENSESDK_ROOT_DIR}/lib/linux_x64/release_dll" )
+				set( SIXENSESDK_LIBRARY_DIRS "${SIXENSESDK_ROOT_DIR}/lib/linux_x64/release" "${SIXENSESDK_ROOT_DIR}/lib/linux_x64/debug" )
 				set( SIXENSESDK_LIBRARIES optimized sixense_x64 optimized sixense_utils_x64 debug sixensed_x64 debug sixense_utilsd_x64 )
 			else()
-				set( SIXENSESDK_LIBRARY_DIRS "${SIXENSESDK_ROOT_DIR}/lib/linux/debug_dll" "${SIXENSESDK_ROOT_DIR}/lib/linux/release_dll" )
+				set( SIXENSESDK_LIBRARY_DIRS "${SIXENSESDK_ROOT_DIR}/lib/linux/release" "${SIXENSESDK_ROOT_DIR}/lib/linux/debug" )
 				set( SIXENSESDK_LIBRARIES optimized sixense optimized sixense_utils debug sixensed debug sixense_utilsd )
 			endif()
 		elseif( NOT SIXENSESDK_FIND_QUIET )
@@ -41,5 +41,5 @@ if( NOT VSIXENSESDK_FOUND )
 
 endif( NOT VSIXENSESDK_FOUND )
 
-find_package_handle_standard_args( VSIXENSESDK "SIXENSESDK could not be found" SIXENSESDK_LIBRARY_DIRS SIXENSESDK_LIBRARIES )
+find_package_handle_standard_args( VSIXENSESDK "SixenseSDK could not be found" SIXENSESDK_LIBRARY_DIRS SIXENSESDK_LIBRARIES )
 
