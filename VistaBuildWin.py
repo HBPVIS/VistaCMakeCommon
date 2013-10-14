@@ -92,7 +92,7 @@ def CleanWorkspace(strdirpath):
     for (dirpath, dirnames, filenames) in os.walk(strdirpath):        
         for filename in filenames:
             temp, fileExtension = os.path.splitext(filename)
-            if fileExtension == '.obj' or fileExtension == '.pdb': 
+            if fileExtension == '.obj': 
                 try:
                     os.remove(os.sep.join([dirpath,filename]))
                 except:
