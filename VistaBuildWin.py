@@ -13,6 +13,10 @@ def BuildIt(strBuildType='Default', strCompiler = 'MSVC_10_64BIT', strCMakeVaria
     sys.stdout.write('Buildtype: ' + strBuildType + '\n')
     sys.stdout.write('Compiler: ' + strCompiler + '\n')
     sys.stdout.write('CMake Definitions: ' + strCMakeVariables + '\n')
+    sys.stdout.write('Workspace: ' + strWorkspacePath + '\n')
+    strWorkspacePath = os.environ['WORKSPACE']
+    
+    
     if True == bRunTests:
         sys.stdout.write('Executing tests\n')
     if True == bInstall:
@@ -77,7 +81,21 @@ def BuildIt(strBuildType='Default', strCompiler = 'MSVC_10_64BIT', strCMakeVaria
         
     os.chdir(os.path.join(strBasepath))
        
+    CleanWorkspace(strWorkspacePath)
+       
     sys.stdout.write("\n\nElapsed time: " + str(int(time.time()-fStartTime)) + " seconds\n")
+    sys.stdout.flush()
+    
+def CleanWorkspace(strdirpath):
+    sys.stdout.write("\nCleaning *.obj and *.pdb from "+strdirpath)
+    for (dirpath, dirnames, filenames) in os.walk(strdirpath):        
+        for filename in filenames:
+            temp, fileExtension = os.path.splitext(filename)
+            if fileExtension == '.obj' or fileExtension == '.pdb': 
+                try:
+                    os.remove(os.sep.join([dirpath,filename]))
+                except:
+                    sys.stderr.out("Error while deleting "+os.sep.join([dirpath,filename]))
     sys.stdout.flush()
 
 def MSVCBuildCall(strBuildType):
