@@ -81,8 +81,9 @@ def BuildIt(strBuildType='Default', strCompiler = 'MSVC_10_64BIT', strCMakeVaria
         MSVCInstallCall()    
         
     os.chdir(os.path.join(strBasepath))
-       
-    CleanWorkspace(strWorkspacePath)
+    
+    if True == bDeleteCMakeCache:
+        CleanWorkspace(strWorkspacePath)
        
     sys.stdout.write("\n\nElapsed time: " + str(int(time.time()-fStartTime)) + " seconds\n")
     sys.stdout.flush()
@@ -92,7 +93,7 @@ def CleanWorkspace(strdirpath):
     for (dirpath, dirnames, filenames) in os.walk(strdirpath):        
         for filename in filenames:
             temp, fileExtension = os.path.splitext(filename)
-            if fileExtension == '.obj': 
+            if fileExtension == '.obj' or fileExtension == '.pdb': 
                 try:
                     os.remove(os.sep.join([dirpath,filename]))
                 except:
