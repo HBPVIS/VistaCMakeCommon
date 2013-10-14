@@ -5,7 +5,7 @@
 # PACKAGE MACROS:
 # vista_add_external_msvc_project_of_package( PACKAGE_NAME [SOLUTION_FOLDER] [DEPENDENT (DENENDENT_TARGET)+ ] [ DEPENDS (DEPENDANT_TRAGET)+ ]  )
 # vista_find_package( <package> [version] [EXACT] [QUIET] [[REQUIRED|COMPONENTS] [components...]] [NO_POLICY_SCOPE] [NO_MODULE] )
-# vista_use_package( <package> [version] [EXACT] [QUIET] [[REQUIRED|COMPONENTS] [components...]] [NO_POLICY_SCOPE] [NO_MODULE] [FIND_DEPENDENCIES] )
+# vista_use_package( <package> [version] [EXACT] [QUIET] [[REQUIRED|COMPONENTS] [components...]] [NO_POLICY_SCOPE] [NO_MODULE] [FIND_DEPENDENCIES] [SYSTEM_HEADERS] )
 # vista_find_shader_dirs( PACKAGE_NAME )
 # vista_configure_app( PACKAGE_NAME [OUT_NAME] )
 # vista_configure_lib( PACKAGE_NAME [OUT_NAME] )
@@ -701,7 +701,7 @@ macro( vista_find_package _PACKAGE_NAME )
 endmacro( vista_find_package )
 
 
-# vista_use_package( PACKAGE [VERSION] [EXACT] [[COMPONENTS | REQUIRED] comp1 comp2 ... ] [QUIET] [FIND_DEPENDENCIES] [NO_RECURSIVE_DEPENCENCY] )
+# vista_use_package( PACKAGE [VERSION] [EXACT] [[COMPONENTS | REQUIRED] comp1 comp2 ... ] [QUIET] [FIND_DEPENDENCIES] [NO_RECURSIVE_DEPENCENCY] [SYSTEM_HEADERS] )
 # finds the desired Package and automatically sets the include dirs, library dirs, definitions for the project.
 # Libraries have to be included using the VARIABLE PACKAGENAME_LIBRARIES. Alternatively, VISTA_USE_PACKAGE_LIBRARIES contains
 # all libraries that have been linked by vista_use_package calls. Additionally, buildsystem-specific variables are set that
@@ -715,14 +715,16 @@ endmacro( vista_find_package )
 # FIND_DEPENDENCIES If set, all packages that are required by the included packages are tried to be found and used automatically
 # NO_RECURSIVE_DEPENCENCY specifies that this package should not count as a recursive dependency, i.e. if a library uses this package,
 #                     and is then used (via vista_use_package) by another project, this package will not count as dependency for the
-#                     new project. This is usefull e.g. for header-only-libraries or libs that are statically linked-in
+#                     new project. This is useful e.g. for header-only-libraries or libs that are statically linked-in
+# SYSTEM_HEADERS marks all include paths of this package as system include pathes on supported compilers (e.g. gcc), which
+#                     may have multiple effects, e.g. ignoring of warnings in these files
 macro( vista_use_package _PACKAGE_NAME )
 	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
-
+		
 	# check if we need to rerun. this is the case it has not been used yet,
 	# or if it has been used, but now additional dependencies are requested
 	set( _REQUIRES_RERUN TRUE )
-	set( _VISTAUSEPACKAGE_COMPONENTS )	
+	set( _VISTAUSEPACKAGE_COMPONENTS )
 	if( VISTA_USE_${_PACKAGE_NAME_UPPER} )
 		# extract components, to see if they are met already or not
 		set( _REQUESTED_COMPONENTS )
@@ -736,7 +738,8 @@ macro( vista_use_package _PACKAGE_NAME )
 					OR ${_ARG} STREQUAL "NO_POLICY_SCOPE"
 					OR ${_ARG} STREQUAL "FIND_DEPENDENCIES"	
 					OR ${_ARG} STREQUAL "NO_RECURSIVE_DEPENCENCY"
-					OR ${_ARG} STREQUAL "NO_RMODULE" )
+					OR ${_ARG} STREQUAL "NO_RMODULE"
+					OR ${_ARG} STREQUAL "SYSTEM_HEADERS"	)
 				set( _PARSE_COMPONENTS FALSE )
 			elseif( _PARSE_COMPONENTS )
 				list( APPEND _REQUESTED_COMPONENTS ${_ARG} )
@@ -786,10 +789,17 @@ macro( vista_use_package _PACKAGE_NAME )
 		endif()
 
 		list( FIND _ARGUMENTS "QUIET" _QUIET_FOUND )
-		if( _QUIET_FOUND )
+		if( _QUIET_FOUND GREATER -1 )
 			set( _QUIET TRUE )
 		else()
 			set( _QUIET FALSE )
+		endif()
+		
+		list( FIND _ARGUMENTS "SYSTEM_HEADERS" _SYSTEM_HEADERS_FOUND )
+		if( _SYSTEM_HEADERS_FOUND GREATER -1 )
+			set( _PACKAGE_INCLUDES_ARE_SYSTEM_HEADERS TRUE )
+		else()
+			set( _PACKAGE_INCLUDES_ARE_SYSTEM_HEADERS FALSE )
 		endif()
 
 		# finding will handle differences to already run find's
@@ -808,7 +818,11 @@ macro( vista_use_package _PACKAGE_NAME )
 			if( ${_PACKAGE_NAME_UPPER}_USE_FILE )
 				include( ${${_PACKAGE_NAME_UPPER}_USE_FILE} )
 			else()
-				include_directories( ${${_PACKAGE_NAME_UPPER}_INCLUDE_DIRS} )
+				if( _PACKAGE_INCLUDES_ARE_SYSTEM_HEADERS )
+					include_directories( SYSTEM ${${_PACKAGE_NAME_UPPER}_INCLUDE_DIRS} )
+				else()
+					include_directories( ${${_PACKAGE_NAME_UPPER}_INCLUDE_DIRS} )
+				endif()
 				link_directories( ${${_PACKAGE_NAME_UPPER}_LIBRARY_DIRS} )
 				add_definitions( ${${_PACKAGE_NAME_UPPER}_DEFINITIONS} )
 			endif( ${_PACKAGE_NAME_UPPER}_USE_FILE )
