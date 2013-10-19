@@ -835,9 +835,10 @@ macro( vista_use_package _PACKAGE_NAME )
 			set( VISTA_USING_${_PACKAGE_NAME_UPPER} TRUE )
 			
 			if( NOT _NO_RECURSIVE_DEPENCENCY )
-				# store dependencies only if we were not called recursively
-				if( NOT INTERNAL_VISTA_FIND_PACKAGE_LIBS GREATER 1 )
-					list( APPEND VISTA_TARGET_FULL_DEPENDENCIES ${_PACKAGE_NAME} )
+				list( APPEND VISTA_TARGET_FULL_DEPENDENCIES ${_PACKAGE_NAME} )
+				list( REMOVE_DUPLICATES VISTA_TARGET_FULL_DEPENDENCIES )
+				# store dependencies only if we were not called recursively, and only if at least one library is actually added
+				if( NOT VISTA_USE_PACKAGE_RECURSION_COUNT OR VISTA_USE_PACKAGE_RECURSION_COUNT EQUAL 0 )
 					list( APPEND VISTA_TARGET_DEPENDENCIES "package" ${ARGV} )
 				endif()
 			endif()
@@ -849,7 +850,7 @@ macro( vista_use_package _PACKAGE_NAME )
 			# its dependencies (which may append libraries to the internal storage), and finally prepend
 			# the internal storage to VISTA_USE_PACKAGE_LIBRARIES
 			set( INTERNAL_VISTA_FIND_PACKAGE_LIBS ${INTERNAL_VISTA_FIND_PACKAGE_LIBS} ${${_PACKAGE_NAME_UPPER}_LIBRARIES} )
-			
+						
 			if( ${_PACKAGE_NAME_UPPER}_SHADER_DIRS )
 				list( APPEND VISTA_SHADER_DIRECTORIS ${${_PACKAGE_NAME_UPPER}_SHADER_DIRS} )
 				list( REMOVE_DUPLICATES VISTA_SHADER_DIRECTORIS )
@@ -886,19 +887,19 @@ macro( vista_use_package _PACKAGE_NAME )
 									message( WARNING "vista_use_package( ${_PACKAGE_NAME} ) - Package depends on \"${_DEPENDENCY_ARGS}\", but including it failed" )
 								endif( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND AND NOT _QUIET )
 							#endif( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND )
-						else( _FIND_DEPENDENCIES )
+						else()
 							# check if dependencies are already included. If not, utter a warning
 							if( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND AND NOT _QUIET )
 								message( "vista_use_package( ${_PACKAGE_NAME} ) - Package depends on \"${_DEPENDENCY_ARGS}\", which was not found yet - "
 										"make sure to find this package before searchig for ${_PACKAGE_NAME}, or use parameter FIND_DEPENDENCIES" )
-							endif( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND AND NOT _QUIET )
+							endif()
 						endif( _FIND_DEPENDENCIES )
 						set( _DEPENDENCY_ARGS )
-					endif( _DEPENDENCY_ARGS AND NOT "${_DEPENDENCY_ARGS}" STREQUAL ""  )
+					endif()
 				else()
 					list( APPEND _DEPENDENCY_ARGS ${_DEPENDENCY} )
-				endif( _DEPENDENCY STREQUAL "package" )
-			endforeach( _DEPENDENCY ${${_PACKAGE_NAME_UPPER}_DEPENDENCIES} )
+				endif()
+			endforeach()
 
 			math( EXPR VISTA_USE_PACKAGE_RECURSION_COUNT "${VISTA_USE_PACKAGE_RECURSION_COUNT} - 1" )
 
@@ -909,9 +910,8 @@ macro( vista_use_package _PACKAGE_NAME )
 			endif()			
 
 		endif()		
-	endif( _REQUIRES_RERUN )
-
-endmacro( vista_use_package _PACKAGE_NAME )
+	endif()
+endmacro()
 
 # vista_find_shader_dirs( PACKAGE_NAME )
 # serches recursive for all subdirectories of CURRENT_SOURCE_DIR that contain shader files and 
@@ -2076,7 +2076,14 @@ macro( vista_create_info_file _PACKAGE_NAME _TARGET_DIR _INSTALL_DIR )
 	endif( UNIX )
 
 	set( INFO_STRING "${INFO_STRING}\n\nDEPENDENCIES" )
-	set( INFO_STRING "${INFO_STRING}\nvista_use_package calls:  ${${_PACKAGE_NAME_UPPER}_DEPENDENCIES}" )
+	set( INFO_STRING "${INFO_STRING}\nvista_use_package calls:" )
+	foreach( _ARG ${${_PACKAGE_NAME_UPPER}_DEPENDENCIES} )
+		if( _ARG STREQUAL "package" )
+			set( INFO_STRING "${INFO_STRING}\n\t" )
+		else()
+			set( INFO_STRING "${INFO_STRING}${_ARG} " )
+		endif()
+	endforeach()
 	set( INFO_STRING "${INFO_STRING}\nFull dependency info:" )
 	foreach( _DEP ${${_PACKAGE_NAME_UPPER}_FULL_DEPENDENCIES} )
 		string( TOUPPER ${_DEP} _DEP_UPPER )
