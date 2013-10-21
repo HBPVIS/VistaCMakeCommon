@@ -89,15 +89,13 @@ def BuildIt(strBuildType='Default', strCompiler = 'MSVC_10_64BIT', strCMakeVaria
     sys.stdout.flush()
     
 def CleanWorkspace(strdirpath):
-    sys.stdout.write("\nCleaning *.obj and *.pdb from "+strdirpath)
+    sys.stdout.write("\nCleaning *.obj files from "+strdirpath+"\n")
     for (dirpath, dirnames, filenames) in os.walk(strdirpath):        
         for filename in filenames:
             temp, fileExtension = os.path.splitext(filename)
-            if fileExtension == '.obj' or fileExtension == '.pdb': 
+            if fileExtension == '.obj': 
                 try:
                     os.remove(os.sep.join([dirpath,filename]))
-                    if fileExtension == '.pdb':
-                        sys.stdout.write("[DebugOutput:] deleting "+os.sep.join([dirpath,filename]))
                 except:
                     sys.stderr.out("Error while deleting "+os.sep.join([dirpath,filename]))
     sys.stdout.flush()
