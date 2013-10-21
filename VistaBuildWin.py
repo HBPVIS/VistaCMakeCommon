@@ -96,6 +96,8 @@ def CleanWorkspace(strdirpath):
             if fileExtension == '.obj' or fileExtension == '.pdb': 
                 try:
                     os.remove(os.sep.join([dirpath,filename]))
+                    if fileExtension == '.pdb':
+                        sys.stdout.write("[DebugOutput:] deleting "+os.sep.join([dirpath,filename]))
                 except:
                     sys.stderr.out("Error while deleting "+os.sep.join([dirpath,filename]))
     sys.stdout.flush()
