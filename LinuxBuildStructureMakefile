@@ -16,7 +16,7 @@ release:
 		&& echo -e "\n${COLOR_BUILD}##### Building RELEASE #####${COLOR_RESET}"  \
 		&& $(MAKE) \
 		&& echo -e "${COLOR_SUCCEED}##### Successfully built RELEASE #####${COLOR_RESET}"  \
-	) || ( echo -e "${COLOR_FAILED}##### Failed building RELEASE #####${COLOR_RESET}" && exit )
+	) || ( echo -e "${COLOR_FAILED}##### Failed building RELEASE #####${COLOR_RESET}" && exit 1 )
 .PHONY : release
 
 debug:
@@ -25,7 +25,7 @@ debug:
 		&& echo -e "\n${COLOR_BUILD}##### Building DEBUG   #####${COLOR_RESET}"  \
 		&& $(MAKE) \
 		&& echo -e "${COLOR_SUCCEED}##### Successfully built DEBUG   #####${COLOR_RESET}"  \
-	) || ( echo -e "${COLOR_FAILED}##### Failed building DEBUG   #####${COLOR_RESET}" && exit )
+	) || ( echo -e "${COLOR_FAILED}##### Failed building DEBUG   #####${COLOR_RESET}" && exit 1 )
 .PHONY : debug
 
 clean:
@@ -48,13 +48,13 @@ clean:
 		&& echo -e "\n${COLOR_BUILD}##### Building RELEASE #####${COLOR_RESET}"  \
 		&& $(MAKE) $@ \
 		&& echo -e "${COLOR_SUCCEED}##### Successfully built RELEASE #####${COLOR_RESET}"  \
-	) || ( echo -e "${COLOR_FAILED}##### Failed building RELEASE #####${COLOR_RESET}" && exit )
+	) || ( echo -e "${COLOR_FAILED}##### Failed building RELEASE #####${COLOR_RESET}" && exit 1 )
 	( \
 		cd ${DEBUG_DIR} \
 		&& echo -e "\n${COLOR_BUILD}##### Building DEBUG   #####${COLOR_RESET}"  \
 		&& $(MAKE) $@ \
 		&& echo -e "${COLOR_SUCCEED}##### Successfully built DEBUG   #####${COLOR_RESET}"  \
-	) || ( echo -e "${COLOR_FAILED}##### Failed building DEBUG   #####${COLOR_RESET}" && exit )
+	) || ( echo -e "${COLOR_FAILED}##### Failed building DEBUG   #####${COLOR_RESET}" && exit 1 )
 NOTPARALLEL : default
 
 
