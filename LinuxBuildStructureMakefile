@@ -33,12 +33,12 @@ clean:
 		cd ${RELEASE_DIR} \
 		&& echo -e "\n${COLOR_BUILD}##### Cleaning RELEASE #####${COLOR_RESET}"  \
 		&& $(MAKE) clean \
-	) || exit
+	) || exit 1
 	@( \
 		cd ${DEBUG_DIR} \
 		&& echo -e "\n${COLOR_BUILD}##### Cleaning DEBUG   #####${COLOR_RESET}"  \
 		&& $(MAKE) clean \
-	) || exit
+	) || exit 1
 .PHONY : clean
 
 # maps any non-specified call to the subdirs, to allow building specific targets

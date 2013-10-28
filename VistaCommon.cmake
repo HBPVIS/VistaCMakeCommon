@@ -816,7 +816,7 @@ macro( vista_use_package _PACKAGE_NAME )
 			# if a USE_FILE is specified, we assume that it handles all the settings
 			# if not, we set the necessary values ourselves
 			if( ${_PACKAGE_NAME_UPPER}_USE_FILE )
-				include( ${${_PACKAGE_NAME_UPPER}_USE_FILE} )
+				include( "${${_PACKAGE_NAME_UPPER}_USE_FILE}" )
 			else()
 				if( _PACKAGE_INCLUDES_ARE_SYSTEM_HEADERS )
 					include_directories( SYSTEM ${${_PACKAGE_NAME_UPPER}_INCLUDE_DIRS} )

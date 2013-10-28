@@ -10,17 +10,14 @@ if( NOT VOPENSG_FOUND )
 		if( UNIX )
 			set( OPENSG_LIBRARY_DIRS ${OPENSG_ROOT_DIR}/lib/opt )
 			set( OPENSG_LIBRARIES
-				OSGWindowGLUT
 				OSGSystem
 				OSGBase
 			)
 		elseif( WIN32 )
 			set( OPENSG_LIBRARY_DIRS ${OPENSG_ROOT_DIR}/lib )
 			set( OPENSG_LIBRARIES
-				optimized OSGWindowGLUT
 				optimized OSGSystem
 				optimized OSGBase
-				debug OSGWindowGLUTD
 				debug OSGSystemD
 				debug OSGBaseD
 			)
