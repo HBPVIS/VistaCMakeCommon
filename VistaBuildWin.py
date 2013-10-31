@@ -13,10 +13,7 @@ def BuildIt(strBuildType='Default', strCompiler = 'MSVC_10_64BIT', strCMakeVaria
     sys.stdout.write('Buildtype: ' + strBuildType + '\n')
     sys.stdout.write('Compiler: ' + strCompiler + '\n')
     sys.stdout.write('CMake Definitions: ' + strCMakeVariables + '\n')
-    strWorkspacePath = os.environ['WORKSPACE']
-    sys.stdout.write('Workspace: ' + strWorkspacePath + '\n')
-    
-    
+   
     
     if True == bRunTests:
         sys.stdout.write('Executing tests\n')
@@ -63,22 +60,22 @@ def BuildIt(strBuildType='Default', strCompiler = 'MSVC_10_64BIT', strCMakeVaria
         
     #make it
     if strBuildType is not 'Default':
-        MSVCBuildCall(strBuildType)
+        MSVCBuildCall(strBuildType, strVCVersion)
     else:
-        MSVCBuildCall('Debug')
-        MSVCBuildCall('Release')  
+        MSVCBuildCall('Debug', strVCVersion)
+        MSVCBuildCall('Release', strVCVersion)  
     
     #execute tests
     if True == bRunTests:
         if strBuildType is not 'Default':
-            MSVCTestCall(strBuildType)
+            MSVCTestCall(strBuildType, strVCVersion)
         else:
-            MSVCTestCall('Debug')
-            MSVCTestCall('Release')     
+            MSVCTestCall('Debug', strVCVersion)
+            MSVCTestCall('Release', strVCVersion)     
         
     #install
     if True == bInstall:
-        MSVCInstallCall()    
+        MSVCInstallCall("ALL_BUILD", strVCVersion)    
         
     os.chdir(os.path.join(strBasepath))
     
@@ -100,18 +97,18 @@ def CleanWorkspace(strdirpath):
                     sys.stderr.out("Error while deleting "+os.sep.join([dirpath,filename]))
     sys.stdout.flush()
 
-def MSVCBuildCall(strBuildType):
+def MSVCBuildCall(strBuildType, strVCVersion):
         sys.stdout.write('\nStarting to build '+strBuildType+ '\n')
-        strVC = 'call "c:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\VC\\vcvarsall.bat" x86'
+        strVC = getVCvarsall( strVCVersion )
         strVC += ' & msbuild ALL_BUILD.vcxproj /property:configuration=' + strBuildType
         strVC += ' /m /clp:ErrorsOnly'
         iRC, strConsoleOutput = VistaPythonCommon.SysCall(strVC)
         sys.stdout.write(strConsoleOutput)
         sys.stdout.flush()
         
-def MSVCTestCall(strBuildType):
+def MSVCTestCall(strBuildType, strVCVersion):
         sys.stdout.write('\nStarting to build Tests \n')
-        strVC = 'call "c:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\VC\\vcvarsall.bat" x86'
+        strVC = getVCvarsall( strVCVersion )
         strVC += ' & msbuild RUN_TESTS.vcxproj /property:configuration=' + strBuildType
         iRC, strConsoleOutput = VistaPythonCommon.SysCall(strVC,ExitOnError = False)
         if 0 != iRC:
@@ -121,10 +118,20 @@ def MSVCTestCall(strBuildType):
         sys.stdout.write(strConsoleOutput)
         sys.stdout.flush()
         
-def MSVCInstallCall( strTarget = "ALL_BUILD" ):
+def MSVCInstallCall( strTarget = "ALL_BUILD" , strVCVersion = "10" ):
         sys.stdout.write('\nStarting to build Tests \n')
-        strVC = 'call "c:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\VC\\vcvarsall.bat" x86'
+        strVC = getVCvarsall( strVCVersion )
         strVC += ' & msbuild INSTALL.vcxproj '
         iRC, strConsoleOutput = VistaPythonCommon.SysCall(strVC)
         sys.stdout.write(strConsoleOutput)
         sys.stdout.flush()
+
+def getVCvarsall( strVCVersion ): #  or 11
+    if "10" == strVCVersion:
+        return 'call "c:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\VC\\vcvarsall.bat" x86'
+    elif "11" == strVCVersion:
+        return 'call "c:\\Program Files (x86)\\Microsoft Visual Studio 11.0\\VC\\vcvarsall.bat" x86'
+    else:
+        sys.stderr.write('\n\n*** ERROR *** Unsupported MSVC Version\n')
+        sys.stderr.write('Supported are: 10 and 11.\n Given is:'+strVCVersion)
+        ExitGently(-1)
