@@ -80,7 +80,7 @@ def BuildIt(strBuildType='Default', strCompiler = 'MSVC_10_64BIT', strCMakeVaria
     os.chdir(os.path.join(strBasepath))
     
     if True == bDeleteCMakeCache:
-        CleanWorkspace(strWorkspacePath)
+        CleanWorkspace(os.path.join(strBasepath, strBuildFolder))
        
     sys.stdout.write("\n\nElapsed time: " + str(int(time.time()-fStartTime)) + " seconds\n")
     sys.stdout.flush()
