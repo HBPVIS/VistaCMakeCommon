@@ -699,6 +699,13 @@ macro( vista_find_package_root _PACKAGE_NAME _EXAMPLE_FILE )
 
 endmacro()
 
+# vista_add_package_dependency( PACKAGE_NAME DEPENDENCY ... )
+# where DEPENDENCY is the equivalent of the vista_use_package_call that should ideally be called
+macro( vista_add_package_dependency _PACKAGE_NAME )
+	string( TOUPPER ${_PACKAGE_NAME} _PACKAGE_NAME_UPPER )
+	list( APPEND ${_PACKAGE_NAME_UPPER}_DEPENDENCIES package ${ARGN} )
+endmacro()
+
 # vista_find_library_uncached( ...find_library_parameters... )
 # usage is a little special: call exactly as find_library, but WITHOUT the target variable
 # the output will be stored in the (uncached) variable VISTA_UNCACHED_LIBRARY
