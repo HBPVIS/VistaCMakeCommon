@@ -99,9 +99,9 @@ def MakeJenkinsBuild(strBuildType, strCompiler, strCMakeVariables, bDeleteCMakeC
     
     #execute tests
     if True == bRunTests:
-        iRC, strConsoleOutput = VistaPythonCommon.SysCall(strCompilerEnv + 'make test',ExitOnError = False)
-        if 0 != iRC:
-            iRC, strConsoleOutput = VistaPythonCommon.SysCall(strCompilerEnv + 'make test_verbose',ExitOnError = True)
+        iRC, strConsoleOutput = VistaPythonCommon.SysCall(strCompilerEnv + 'make test_outputonfailure',ExitOnError = False)
+        #if 0 != iRC:
+        #    iRC, strConsoleOutput = VistaPythonCommon.SysCall(strCompilerEnv + 'make test_verbose',ExitOnError = True)
         sys.stdout.write(strConsoleOutput)
         sys.stdout.flush()
         
