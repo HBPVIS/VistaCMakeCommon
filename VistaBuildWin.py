@@ -101,7 +101,7 @@ def MSVCBuildCall(strBuildType, strVCVersion):
         sys.stdout.write('\nStarting to build '+strBuildType+ '\n')
         strVC = getVCvarsall( strVCVersion )
         strVC += ' & msbuild ALL_BUILD.vcxproj /property:configuration=' + strBuildType
-        strVC += ' /m /clp:ErrorsOnly'
+        strVC += ' /m'
         iRC, strConsoleOutput = VistaPythonCommon.SysCall(strVC)
         sys.stdout.write(strConsoleOutput)
         sys.stdout.flush()
@@ -135,5 +135,5 @@ def getVCvarsall( strVCVersion ): #  or 11
         return 'call "c:\\Program Files (x86)\\Microsoft Visual Studio 9.0\\VC\\vcvarsall.bat" x86'
     else:
         sys.stderr.write('\n\n*** ERROR *** Unsupported MSVC Version\n')
-        sys.stderr.write('Supported are: 10 and 11.\n Given is:'+strVCVersion)
+        sys.stderr.write('Supported are: 09, 10 and 11.\n Given is:'+strVCVersion)
         ExitGently(-1)
