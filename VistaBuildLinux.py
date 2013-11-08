@@ -9,10 +9,20 @@ def BuildIt(strBuildType='Default', strCompiler = 'GCC_DEFAULT', strCMakeVariabl
     #make sure we are on linux system
     if sys.platform != 'linux2':
         VistaPythonCommon.ExitError('\n\n*** ERROR *** Linux build on non Linux system\n\n',-1)
-
+    
     sys.stdout.write('Buildtype: ' + strBuildType + '\n')
     sys.stdout.write('Compiler: ' + strCompiler + '\n')
     sys.stdout.write('CMake Definitions: ' + strCMakeVariables + '\n')
+    
+    sys.stdout.write('Username: ')
+    VistaPythonCommon.SysCall('whoami',ExitOnError = False)
+    sys.stdout.write('\nSHELL: ')
+    VistaPythonCommon.SysCall('echo $SHELL',ExitOnError = False)
+    sys.stdout.write('\nHostname: ')
+    VistaPythonCommon.SysCall('echo $HOSTNAME',ExitOnError = False)
+    sys.stdout.write('\n')
+    sys.stdout.flush()
+    
     if True == bRunTests:
         sys.stdout.write('make tests will be executed\n')
     if True == bInstall:
