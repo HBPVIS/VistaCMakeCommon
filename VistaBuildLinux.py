@@ -70,6 +70,9 @@ def MakeJenkinsBuild(strBuildType, strCompiler, strCMakeVariables, bDeleteCMakeC
     #check compiler if we are on gpucluster
     strCompilerEnv = GetCompilerEnvCall(strCompiler)
 
+    sys.stdout.write('Compiler Environment:\n ' + strCompilerEnv + '\n\nExecution cmake:\n')
+    sys.stdout.flush()
+    
     #configure cmake
     strCMakeCmd = strCompilerEnv + 'cmake -DCMAKE_BUILD_TYPE=' + strBuildType + ' ' + strCMakeVariables + ' ' + os.path.join(strBasePath)
     iRC, strConsoleOutput = VistaPythonCommon.SysCall(strCMakeCmd)
