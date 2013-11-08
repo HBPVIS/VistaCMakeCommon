@@ -14,9 +14,9 @@ def BuildIt(strBuildType='Default', strCompiler = 'GCC_DEFAULT', strCMakeVariabl
     sys.stdout.write('Compiler: ' + strCompiler + '\n')
     sys.stdout.write('CMake Definitions: ' + strCMakeVariables + '\n')
     if True == bRunTests:
-        sys.stdout.write('Executing tests\n')
+        sys.stdout.write('make tests will be executed\n')
     if True == bInstall:
-        sys.stdout.write('Make install\n')
+        sys.stdout.write('make install will be executed\n')
     sys.stdout.flush()
     
     fStartTime=time.time()
@@ -71,6 +71,7 @@ def MakeJenkinsBuild(strBuildType, strCompiler, strCMakeVariables, bDeleteCMakeC
     strCompilerEnv = GetCompilerEnvCall(strCompiler)
 
     sys.stdout.write('Compiler Environment:\n ' + strCompilerEnv + '\n\nExecution cmake:\n')
+    VistaPythonCommon.SysCall('cmake -version',ExitOnError = False)
     sys.stdout.flush()
     
     #configure cmake
@@ -118,17 +119,18 @@ def MakeJenkinsBuild(strBuildType, strCompiler, strCMakeVariables, bDeleteCMakeC
         
 #since every syscall opens a new shell we have to set environment each time :(
 def GetCompilerEnvCall(strCompiler):
+    strDefaultModules = 'module unload gcc;module unload intel;module load cmake/2.8.5;'
     if (0 == os.uname()[1].find('linuxgpu')):
         liCompilerDef = strCompiler.split('_', 1)
         if (len(liCompilerDef) != 0):
             if 'INTEL' in liCompilerDef[0]:
-                return 'module unload gcc;module unload intel;module load intel;'
+                return strDefaultModules+'module load intel;'
             elif 'GCC' in liCompilerDef[0]:
                 if (len(liCompilerDef) > 1):
                     if 'DEFAULT' in liCompilerDef[1]:
-                        return 'module unload gcc;module unload intel;module load gcc;'
+                        return strDefaultModules+'module load gcc;'
                     else:
-                        return 'module unload gcc;module unload intel;module load gcc/' + liCompilerDef[1] + ';'
+                        return strDefaultModules+'module load gcc/' + liCompilerDef[1] + ';'
             else:
                 sys.stderr.write('unsupported compiler-version: ' + strCompiler)
                 VistaPythonCommon.ExitGently(-1)
