@@ -100,7 +100,7 @@ def CleanWorkspace(strdirpath):
 def MSVCBuildCall(strBuildType, strVCVersion):
         sys.stdout.write('\nStarting to build '+strBuildType+ '\n')
         strVC = getVCvarsall( strVCVersion )
-        strVC += ' & msbuild ALL_BUILD.vcxproj /property:configuration=' + strBuildType
+        strVC += ' & msbuild ALL_BUILD.'+getProjextFileEnding( strVCVersion )+' /property:configuration=' + strBuildType
         strVC += ' /maxcpucount '
         iRC, strConsoleOutput = VistaPythonCommon.SysCall(strVC)
         sys.stdout.write(strConsoleOutput)
@@ -109,11 +109,11 @@ def MSVCBuildCall(strBuildType, strVCVersion):
 def MSVCTestCall(strBuildType, strVCVersion):
         sys.stdout.write('\nStarting to build Tests \n')
         strVC = getVCvarsall( strVCVersion )
-        strVC += ' & msbuild RUN_TESTS.vcxproj /property:configuration=' + strBuildType
+        strVC += ' & msbuild RUN_TESTS.'+getProjextFileEnding( strVCVersion )+' /property:configuration=' + strBuildType
         iRC, strConsoleOutput = VistaPythonCommon.SysCall(strVC,ExitOnError = False)
         if 0 != iRC:
             strVC = getVCvarsall( strVCVersion )
-            strVC += ' & msbuild RUN_TESTS_VERBOSE.'+getProjextFileEnding( strVCVersion )+' '
+            strVC += ' & msbuild RUN_TESTS_VERBOSE.'+getProjextFileEnding( strVCVersion )
             iRC, strConsoleOutput = VistaPythonCommon.SysCall(strVC,ExitOnError = True)
         sys.stdout.write(strConsoleOutput)
         sys.stdout.flush()
@@ -121,7 +121,7 @@ def MSVCTestCall(strBuildType, strVCVersion):
 def MSVCInstallCall( strTarget = "ALL_BUILD" , strVCVersion = "10" ):
         sys.stdout.write('\nStarting to build Tests \n')
         strVC = getVCvarsall( strVCVersion )
-        strVC += ' & msbuild INSTALL.vcxproj '
+        strVC += ' & msbuild INSTALL.'+getProjextFileEnding( strVCVersion )
         iRC, strConsoleOutput = VistaPythonCommon.SysCall(strVC)
         sys.stdout.write(strConsoleOutput)
         sys.stdout.flush()
