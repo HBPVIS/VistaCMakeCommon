@@ -112,8 +112,8 @@ def MSVCTestCall(strBuildType, strVCVersion):
         strVC += ' & msbuild RUN_TESTS.vcxproj /property:configuration=' + strBuildType
         iRC, strConsoleOutput = VistaPythonCommon.SysCall(strVC,ExitOnError = False)
         if 0 != iRC:
-            strVC = 'call "c:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\VC\\vcvarsall.bat" x86'
-            strVC += ' & msbuild RUN_TESTS_VERBOSE.vcxproj '
+            strVC = getVCvarsall( strVCVersion )
+            strVC += ' & msbuild RUN_TESTS_VERBOSE.'+getProjextFileEnding( strVCVersion )+' '
             iRC, strConsoleOutput = VistaPythonCommon.SysCall(strVC,ExitOnError = True)
         sys.stdout.write(strConsoleOutput)
         sys.stdout.flush()
@@ -160,3 +160,10 @@ def getMSVCGeneratorString(strCompiler, strVCVersion):
         ExitGently(-1)
     return strMSVCGenerator+strVersion+strArch
 
+def getProjextFileEnding( strVCVersion ):
+    if "09" == strVCVersion:
+        return 'vcxproj'
+    else:
+        return 'vcproj'
+
+    
