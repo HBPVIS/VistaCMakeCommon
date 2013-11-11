@@ -138,7 +138,7 @@ def getVCvarsall( strVCVersion ): #  or 11
         sys.stderr.write('Supported are: 09, 10 and 11.\n Given is:'+strVCVersion)
         ExitGently(-1)
         
-def getMSVCGeneratorString(strCompiler, strVCVersion)
+def getMSVCGeneratorString(strCompiler, strVCVersion):
     strMSVCGenerator='Visual Studio '
     strArch=''
     strVersion=''
