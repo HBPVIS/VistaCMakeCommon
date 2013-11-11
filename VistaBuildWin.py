@@ -162,8 +162,8 @@ def getMSVCGeneratorString(strCompiler, strVCVersion):
 
 def getProjextFileEnding( strVCVersion ):
     if "09" == strVCVersion:
-        return 'vcxproj'
-    else:
         return 'vcproj'
+    else:
+        return 'vcxproj'
 
     
