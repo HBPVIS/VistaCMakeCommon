@@ -30,11 +30,11 @@ def BuildIt(strBuildType='Default', strCompiler = 'MSVC_10_64BIT', strCMakeVaria
         sys.stderr.write('\n\n*** ERROR *** Formt of Visual Studio version\n\n')
         ExitGently(-1)
     
-    strArch = ''
-    strMSCV = 'Visual Studio ' + strVCVersion
-    if '64BIT' in strCompiler:
-        strArch = '-x64'
-        strMSCV += ' Win64'
+    #strArch = ''
+    #strMSCV = 'Visual Studio ' + strVCVersion
+    #if '64BIT' in strCompiler:
+        #strArch = '-x64'
+        #strMSCV += ' Win64'
     
     if strBuildFolder is 'JenkinsDefault':
         strBuildFolder='build'#.win32' + strArch + '.vc' + strVCVersion #shortening this one because of vc10 bug regarding filename length 
@@ -50,7 +50,7 @@ def BuildIt(strBuildType='Default', strCompiler = 'MSVC_10_64BIT', strCMakeVaria
     os.chdir(os.path.join(strBasepath, strBuildFolder))
     
     #configure cmake
-    strCMakeCmd = 'cmake.exe -G "' + strMSCV + '" ' + strCMakeVariables + ' ' + os.path.join(strBasepath)
+    strCMakeCmd = 'cmake.exe -G "' + getMSVCGeneratorString(strCompiler,strVCVersion) + '" ' + strCMakeVariables + ' ' + os.path.join(strBasepath)
     iRC, strConsoleOutput = VistaPythonCommon.SysCall(strCMakeCmd)
     sys.stdout.write(strConsoleOutput)
     sys.stdout.flush()
@@ -137,3 +137,26 @@ def getVCvarsall( strVCVersion ): #  or 11
         sys.stderr.write('\n\n*** ERROR *** Unsupported MSVC Version\n')
         sys.stderr.write('Supported are: 09, 10 and 11.\n Given is:'+strVCVersion)
         ExitGently(-1)
+        
+def getMSVCGeneratorString(strCompiler, strVCVersion)
+    strMSVCGenerator='Visual Studio '
+    strArch=''
+    strVersion=''
+    
+    if '64BIT' in strCompiler:
+        strArch += ' Win64'    
+    
+    if "10" == strVCVersion:
+        strVersion='10'
+    elif "11" == strVCVersion:
+        strVersion='11'
+    elif "09" == strVCVersion:
+        strVersion='9 2008'
+    elif "08" == strVCVersion:
+        strVersion='8 2005'
+    else:
+        sys.stderr.write('\n\n*** ERROR *** Unsupported MSVC Version\n')
+        sys.stderr.write('Supported are: 08,09, 10 and 11.\n Given is:'+strVCVersion)
+        ExitGently(-1)
+    return strMSVCGenerator+strVersion+strArch
+
