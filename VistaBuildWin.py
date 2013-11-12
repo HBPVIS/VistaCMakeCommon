@@ -27,11 +27,11 @@ def BuildIt(strBuildType='Default', strCompiler = 'MSVC_10_64BIT', strCMakeVaria
         
     strVCVersion = strCompiler.split('_')[1]
     if not strVCVersion.isdigit():
-        sys.stderr.write('\n\n*** ERROR *** Formt of Visual Studio version\n\n')
+        sys.stderr.write('\n\n*** ERROR *** Formt of Visual Studio version: +' strVCVersion ' \n\n')
         ExitGently(-1)
     
     #strArch = ''
-    #strMSCV = 'Visual Studio ' + strVCVersion
+    #strMSCV = 'Visual Studio ' + strVCsVersion
     #if '64BIT' in strCompiler:
         #strArch = '-x64'
         #strMSCV += ' Win64'
@@ -50,7 +50,7 @@ def BuildIt(strBuildType='Default', strCompiler = 'MSVC_10_64BIT', strCMakeVaria
     os.chdir(os.path.join(strBasepath, strBuildFolder))
     
     #configure cmake
-    strCMakeCmd = 'cmake.exe -G "' + getMSVCGeneratorString(strCompiler,strVCVersion) + '" ' + strCMakeVariables + ' ' + os.path.join(strBasepath)
+    strCMakeCmd = 'cmake -version;cmake.exe -G "' + getMSVCGeneratorString(strCompiler,strVCVersion) + '" ' + strCMakeVariables + ' ' + os.path.join(strBasepath)
     iRC, strConsoleOutput = VistaPythonCommon.SysCall(strCMakeCmd)
     sys.stdout.write(strConsoleOutput)
     sys.stdout.flush()
