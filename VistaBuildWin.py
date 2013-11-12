@@ -127,12 +127,13 @@ def MSVCInstallCall( strTarget = "ALL_BUILD" , strVCVersion = "10" ):
         sys.stdout.flush()
 
 def getVCvarsall( strVCVersion ): #  or 11
+    strProgramPath=os.environ['ProgramFiles(x86)']
     if "10" == strVCVersion:
-        return 'call "c:\\Program Files (x86)\\Microsoft Visual Studio 10.0\\VC\\vcvarsall.bat" x86'
+        return 'call "'+strProgramPath+'\\Microsoft Visual Studio 10.0\\VC\\vcvarsall.bat" x86'
     elif "11" == strVCVersion:
-        return 'call "c:\\Program Files (x86)\\Microsoft Visual Studio 11.0\\VC\\vcvarsall.bat" x86'
+        return 'call "'+strProgramPath+'\\Microsoft Visual Studio 11.0\\VC\\vcvarsall.bat" x86'
     elif "09" == strVCVersion:
-        return 'call "c:\\Program Files (x86)\\Microsoft Visual Studio 9.0\\VC\\vcvarsall.bat" x86'
+        return 'call "'+strProgramPath+'\\Microsoft Visual Studio 9.0\\VC\\vcvarsall.bat" x86'
     else:
         sys.stderr.write('\n\n*** ERROR *** Unsupported MSVC Version\n')
         sys.stderr.write('Supported are: 09, 10 and 11.\n Given is:'+strVCVersion)
