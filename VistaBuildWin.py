@@ -27,7 +27,7 @@ def BuildIt(strBuildType='Default', strCompiler = 'MSVC_10_64BIT', strCMakeVaria
         
     strVCVersion = strCompiler.split('_')[1]
     if not strVCVersion.isdigit():
-        sys.stderr.write('\n\n*** ERROR *** Formt of Visual Studio version: +' strVCVersion +' \n\n')
+        sys.stderr.write('\n\n*** ERROR *** Formt of Visual Studio version: '+ strVCVersion +' \n\n')
         ExitGently(-1)
     
     #strArch = ''
