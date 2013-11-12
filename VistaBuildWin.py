@@ -27,7 +27,7 @@ def BuildIt(strBuildType='Default', strCompiler = 'MSVC_10_64BIT', strCMakeVaria
         
     strVCVersion = strCompiler.split('_')[1]
     if not strVCVersion.isdigit():
-        sys.stderr.write('\n\n*** ERROR *** Formt of Visual Studio version: +' strVCVersion ' \n\n')
+        sys.stderr.write('\n\n*** ERROR *** Formt of Visual Studio version: +' strVCVersion +' \n\n')
         ExitGently(-1)
     
     #strArch = ''
@@ -101,7 +101,7 @@ def MSVCBuildCall(strBuildType, strVCVersion):
         sys.stdout.write('\nStarting to build '+strBuildType+ '\n')
         strVC = getVCvarsall( strVCVersion )
         strVC += ' & msbuild ALL_BUILD.'+getProjextFileEnding( strVCVersion )+' /property:configuration=' + strBuildType
-        strVC += ' /maxcpucount '
+        strVC += ' /maxcpucount /clp:WarningsOnly;ForceNoAlign '
         iRC, strConsoleOutput = VistaPythonCommon.SysCall(strVC)
         sys.stdout.write(strConsoleOutput)
         sys.stdout.flush()
