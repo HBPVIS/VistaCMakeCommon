@@ -131,7 +131,7 @@ def MakeJenkinsBuild(strBuildType, strCompiler, strCMakeVariables, bDeleteCMakeC
         
 #since every syscall opens a new shell we have to set environment each time :(
 def GetCompilerEnvCall(strCompiler):
-    strDefaultModules = 'module unload gcc;module unload intel;module load cmake/2.8.5;'
+    strDefaultModules = 'module unload gcc;module unload intel;module unload cmake;module load cmake/2.8.5;'
     if (0 == os.uname()[1].find('linuxgpu')):
         liCompilerDef = strCompiler.split('_', 1)
         if (len(liCompilerDef) != 0):
