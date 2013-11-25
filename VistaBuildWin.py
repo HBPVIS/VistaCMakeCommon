@@ -101,7 +101,7 @@ def MSVCBuildCall(strBuildType, strVCVersion):
         sys.stdout.write('\nStarting to build '+strBuildType+ '\n')
         strVC = getVCvarsall( strVCVersion )
         strVC += ' & msbuild ALL_BUILD.'+getProjextFileEnding( strVCVersion )+' /property:configuration=' + strBuildType
-        strVC += ' /maxcpucount /clp:WarningsOnly;ForceNoAlign '
+        strVC += ' /maxcpucount /clp:WarningsOnly;ErrorsOnly;ForceNoAlign '
         iRC, strConsoleOutput = VistaPythonCommon.SysCall(strVC)
         sys.stdout.write(strConsoleOutput)
         sys.stdout.flush()
