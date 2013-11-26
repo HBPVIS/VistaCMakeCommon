@@ -296,14 +296,16 @@ endmacro( vista_enable_most_compiler_warnings )
 ###########################
 
 
-# vista_add_external_msvc_project_of_package( PACKAGE_NAME [WARNING_LEVEL] [SOLUTION_FOLDER] [DEPENDENT (DENENDENT_TARGET)+ ] [ DEPENDS (DEPENDANT_TRAGET)+ ]  )
+# vista_add_external_msvc_project_of_package( PACKAGE_NAME [SOLUTION_FOLDER] [DEPENDENT (DENENDENT_TARGET)+ ] [ DEPENDS (DEPENDANT_TRAGET)+ ]  [SILENT | WARNING | ERROR] )
 # Adds msvc projects that were exported by a package to the solution (Visual Studio only)
 # note: the targets will NOT be named by their original name, but
 # instead external_NAME, to prevent name clashes (e.g. with included libraries)
 # will only work if a project exists, and other wise fails silently (note: deployments, i.e. installed libs, have no projects and will hence always fail)
 # Parameters:
 #    - PACKAGE_NAME: name of the package (from vista_find|use_package) whose projects should become included
-#	 - WARNING_LEVEL (optional, default is WARNING): SILENT will silently ignore all warnings, WARNING will emit warning but continues cmake execution, ERROR emits warning and stops cmake execution
+#	 - [SILENT | WARNING | ERROR] (optional, default is WARNING): SILENT will silently ignore all warnings and
+#                            suppress information output, WARNING will emit warning but continues cmake execution,
+#                            ERROR emits warning and stops cmake execution
 #    - SOLUTION_FOLDER (optional): Visual Studio solution folder where the project(s) should be put
 #    - DEPENDENT (targets)* (optional): list of targets that should depend on the added projects
 #                            Note: for this to work, the macro has to be called AFTER defining the dependent targets
