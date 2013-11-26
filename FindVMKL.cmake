@@ -5,7 +5,7 @@ include( VistaFindUtils )
 include( VistaCommon )
 
 if( NOT VMKL_FOUND )
-	vista_find_package_root( MKL include/mkl.h PATHS "C:/Program Files (x86)/Intel/Composer XE 2013/mkl/" "$ENV{MKLROOT}" )
+	vista_find_package_root( MKL include/mkl.h PATHS "C:/Program Files (x86)/Intel/Composer XE/mkl/" "$ENV{MKLROOT}" )
 	
 	if( MKL_ROOT_DIR )
 		set( MKL_INCLUDE_DIRS "${MKL_ROOT_DIR}/include" )
