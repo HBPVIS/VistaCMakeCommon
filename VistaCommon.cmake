@@ -892,7 +892,8 @@ macro( vista_use_package _PACKAGE_NAME )
 						else()
 							# check if dependencies are already included. If not, utter a warning
 							if( NOT ${_DEPENDENCY_NAME_UPPER}_FOUND AND NOT _QUIET )
-								message( "vista_use_package( ${_PACKAGE_NAME} ) - Package depends on \"${_DEPENDENCY_ARGS}\", which was not found yet - "
+								string( REPLACE ";" " " _DEPENDENCY_ARGS_STRING "${_DEPENDENCY_ARGS}" )
+								message( "vista_use_package( ${_PACKAGE_NAME} ) - Package depends on \"${_DEPENDENCY_ARGS_STRING}\", which was not found yet - "
 										"make sure to find this package before searchig for ${_PACKAGE_NAME}, or use parameter FIND_DEPENDENCIES" )
 							endif()
 						endif( _FIND_DEPENDENCIES )
