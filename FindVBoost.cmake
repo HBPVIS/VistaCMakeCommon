@@ -5,6 +5,7 @@ include( VistaFindUtils )
 
 if( NOT VBOOST_FOUND )
 	if( NOT BOOST_ROOT )
+		set( Boost_NO_BOOST_CMAKE ON )
 		vista_find_package_root( Boost boost/any.hpp NAMES Boost boost NO_CACHE )
 
 		if( BOOST_ROOT_DIR )
