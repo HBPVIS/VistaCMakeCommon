@@ -64,6 +64,10 @@ set( VISTA_COMMON_INCLUDED TRUE )
 
 set( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )
 
+if( CMAKE_VERSION VERSION_GREATER 2.8.12 OR CMAKE_VERSION VERSION_EQUAL 2.8.12 )
+	cmake_policy( SET CMP0022 OLD )
+endif()
+
 #this package sets the variables VISTA_HWARCH, VISTA_COMPATIBLE_HWARCH and VISTA_64BIT
 include( VistaHWArchSettings )
 include( VistaFindUtils )
