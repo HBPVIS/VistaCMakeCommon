@@ -51,12 +51,14 @@ def MakeLinuxStandardBuild(strCompiler,bDeleteCMakeCache):
     strCompilerEnv = GetCompilerEnvCall(strCompiler)
     
     if not os.path.exists(strBuildFolder):
-        VistaPythonCommon.SysCall(strCompilerEnv+'$VISTA_CMAKE_COMMON/MakeLinuxBuildStructure.sh')
+        iRC, strConsoleOutput = VistaPythonCommon.SysCall(strCompilerEnv+'$VISTA_CMAKE_COMMON/MakeLinuxBuildStructure.sh')
     else:
        if True == bDeleteCMakeCache:
             shutil.rmtree(strBuildFolder,True)#clean cmake build
-            VistaPythonCommon.SysCall(strCompilerEnv+'$VISTA_CMAKE_COMMON/MakeLinuxBuildStructure.sh')
+            iRC, strConsoleOutput = VistaPythonCommon.SysCall(strCompilerEnv+'$VISTA_CMAKE_COMMON/MakeLinuxBuildStructure.sh')
     
+    sys.stdout.write(strConsoleOutput)
+    sys.stdout.flush()
     os.chdir(os.path.join(os.getcwd(), strBuildFolder))
     iRC, strConsoleOutput = VistaPythonCommon.SysCall(strCompilerEnv + 'make -j')        
     sys.stdout.write(strConsoleOutput)

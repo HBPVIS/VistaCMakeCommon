@@ -26,7 +26,7 @@ def ExitError(strErrorMessage,iReturnCode = -1):
 def SysCall(strCmd, ExitOnError = True,Debug=False):
     iReturnCode = 0
     if True == Debug:
-        out.write('\nExecuting Command:'+cmd+'\n')
+        out.write('\nExecuting Command:'+strCmd+'\n')
         out.flush()
     pCall = subprocess.Popen(strCmd, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
     strOutput = pCall.communicate()[0]
