@@ -4,7 +4,7 @@ include( FindPackageHandleStandardArgs )
 include( VistaFindUtils )
 
 if( NOT VSMARTBODY_FOUND )
-	vista_find_package_root( SmartBody /src/SmartBody/sb/SBTypes.h )
+	vista_find_package_root( SMARTBODY /src/SmartBody/sb/SBTypes.h NAMES SmartBodySDK smartbody SmartBody )
 	if( SMARTBODY_ROOT_DIR )
 		set( SMARTBODY_INCLUDE_DIRS 
 			${SMARTBODY_ROOT_DIR}/src/SmartBody
@@ -107,11 +107,19 @@ if( NOT VSMARTBODY_FOUND )
         debug xerces-c_3D.lib
         glew32 #windows
         optimized vhcl #windows
-        debug vhcl_d #windows
+        debug vhcl_d #windows        
         boost_filesystem-vc100-mt-1_51.lib #windows ?
         boost_system-vc100-mt-1_51.lib #windows ?        
         optimized steerlib
         debug steerlibd
+        
+        #boost_filesystem-vc100-mt-gd-1_51.lib
+#boost_system-vc100-mt-gd-1_51.lib
+#boost_regex-vc100-mt-gd-1_51.lib
+#boost_python-vc100-mt-gd-1_51.lib
+#boost_serialization-vc100-mt-gd-1_51.lib
+     
+  
     )
     else() # Linux   
     list(APPEND SMARTBODY_LIBRARIES
@@ -127,7 +135,7 @@ if( NOT VSMARTBODY_FOUND )
     endif()
         
 	else( SMARTBODY_ROOT_DIR )
-		message( WARNING "vista_find_package_root - File named /core/smartbody/SmartBody/src/sb/SBTypes.h not found" )	
+		message( WARNING "vista_find_package_root - File named /src/SmartBody/sb/SBTypes.h not found" )	
 	endif( SMARTBODY_ROOT_DIR )
 endif( NOT VSMARTBODY_FOUND )
 

@@ -457,7 +457,7 @@ endmacro( vista_get_version_from_path )
 # if QUIET is specified, no info messages will be printed
 # if DEBUG_OUTPUT is specified, additional debug info will be printed
 # if DONT_ALLOW_UNVERSIONED is specified, no unversioned path is accepted when a versioned one is requested
-# if PREFER_UNVRSIONED is set and no version is requested, an unversioned package is used - otherwise by default
+# if PREFER_UNVERSIONED is set and no version is requested, an unversioned package is used - otherwise by default
 # the highest version is chosen
 # the NAMES list provides alternative names to be searched (equivalently to vista_find_package_dirs)
 # the PATHS list provides additional (absolute) base pathes to search (equivalently to vista_find_package_dirs)

@@ -49,7 +49,7 @@ def BuildIt(strBuildType='Default', strCompiler = 'GCC_DEFAULT', strCMakeVariabl
 def MakeLinuxStandardBuild(strCompiler,bDeleteCMakeCache):
     strBuildFolder='build_LINUX.X86_64' 
     strCompilerEnv = GetCompilerEnvCall(strCompiler)
-    
+    strConsoleOutput=''
     if not os.path.exists(strBuildFolder):
         iRC, strConsoleOutput = VistaPythonCommon.SysCall(strCompilerEnv+'$VISTA_CMAKE_COMMON/MakeLinuxBuildStructure.sh')
     else:
@@ -152,4 +152,6 @@ def GetCompilerEnvCall(strCompiler):
             return ''
     else:
         return ''
-        
+    
+
+    
