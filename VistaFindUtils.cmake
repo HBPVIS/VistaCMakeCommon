@@ -486,7 +486,7 @@ macro( vista_find_package_root _PACKAGE_NAME _EXAMPLE_FILE )
 			set( _NEXT_IS_FOLDER FALSE )
 			foreach( _ARG ${_ARGS} )
 				if( ${_ARG} STREQUAL "NAMES" )
-                    Message(${NAMES})
+                    Message("${NAMES}")
 					set( _NEXT_IS_FOLDER TRUE )
 				elseif( _NEXT_IS_FOLDER )
 					if( ${_ARG} STREQUAL "DONT_ALLOW_UNVERSIONED"
