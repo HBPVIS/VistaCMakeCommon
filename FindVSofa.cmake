@@ -1,45 +1,32 @@
-# $Id: FindVSOFA.cmake 21495 2011-05-25 07:52:18Z tk674006 $
+# $Id$
 
-# Tested with: Sofa - Development Version - Revision 7193
+# Tested with: Sofa 1.0 rev10511@svn://scm.gforge.inria.fr/svn/sofa/trunk/Sofa
 
 include( FindPackageHandleStandardArgs )
 include( VistaFindUtils )
 
 if( NOT VSOFA_FOUND )
-	vista_find_package_root( SOFA framework/sofa/core/SofaLibrary.h )
+	vista_find_package_root( SOFA include/sofa/core/SofaLibrary.h )
 
 	if( SOFA_ROOT_DIR )
 
 		set( SOFA_INCLUDE_DIRS 
-			${SOFA_ROOT_DIR}/tools/qt4win/include/QtCore
-			${SOFA_ROOT_DIR}/tools/qt4win/include/QtGui
-			${SOFA_ROOT_DIR}/tools/qt4win/include/QtOpenGL
-			${SOFA_ROOT_DIR}/tools/qt4win/include/QtXml
-			${SOFA_ROOT_DIR}/tools/qt4win/include/Qt3Support
-			${SOFA_ROOT_DIR}/tools/qt4win/include
-			${SOFA_ROOT_DIR}/include/win32
 			${SOFA_ROOT_DIR}/include
-			${SOFA_ROOT_DIR}/framework
 			${SOFA_ROOT_DIR}/modules
 			${SOFA_ROOT_DIR}/applications
-			${SOFA_ROOT_DIR}/extlibs/miniBoost
-			${SOFA_ROOT_DIR}/extlibs/tinyxml
-			${SOFA_ROOT_DIR}/extlibs/newmat
-			${SOFA_ROOT_DIR}/extlibs/qwt-5.2.0/src
-			${SOFA_ROOT_DIR}/extlibs/miniFlowVR/include
-			${SOFA_ROOT_DIR}/tools/qt4win/include/ActiveQt
-			${SOFA_ROOT_DIR}/tools/qt4win/mkspecs/win32-msvc2008 )
+			${SOFA_ROOT_DIR}/extlibs
+        )
 		
 		if( WIN32 )
 			if( MSVC )
-				if( MSVC80 )
-					set( SOFA_LIBRARY_DIRS ${SOFA_ROOT_DIR}/lib/win32/ReleaseVC8 ${SOFA_ROOT_DIR}/lib/win32/DebugVC8 ${SOFA_ROOT_DIR}/bin)		
-				elseif( MSVC90 )
-					set( SOFA_LIBRARY_DIRS ${SOFA_ROOT_DIR}/lib/win32/ReleaseVC9 ${SOFA_ROOT_DIR}/lib/win32/DebugVC9 ${SOFA_ROOT_DIR}/bin)
-				else( MSVC80 )
+				if( MSVC10 )
+					set( SOFA_LIBRARY_DIRS ${SOFA_ROOT_DIR}/lib/ ${SOFA_ROOT_DIR}/bin/ )
+				else( MSVC10 )
+					set( SOFA_LIBRARY_DIRS ${SOFA_ROOT_DIR}/lib/ ${SOFA_ROOT_DIR}/bin/ )
 					message( WARNING "FindPackageSOFA - Unknown MSVC version" )
-				endif( MSVC80 )				
+				endif( MSVC10 )				
 			else( MSVC )
+                set( SOFA_LIBRARY_DIRS ${SOFA_ROOT_DIR}/lib/ ${SOFA_ROOT_DIR}/bin/ )
 				message( WARNING "FindPackageSOFA - using WIN32 without Visual Studio - this will probably fail - use at your own risk!" )
 			endif( MSVC )
 		
@@ -50,103 +37,167 @@ if( NOT VSOFA_FOUND )
 				optimized glu32.lib
 				optimized gdi32.lib
 				optimized user32.lib
-				optimized sofahelper.lib
-				optimized sofadefaulttype.lib
-				optimized sofacore.lib
-				optimized sofacomponentmastersolver.lib
-				optimized sofacomponentfem.lib
-				optimized sofacomponentinteractionforcefield.lib
-				optimized sofacomponentcontextobject.lib
-				optimized sofacomponentbehaviormodel.lib
-				optimized sofacomponentengine.lib
-				optimized sofacomponentlinearsolver.lib
-				optimized sofacomponentodesolver.lib
-				optimized sofacomponentbase.lib
-				optimized sofacomponentloader.lib
-				optimized sofacomponentcontroller.lib
-				optimized sofacomponentvisualmodel.lib
-				optimized sofacomponentmass.lib
-				optimized sofacomponentforcefield.lib
-				optimized sofacomponentmapping.lib
-				optimized sofacomponentconstraint.lib
-				optimized sofacomponentcollision.lib
-				optimized sofacomponentmisc.lib
-				optimized sofacomponent.lib
-				optimized sofasimulation.lib
-				optimized sofatree.lib
-				optimized sofaautomatescheduler.lib
-				optimized sofabgl.lib
-				optimized sofagui.lib
-				optimized qwt.lib
-				optimized ${SOFA_ROOT_DIR}/lib/win32/Common/glut32.lib
+				optimized FlowVR_1_0.lib
+				optimized newmat_1_0.lib
+				optimized ObjectCreator_1_0.lib
+				optimized QGLViewer_1_0.lib
+				optimized Qwt_1_0.lib
+				optimized Sensable_1_0.lib
+				optimized SofaBaseAnimationLoop_1_0.lib
+				optimized SofaBaseCollision_1_0.lib
+				optimized SofaBaseLinearSolver_1_0.lib
+				optimized SofaBaseMechanics_1_0.lib
+				optimized SofaBaseTopology_1_0.lib
+				optimized SofaBaseVisual_1_0.lib
+				optimized SofaBoundaryCondition_1_0.lib
+				optimized SofaComponentAdvanced_1_0.lib
+				optimized SofaComponentBase_1_0.lib
+				optimized SofaComponentCommon_1_0.lib
+				optimized SofaComponentGeneral_1_0.lib
+				optimized SofaComponentMain_1_0.lib
+				optimized SofaComponentMisc_1_0.lib
+				optimized SofaConstraint_1_0.lib
+				optimized SofaCore_1_0.lib
+				optimized SofaDefaultType_1_0.lib
+				optimized SofaDeformable_1_0.lib
+				optimized SofaDenseSolver_1_0.lib
+				optimized SofaEigen2Solver_1_0.lib
+				optimized SofaEngine_1_0.lib
+				optimized SofaEulerianFluid_1_0.lib
+				optimized SofaExplicitOdeSolver_1_0.lib
+				optimized SofaExporter_1_0.lib
+				optimized SofaGraphComponent_1_0.lib
+				optimized SofaGuiCommon_1_0.lib
+				optimized SofaGuiGlut_1_0.lib
+				optimized SofaGuiMain_1_0.lib
+				optimized SofaGuiQt_1_0.lib
+				optimized SofaHaptics_1_0.lib
+				optimized SofaHelper_1_0.lib
+				optimized SofaImplicitOdeSolver_1_0.lib
+				optimized SofaLoader_1_0.lib
+				optimized SofaMeshCollision_1_0.lib
+				optimized SofaMisc_1_0.lib
+				optimized SofaMiscCollision_1_0.lib
+				optimized SofaMiscEngine_1_0.lib
+				optimized SofaMiscFem_1_0.lib
+				optimized SofaMiscForceField_1_0.lib
+				optimized SofaMiscMapping_1_0.lib
+				optimized SofaMiscSolver_1_0.lib
+				optimized SofaMiscTopology_1_0.lib
+				optimized SofaModeler_1_0.lib
+				optimized SofaNonUniformFem_1_0.lib
+				optimized SofaObjectInteraction_1_0.lib
+				optimized SofaOpenglVisual_1_0.lib
+				optimized SofaPreconditioner_1_0.lib
+				optimized SofaRigid_1_0.lib
+				optimized SofaSimpleFem_1_0.lib
+				optimized SofaSimulationCommon_1_0.lib
+				optimized SofaSimulationGraph_1_0.lib
+				optimized SofaSimulationTree_1_0.lib
+				optimized SofaSphFluid_1_0.lib
+				optimized SofaTopologyMapping_1_0.lib
+				optimized SofaUserInteraction_1_0.lib
+				optimized SofaValidation_1_0.lib
+				optimized SofaVolumetricData_1_0.lib
+				optimized tinyxml_1_0.lib
+				optimized glut32.lib
 				optimized comctl32.lib
 				optimized AdvAPI32.lib
 				optimized Shell32.lib
 				optimized WSock32.lib
 				optimized WS2_32.lib
 				optimized Ole32.lib
-				optimized tinyxml.lib
-				optimized ${SOFA_ROOT_DIR}/lib/win32/ReleaseVC9/zlib.lib
-				optimized ${SOFA_ROOT_DIR}/lib/win32/ReleaseVC9/libpng.lib
-				optimized newmat.lib
-				optimized ${SOFA_ROOT_DIR}/lib/win32/Common/glew32.lib
-				optimized miniFlowVR.lib
-				optimized ${SOFA_ROOT_DIR}/tools/qt4win/lib/Qt3Support4.lib
-				optimized ${SOFA_ROOT_DIR}/tools/qt4win/lib/QtXml4.lib
-				optimized ${SOFA_ROOT_DIR}/tools/qt4win/lib/QtOpenGL4.lib
-				optimized ${SOFA_ROOT_DIR}/tools/qt4win/lib/QtGui4.lib
-				optimized ${SOFA_ROOT_DIR}/tools/qt4win/lib/QtCore4.lib
+				optimized zlib.lib
+				optimized libpng.lib
+				optimized glew32.lib
+				optimized Qt3Support4.lib
+				optimized QtXml4.lib
+				optimized QtOpenGL4.lib
+				optimized QtGui4.lib
+				optimized QtCore4.lib
 
 				debug opengl32.lib
 				debug glu32.lib
 				debug gdi32.lib
 				debug user32.lib
-				debug sofahelperD.lib
-				debug sofadefaulttypeD.lib
-				debug sofacoreD.lib
-				debug sofacomponentmastersolverD.lib
-				debug sofacomponentfemD.lib
-				debug sofacomponentinteractionforcefieldD.lib
-				debug sofacomponentcontextobjectD.lib
-				debug sofacomponentbehaviormodelD.lib
-				debug sofacomponentengineD.lib
-				debug sofacomponentlinearsolverD.lib
-				debug sofacomponentodesolverD.lib
-				debug sofacomponentbaseD.lib
-				debug sofacomponentloaderD.lib
-				debug sofacomponentcontrollerD.lib
-				debug sofacomponentvisualmodelD.lib
-				debug sofacomponentmassD.lib
-				debug sofacomponentforcefieldD.lib
-				debug sofacomponentmappingD.lib
-				debug sofacomponentconstraintD.lib
-				debug sofacomponentcollisionD.lib
-				debug sofacomponentmiscD.lib
-				debug sofacomponentD.lib
-				debug sofasimulationD.lib
-				debug sofatreeD.lib
-				debug sofaautomateschedulerD.lib
-				debug sofabglD.lib
-				debug sofaguiD.lib
-				debug qwtD.lib
-				debug ${SOFA_ROOT_DIR}/lib/win32/Common/glut32.lib
+				debug FlowVR_1_0d.lib
+				debug newmat_1_0d.lib
+				debug ObjectCreator_1_0d.lib
+				debug QGLViewer_1_0.lib
+				debug Qwt_1_0d.lib
+				debug Sensable_1_0d.lib
+				debug SofaBaseAnimationLoop_1_0d.lib
+				debug SofaBaseCollision_1_0d.lib
+				debug SofaBaseLinearSolver_1_0d.lib
+				debug SofaBaseMechanics_1_0d.lib
+				debug SofaBaseTopology_1_0d.lib
+				debug SofaBaseVisual_1_0d.lib
+				debug SofaBoundaryCondition_1_0d.lib
+				debug SofaComponentAdvanced_1_0d.lib
+				debug SofaComponentBase_1_0d.lib
+				debug SofaComponentCommon_1_0d.lib
+				debug SofaComponentGeneral_1_0d.lib
+				debug SofaComponentMain_1_0d.lib
+				debug SofaComponentMisc_1_0d.lib
+				debug SofaConstraint_1_0d.lib
+				debug SofaCore_1_0d.lib
+				debug SofaDefaultType_1_0d.lib
+				debug SofaDeformable_1_0d.lib
+				debug SofaDenseSolver_1_0d.lib
+				debug SofaEigen2Solver_1_0d.lib
+				debug SofaEngine_1_0d.lib
+				debug SofaEulerianFluid_1_0d.lib
+				debug SofaExplicitOdeSolver_1_0d.lib
+				debug SofaExporter_1_0d.lib
+				debug SofaGraphComponent_1_0d.lib
+				debug SofaGuiCommon_1_0d.lib
+				debug SofaGuiGlut_1_0d.lib
+				debug SofaGuiMain_1_0d.lib
+				debug SofaGuiQt_1_0d.lib
+				debug SofaHaptics_1_0d.lib
+				debug SofaHelper_1_0d.lib
+				debug SofaImplicitOdeSolver_1_0d.lib
+				debug SofaLoader_1_0d.lib
+				debug SofaMeshCollision_1_0d.lib
+				debug SofaMisc_1_0d.lib
+				debug SofaMiscCollision_1_0d.lib
+				debug SofaMiscEngine_1_0d.lib
+				debug SofaMiscFem_1_0d.lib
+				debug SofaMiscForceField_1_0d.lib
+				debug SofaMiscMapping_1_0d.lib
+				debug SofaMiscSolver_1_0d.lib
+				debug SofaMiscTopology_1_0d.lib
+				debug SofaModeler_1_0d.lib
+				debug SofaNonUniformFem_1_0d.lib
+				debug SofaObjectInteraction_1_0d.lib
+				debug SofaOpenglVisual_1_0d.lib
+				debug SofaPreconditioner_1_0d.lib
+				debug SofaRigid_1_0d.lib
+				debug SofaSimpleFem_1_0d.lib
+				debug SofaSimulationCommon_1_0d.lib
+				debug SofaSimulationGraph_1_0d.lib
+				debug SofaSimulationTree_1_0d.lib
+				debug SofaSphFluid_1_0d.lib
+				debug SofaTopologyMapping_1_0d.lib
+				debug SofaUserInteraction_1_0d.lib
+				debug SofaValidation_1_0d.lib
+				debug SofaVolumetricData_1_0d.lib
+				debug tinyxml_1_0d.lib
+				debug glut32.lib
 				debug comctl32.lib
 				debug AdvAPI32.lib
 				debug Shell32.lib
 				debug WSock32.lib
 				debug WS2_32.lib
 				debug Ole32.lib
-				debug tinyxmlD.lib
-				debug ${SOFA_ROOT_DIR}/lib/win32/ReleaseVC9/zlib.lib
-				debug ${SOFA_ROOT_DIR}/lib/win32/ReleaseVC9/libpng.lib
-				debug newmatD.lib
-				debug ${SOFA_ROOT_DIR}/lib/win32/Common/glew32.lib
-				debug miniFlowVRD.lib
-				debug ${SOFA_ROOT_DIR}/tools/qt4win/lib/Qt3Support4.lib
-				debug ${SOFA_ROOT_DIR}/tools/qt4win/lib/QtXml4.lib
-				debug ${SOFA_ROOT_DIR}/tools/qt4win/lib/QtOpenGL4.lib
-				debug ${SOFA_ROOT_DIR}/tools/qt4win/lib/QtGui4.lib
-				debug ${SOFA_ROOT_DIR}/tools/qt4win/lib/QtCore4.lib
+				debug zlib.lib
+				debug libpng.lib
+				debug glew32.lib
+				debug Qt3Supportd4.lib
+				debug QtXmld4.lib
+				debug QtOpenGLd4.lib
+				debug QtGuid4.lib
+				debug QtCored4.lib
 			)		
 		endif( WIN32 )
 
