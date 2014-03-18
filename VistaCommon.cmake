@@ -58,8 +58,19 @@
 #	scans XYZConfig.cmake files in VISTA_CMAKE_COMMON/share, and deletes outdated ones
 
 
+# we clean the CMAKE_MODULE_PATH - just in case there are some \ pathes in there
+# this, we also do on multiple inclusions
+set( _TMP_MODULE_PATH ${CMAKE_MODULE_PATH} )
+set( CMAKE_MODULE_PATH )
+foreach( _PATH ${_TMP_MODULE_PATH} )
+	file( TO_CMAKE_PATH ${_PATH} _CHANGED_PATH )
+	list( APPEND CMAKE_MODULE_PATH ${_CHANGED_PATH} )
+endforeach( _PATH )
+list( REMOVE_DUPLICATES CMAKE_MODULE_PATH )
+	
 # avoid multiple includes of this file (for performance reasons )
 if( NOT VISTA_COMMON_INCLUDED )
+
 set( VISTA_COMMON_INCLUDED TRUE )
 
 set( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )
@@ -2153,14 +2164,6 @@ vista_set_defaultvalue( BUILD_SHARED_LIBS ON CACHE BOOL "Build shared libraries 
 if( EXISTS "$ENV{VISTA_CMAKE_COMMON}" )
 	file( TO_CMAKE_PATH $ENV{VISTA_CMAKE_COMMON} VISTA_CMAKE_COMMON )
 	
-	# we clean the CMAKE_MODULE_PATH - just in case there are some \ pathes in there
-	set( _TMP_MODULE_PATH ${CMAKE_MODULE_PATH} )
-	set( CMAKE_MODULE_PATH )
-	foreach( _PATH ${_TMP_MODULE_PATH} )
-		file( TO_CMAKE_PATH ${_PATH} _CHANGED_PATH )
-		list( APPEND CMAKE_MODULE_PATH ${_CHANGED_PATH} )
-	endforeach( _PATH )
-
 	list( APPEND CMAKE_MODULE_PATH "${VISTA_CMAKE_COMMON}" "${VISTA_CMAKE_COMMON}/share" )
 	list( APPEND CMAKE_PREFIX_PATH "${VISTA_CMAKE_COMMON}" "${VISTA_CMAKE_COMMON}/share" )
 	list( REMOVE_DUPLICATES CMAKE_MODULE_PATH )
