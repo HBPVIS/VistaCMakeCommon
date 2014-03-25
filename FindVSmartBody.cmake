@@ -13,14 +13,13 @@ if( NOT VSMARTBODY_FOUND )
 			${SMARTBODY_ROOT_DIR}/include/vhcl
 			${SMARTBODY_ROOT_DIR}/include/steersuite
             ${SMARTBODY_ROOT_DIR}/include/steersuite/external
-			${SMARTBODY_ROOT_DIR}/python27/include
 			${SMARTBODY_ROOT_DIR}/include/bonebus
 			${SMARTBODY_ROOT_DIR}/include/wsp                      
         )
         
         if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
             list(APPEND SMARTBODY_INCLUDE_DIRS
-                ${SMARTBODY_ROOT_DIR}/core/smartbody/Python27/include
+                ${SMARTBODY_ROOT_DIR}/python27/include
             )
             else() # Linux   
             list(APPEND SMARTBODY_INCLUDE_DIRS
