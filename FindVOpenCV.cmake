@@ -16,7 +16,8 @@ if( NOT VOPENCV_FOUND )
 
 	set( OPENCV_FOUND )
 	set( OpenCV_FOUND )
-	find_package( OpenCV PATHS "${OPENCV_ROOT_DIR}" "${OPENCV_ROOT_DIR}/share" "${OPENCV_ROOT_DIR}/share/OpenCV" )
+	set( CMAKE_PREFIX_PATH "${OPENCV_ROOT_DIR}" ${CMAKE_PREFIX_PATH} )
+	vista_find_original_package( VOpenCV )
 	# an OpenCVConfig.cmake has been found and loaded
 	if( OpenCV_FOUND )
 		set( OPENCV_LIBRARIES "${OpenCV_LIBS}" )
